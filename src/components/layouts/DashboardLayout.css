@@ -1,0 +1,38 @@
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-gray-light);
+}
+
+.layout-content {
+  flex: 1;
+  margin-left: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .layout-content {
+    margin-left: 260px;
+  }
+  
+  .main-content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .layout-content {
+    margin-left: 0;
+  }
+  
+  .main-content {
+    padding: 16px;
+  }
+}

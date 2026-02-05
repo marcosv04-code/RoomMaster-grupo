@@ -1,0 +1,278 @@
+═══════════════════════════════════════════════════════════════════════════
+                    ARCHIVOS CLAVE - REFERENCIA RÁPIDA
+═══════════════════════════════════════════════════════════════════════════
+
+Cuando necesites... busca aquí:
+
+🚀 INICIAR EL PROYECTO
+──────────────────────────────────────────────────────────────────────────
+  → Archivo: package.json
+    Contiene: dependencias, scripts npm
+    Scripts: npm run dev, npm run build, npm run preview
+
+  → Archivo: vite.config.js
+    Contiene: configuración del servidor de desarrollo
+
+  → Archivo: index.html
+    Contiene: HTML principal, tipografía Google Fonts
+
+
+🎯 ENTENDER LA ESTRUCTURA
+──────────────────────────────────────────────────────────────────────────
+  → Archivo: INICIO_RAPIDO.md
+    Para: Empezar en 5 minutos
+
+  → Archivo: ESTRUCTURA_PROYECTO.txt
+    Para: Árbol detallado del proyecto
+
+  → Archivo: README.md
+    Para: Documentación completa
+
+  → Archivo: RESUMEN_CREACION.txt
+    Para: Esta lista que estás leyendo
+
+  → Archivo: EJEMPLOS_USO.js
+    Para: Ver código ejemplo de cada componente
+
+
+⚙️ CONFIGURACIÓN
+──────────────────────────────────────────────────────────────────────────
+  → Archivo: .env (CREAR ESTE)
+    Contiene: variables de entorno
+    Necesitas: REACT_APP_API_URL
+
+  → Archivo: CONFIGURACION_ENTORNO.md
+    Contiene: guía de configuración
+    Incluye: endpoints esperados
+
+
+🔐 AUTENTICACIÓN
+──────────────────────────────────────────────────────────────────────────
+  → Archivo: src/context/AuthContext.jsx
+    Proporciona: user, isAuthenticated, login, logout
+
+  → Archivo: src/hooks/useAuth.js
+    Uso: const { user, logout } = useAuth()
+
+  → Archivo: src/components/common/ProtectedRoute.jsx
+    Uso: <ProtectedRoute><MiPagina /></ProtectedRoute>
+
+  → Archivo: src/pages/auth/LoginPage.jsx
+    Contiene: formulario de login
+
+  → Archivo: src/pages/auth/RegisterPage.jsx
+    Contiene: formulario de registro
+
+
+🛣️ RUTAS
+──────────────────────────────────────────────────────────────────────────
+  → Archivo: src/App.jsx
+    Contiene: todas las rutas
+    Modificar: agregar nuevas rutas aquí
+
+  Rutas principales:
+    /              → Landing
+    /login         → Login
+    /register      → Registro
+    /dashboard     → Dashboard (protegido)
+    /clientes      → Clientes (protegido)
+    ... todas en App.jsx
+
+
+🎨 COMPONENTES REUTILIZABLES
+──────────────────────────────────────────────────────────────────────────
+  → Carpeta: src/components/common/
+
+  Card.jsx (Tarjeta de estadísticas)
+    <Card title="Habitaciones" value="8" icon="🏨" />
+
+  Modal.jsx (Diálogo reutilizable)
+    <Modal isOpen={true} title="Nuevo" onConfirm={save}>
+      {contenido}
+    </Modal>
+
+  Table.jsx (Tabla genérica)
+    <Table columns={cols} data={rows} onEdit={e} onDelete={d} />
+
+  Sidebar.jsx (Menú lateral)
+    Automático, usa menuItems
+
+  Navbar.jsx (Barra superior)
+    Automático, muestra nombre del usuario
+
+  ProtectedRoute.jsx (Ruta protegida)
+    <ProtectedRoute><Pagina /></ProtectedRoute>
+
+
+📄 PÁGINAS
+──────────────────────────────────────────────────────────────────────────
+  → Carpeta: src/pages/
+
+  landing/LandingPage.jsx          → Página inicial pública
+  auth/LoginPage.jsx               → Login
+  auth/RegisterPage.jsx            → Registro
+  dashboard/DashboardPage.jsx      → Dashboard principal
+  gestion-estadia/GestionEstadiaPage.jsx  → Gestión de estadías
+  inventario/InventarioPage.jsx    → Inventario
+  clientes/ClientesPage.jsx        → Clientes
+  tienda/TiendaPage.jsx            → Tienda
+  reportes/ReportesPage.jsx        → Reportes
+  facturacion/FacturacionPage.jsx  → Facturación
+  perfil/PerfilPage.jsx            → Perfil
+
+
+📡 SERVICIOS DE API
+──────────────────────────────────────────────────────────────────────────
+  → Archivo: src/services/api.js
+    Contiene: configuración de Axios
+    Tiene: interceptores de autenticación
+
+  → Archivo: src/services/index.js
+    Contiene: todos los servicios
+    Servicios:
+      - authService (login, register)
+      - roomService (habitaciones CRUD)
+      - clientService (clientes CRUD)
+      - stayService (estadías CRUD)
+      - reportService (reportes)
+      - billingService (facturas)
+
+  Uso:
+    import { clientService } from '@/services'
+    const clients = await clientService.getAll()
+
+
+🎨 ESTILOS
+──────────────────────────────────────────────────────────────────────────
+  → Archivo: src/styles/global.css
+    Contiene: variables de color, estilos base
+    Variables:
+      --color-primary: #2196F3
+      --color-primary-dark: #1565c0
+      --color-success: #4caf50
+      --color-warning: #ff9800
+      --color-error: #f44336
+      ... más variables
+
+  Archivos CSS individuales:
+    Sidebar.css          → Estilos del sidebar
+    Navbar.css           → Estilos de navbar
+    Card.css             → Estilos de cards
+    Modal.css            → Estilos de modales
+    Table.css            → Estilos de tablas
+    DashboardLayout.css  → Layout del dashboard
+    LandingPage.css      → Landing page
+    AuthPage.css         → Páginas de auth
+    DashboardPage.css    → Dashboard
+
+
+📝 EJEMPLOS
+──────────────────────────────────────────────────────────────────────────
+  → Archivo: EJEMPLOS_USO.js
+
+  Contiene:
+    1. Usar useAuth hook
+    2. Usar ProtectedRoute
+    3. Usar DashboardLayout
+    4. Usar Card component
+    5. Usar Table component
+    6. Usar Modal component
+    7. Usar servicios API
+    8. Ejemplo completo de página
+
+
+🔍 BUSCAR ALGO
+──────────────────────────────────────────────────────────────────────────
+  ¿Cómo agregar un nuevo módulo?
+    → Lee: INICIO_RAPIDO.md → PASO 6
+
+  ¿Cómo conectar el backend?
+    → Lee: CONFIGURACION_ENTORNO.md
+
+  ¿Cómo crear un formulario?
+    → Lee: EJEMPLOS_USO.js → Ejemplo #8
+
+  ¿Cómo usar el context de auth?
+    → Abre: src/hooks/useAuth.js
+
+  ¿Cómo está organizado todo?
+    → Lee: ESTRUCTURA_PROYECTO.txt
+
+  ¿Qué componentes hay?
+    → Ve a: src/components/common/
+
+  ¿Cuáles son los colores?
+    → Abre: src/styles/global.css
+
+
+✅ CHECKLIST PARA EMPEZAR
+──────────────────────────────────────────────────────────────────────────
+  [ ] 1. npm install
+  [ ] 2. Crear archivo .env
+  [ ] 3. npm run dev
+  [ ] 4. Abrir http://localhost:3000
+  [ ] 5. Registrarse o Iniciar Sesión
+  [ ] 6. Ver Dashboard y explorar
+  [ ] 7. Revisar archivos clave
+  [ ] 8. Leer EJEMPLOS_USO.js
+  [ ] 9. Conectar backend
+  [ ] 10. ¡Empezar a desarrollar!
+
+
+🎯 TAREAS COMUNES
+──────────────────────────────────────────────────────────────────────────
+  Agregar nueva ruta:
+    1. Crea archivo en src/pages/
+    2. Importa en App.jsx
+    3. Agrega <Route path="..." element={...} />
+
+  Agregar al menú sidebar:
+    1. Abre src/components/common/Sidebar.jsx
+    2. Agrega item en menuItems array
+
+  Llamar API:
+    1. Usa servicio de src/services/index.js
+    2. await clientService.getAll()
+
+  Mostrar datos del usuario:
+    1. Usa useAuth hook
+    2. const { user } = useAuth()
+    3. Accede a user.name, user.email, etc.
+
+  Crear formulario con modal:
+    1. Usa Modal component
+    2. useState para isModalOpen
+    3. Forma el contenido dentro
+
+  Crear tabla:
+    1. Usa Table component
+    2. Define columns array
+    3. Pasa data array
+
+
+📱 RESPONSIVE
+──────────────────────────────────────────────────────────────────────────
+  Breakpoints:
+    Desktop: 1400px+
+    Tablet: 768px - 1399px
+    Mobile: 480px - 767px
+
+  Archivos CSS contemplan todos los breakpoints
+  Todo es responsivo por defecto
+
+
+💡 TIPS
+──────────────────────────────────────────────────────────────────────────
+  ✓ Cada componente tiene su propio CSS
+  ✓ Variables de color en global.css
+  ✓ Componentes usan props para flexibilidad
+  ✓ Servicios usan Axios configurado
+  ✓ Autenticación con Context API
+  ✓ Mock data para testing sin backend
+  ✓ Todo está comentado
+  ✓ Sigue patrones React estándar
+
+
+═══════════════════════════════════════════════════════════════════════════
+                   Ahora sí, ¡a desarrollar! 🚀
+═══════════════════════════════════════════════════════════════════════════

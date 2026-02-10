@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
@@ -6,376 +6,205 @@ import Card from '../../components/common/Card'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
+const API = 'http://localhost/roommaster/backend'
+
 export default function TiendaPage() {
   const { user } = useAuth()
-  const [products, setProducts] = useState([
-    { id: 1, nombre: 'Botella de Agua Premium', precio: 8, stock: 120, categoria: 'Bebidas', descripcion: 'Botella reutilizable de 1L', vendidas: 450 },
-    { id: 2, nombre: 'Kit de Aseo (Champo + Jabón)', precio: 12, stock: 95, categoria: 'Aseo', descripcion: 'Conjunto de higiene personal', vendidas: 320 },
-    { id: 3, nombre: 'Toalla de Microfibra', precio: 25, stock: 45, categoria: 'Textiles', descripcion: 'Toalla absorbente y secado rápido', vendidas: 120 },
-    { id: 4, nombre: 'Desodorante de Ambiente', precio: 15, stock: 60, categoria: 'Aromatizantes', descripcion: 'Spray para ambientes', vendidas: 200 },
-    { id: 5, nombre: 'Chocolates Variados', precio: 18, stock: 80, categoria: 'Alimentos', descripcion: 'Caja de chocolates surtidos', vendidas: 350 },
-  ])
+  const [products, setProducts] = useState([])
+  const [sales, setSales] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const [sales, setSales] = useState([
-    { id: 1, producto: 'Botella de Agua Premium', cantidad: 3, total: 24, fecha: '2026-02-15', huésped: 'María García' },
-    { id: 2, producto: 'Kit de Aseo', cantidad: 1, total: 12, fecha: '2026-02-15', huésped: 'Carlos López' },
-    { id: 3, producto: 'Chocolates Variados', cantidad: 2, total: 36, fecha: '2026-02-14', huésped: 'Ana Martínez' },
-    { id: 4, producto: 'Desodorante de Ambiente', cantidad: 1, total: 15, fecha: '2026-02-14', huésped: 'Jorge Rodríguez' },
-  ])
-
-  // Estados para productos
+  // Modal productos
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [editingProduct, setEditingProduct] = useState(null)
-  const [productSaving, setProductSaving] = useState(false)
   const [productForm, setProductForm] = useState({
     nombre: '',
     precio: '',
     stock: '',
     categoria: '',
-    descripcion: '',
   })
 
-  // Estados para ventas
+  // Modal ventas
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
-  const [isEditSaleMode, setIsEditSaleMode] = useState(false)
-  const [editingSale, setEditingSale] = useState(null)
-  const [saleSaving, setSaleSaving] = useState(false)
   const [saleForm, setSaleForm] = useState({
-    producto: '',
+    producto_id: '',
     cantidad: '',
-    huésped: '',
   })
 
-  // Columnas
+  // Cargar datos
+  useEffect(() => {
+    cargarProductos()
+    cargarVentas()
+  }, [])
+
+  async function cargarProductos() {
+    try {
+      const res = await fetch(`${API}/productos.php`)
+      const data = await res.json()
+      if (data.success) setProducts(data.datos)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  async function cargarVentas() {
+    try {
+      const res = await fetch(`${API}/ventas.php`)
+      const data = await res.json()
+      if (data.success) setSales(data.datos)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  async function crearProducto() {
+    if (!productForm.nombre || !productForm.precio || !productForm.stock) {
+      alert('Completa todos los campos')
+      return
+    }
+    try {
+      const res = await fetch(`${API}/productos.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: productForm.nombre,
+          precio: parseFloat(productForm.precio),
+          stock: parseInt(productForm.stock),
+          categoria: productForm.categoria,
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        cargarProductos()
+        setProductForm({ nombre: '', precio: '', stock: '', categoria: '' })
+        setIsProductModalOpen(false)
+      } else {
+        alert(data.mensaje)
+      }
+    } catch (err) {
+      alert('Error al crear producto')
+    }
+  }
+
+  async function crearVenta() {
+    if (!saleForm.producto_id || !saleForm.cantidad) {
+      alert('Completa todos los campos')
+      return
+    }
+    try {
+      const res = await fetch(`${API}/ventas.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          producto_id: parseInt(saleForm.producto_id),
+          cantidad: parseInt(saleForm.cantidad),
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        cargarVentas()
+        cargarProductos()
+        setSaleForm({ producto_id: '', cantidad: '' })
+        setIsSaleModalOpen(false)
+      } else {
+        alert(data.mensaje)
+      }
+    } catch (err) {
+      alert('Error al registrar venta')
+    }
+  }
+
+  async function eliminarProducto(id) {
+    if (!confirm('¿Estás seguro?')) return
+    try {
+      const res = await fetch(`${API}/productos.php`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      const data = await res.json()
+      if (data.success) cargarProductos()
+    } catch (err) {
+      alert('Error al eliminar')
+    }
+  }
+
+  async function eliminarVenta(id) {
+    if (!confirm('¿Estás seguro?')) return
+    try {
+      const res = await fetch(`${API}/ventas.php`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      const data = await res.json()
+      if (data.success) {
+        cargarVentas()
+        cargarProductos()
+      }
+    } catch (err) {
+      alert('Error al eliminar')
+    }
+  }
+
   const productColumns = [
     { key: 'nombre', label: 'Nombre' },
     { key: 'categoria', label: 'Categoría' },
-    { 
-      key: 'precio', 
-      label: 'Precio',
-      render: (value) => `$${value}`
-    },
+    { key: 'precio', label: 'Precio', render: (v) => `$${v}` },
     { key: 'stock', label: 'Stock' },
-    { key: 'vendidas', label: 'Vendidas' },
   ]
 
   const saleColumns = [
-    { key: 'producto', label: 'Producto' },
+    { key: 'id', label: 'ID' },
+    { key: 'producto_id', label: 'Producto ID' },
     { key: 'cantidad', label: 'Cantidad' },
-    { 
-      key: 'total', 
-      label: 'Total',
-      render: (value) => `$${value}`
-    },
-    { key: 'fecha', label: 'Fecha' },
-    { key: 'huésped', label: 'Huésped' },
+    { key: 'fecha_venta', label: 'Fecha' },
   ]
 
-  // ==== FUNCIONES PARA PRODUCTOS ====
-
-  const resetProductForm = () => {
-    setProductForm({
-      nombre: '',
-      precio: '',
-      stock: '',
-      categoria: '',
-      descripcion: '',
-    })
-    setIsEditMode(false)
-    setEditingProduct(null)
-  }
-
-  const handleOpenAddProductModal = () => {
-    resetProductForm()
-    setIsProductModalOpen(true)
-  }
-
-  const handleEditProduct = (product) => {
-    setEditingProduct(product)
-    setProductForm({
-      nombre: product.nombre,
-      precio: product.precio.toString(),
-      stock: product.stock.toString(),
-      categoria: product.categoria,
-      descripcion: product.descripcion,
-    })
-    setIsEditMode(true)
-    setIsProductModalOpen(true)
-  }
-
-  const handleSaveProduct = async () => {
-    if (!productForm.nombre || !productForm.precio || !productForm.stock) {
-      alert('Por favor completa los campos requeridos: Nombre, Precio y Stock')
-      return
-    }
-
-    setProductSaving(true)
-    try {
-      if (isEditMode && editingProduct) {
-        // Actualizar producto existente
-        setProducts(products.map(product =>
-          product.id === editingProduct.id
-            ? { 
-                ...product, 
-                nombre: productForm.nombre,
-                precio: parseInt(productForm.precio),
-                stock: parseInt(productForm.stock),
-                categoria: productForm.categoria,
-                descripcion: productForm.descripcion,
-              }
-            : product
-        ))
-        alert('Producto actualizado exitosamente')
-      } else {
-        // Agregar nuevo producto
-        const newProduct = {
-          id: Math.max(...products.map(p => p.id), 0) + 1,
-          nombre: productForm.nombre,
-          precio: parseInt(productForm.precio),
-          stock: parseInt(productForm.stock),
-          categoria: productForm.categoria,
-          descripcion: productForm.descripcion,
-          vendidas: 0,
-        }
-        setProducts([...products, newProduct])
-        alert('Producto agregado exitosamente')
-      }
-      setIsProductModalOpen(false)
-      resetProductForm()
-    } catch (error) {
-      console.error('Error al guardar producto:', error)
-      alert('Error al guardar el producto')
-    } finally {
-      setProductSaving(false)
-    }
-  }
-
-  const handleDeleteProduct = async (product) => {
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de que deseas eliminar el producto "${product.nombre}"?`
-    )
-
-    if (!confirmDelete) return
-
-    try {
-      setProducts(products.filter(p => p.id !== product.id))
-      alert('Producto eliminado exitosamente')
-    } catch (error) {
-      console.error('Error al eliminar producto:', error)
-      alert('Error al eliminar el producto')
-    }
-  }
-
-  const handleProductFormChange = (e) => {
-    const { name, value } = e.target
-    setProductForm(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
-  // ==== FUNCIONES PARA VENTAS ====
-
-  const resetSaleForm = () => {
-    setSaleForm({
-      producto: '',
-      cantidad: '',
-      huésped: '',
-    })
-    setIsEditSaleMode(false)
-    setEditingSale(null)
-  }
-
-  const handleOpenAddSaleModal = () => {
-    resetSaleForm()
-    setIsSaleModalOpen(true)
-  }
-
-  const handleEditSale = (sale) => {
-    setEditingSale(sale)
-    setSaleForm({
-      producto: sale.producto,
-      cantidad: sale.cantidad.toString(),
-      huésped: sale.huésped,
-    })
-    setIsEditSaleMode(true)
-    setIsSaleModalOpen(true)
-  }
-
-  const handleSaveSale = async () => {
-    if (!saleForm.producto || !saleForm.cantidad || !saleForm.huésped) {
-      alert('Por favor completa todos los campos requeridos')
-      return
-    }
-
-    const product = products.find(p => p.nombre === saleForm.producto)
-    if (!product) {
-      alert('Producto no encontrado')
-      return
-    }
-
-    const cantidad = parseInt(saleForm.cantidad)
-
-    if (isEditSaleMode && editingSale) {
-      // Validar stock cuando se actualiza
-      const diferencia = cantidad - editingSale.cantidad
-      if (diferencia > 0 && product.stock < diferencia) {
-        alert('Stock insuficiente para esta cantidad')
-        return
-      }
-    } else {
-      // Validar stock para nueva venta
-      if (product.stock < cantidad) {
-        alert('Stock insuficiente para esta cantidad')
-        return
-      }
-    }
-
-    setSaleSaving(true)
-    try {
-      if (isEditSaleMode && editingSale) {
-        // Actualizar venta
-        const diferencia = cantidad - editingSale.cantidad
-        setSales(sales.map(sale =>
-          sale.id === editingSale.id
-            ? { 
-                ...sale,
-                producto: saleForm.producto,
-                cantidad: cantidad,
-                total: product.precio * cantidad,
-                huésped: saleForm.huésped,
-              }
-            : sale
-        ))
-        // Ajustar stock
-        setProducts(products.map(p =>
-          p.id === product.id
-            ? { 
-                ...p, 
-                stock: p.stock - diferencia,
-                vendidas: p.vendidas + diferencia
-              }
-            : p
-        ))
-        alert('Venta actualizada exitosamente')
-      } else {
-        // Agregar nueva venta
-        const newSale = {
-          id: Math.max(...sales.map(s => s.id), 0) + 1,
-          producto: saleForm.producto,
-          cantidad: cantidad,
-          total: product.precio * cantidad,
-          fecha: new Date().toISOString().split('T')[0],
-          huésped: saleForm.huésped,
-        }
-        setSales([...sales, newSale])
-        // Restar del stock
-        setProducts(products.map(p =>
-          p.id === product.id
-            ? { 
-                ...p, 
-                stock: p.stock - cantidad,
-                vendidas: p.vendidas + cantidad
-              }
-            : p
-        ))
-        alert('Venta registrada exitosamente')
-      }
-      setIsSaleModalOpen(false)
-      resetSaleForm()
-    } catch (error) {
-      console.error('Error al guardar venta:', error)
-      alert('Error al guardar la venta')
-    } finally {
-      setSaleSaving(false)
-    }
-  }
-
-  const handleDeleteSale = async (sale) => {
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de que deseas eliminar esta venta de ${sale.cantidad} unidad(es) de ${sale.producto}?`
-    )
-
-    if (!confirmDelete) return
-
-    try {
-      const product = products.find(p => p.nombre === sale.producto)
-      // Devolver al stock
-      if (product) {
-        setProducts(products.map(p =>
-          p.id === product.id
-            ? { 
-                ...p, 
-                stock: p.stock + sale.cantidad,
-                vendidas: p.vendidas - sale.cantidad
-              }
-            : p
-        ))
-      }
-      setSales(sales.filter(s => s.id !== sale.id))
-      alert('Venta eliminada exitosamente')
-    } catch (error) {
-      console.error('Error al eliminar venta:', error)
-      alert('Error al eliminar la venta')
-    }
-  }
-
-  const handleSaleFormChange = (e) => {
-    const { name, value } = e.target
-    setSaleForm(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
-  // ==== CÁLCULOS ====
-  const totalVentas = sales.reduce((sum, sale) => sum + sale.total, 0)
-  const totalProductos = products.reduce((sum, prod) => sum + prod.stock, 0)
-  const productosVendidos = products.reduce((sum, prod) => sum + prod.vendidas, 0)
+  const totalVentas = sales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0)
+  const stockTotal = products.reduce((sum, p) => sum + (parseInt(p.stock) || 0), 0)
 
   return (
     <DashboardLayout>
       <div className="module-page">
         <h1>Tienda</h1>
-        <p className="page-subtitle">Gestiona inventario de productos y ventas adicionales</p>
+        <p className="page-subtitle">Gestiona inventario de productos y ventas</p>
+
+        {error && <div style={{ color: 'red', marginBottom: '20px' }}>{error}</div>}
 
         <div className="stats-grid" style={{ marginBottom: '40px' }}>
           <Card
-            title="Ingresos por Tienda"
-            value={`$${totalVentas}`}
+            title="Ingresos"
+            value={`$${totalVentas.toFixed(2)}`}
             icon="💰"
-            subtitle="De ventas adicionales"
+            subtitle="Total de ventas"
           />
           <Card
             title="Stock Total"
-            value={totalProductos}
+            value={stockTotal}
             icon="📦"
-            subtitle="Unidades disponibles"
+            subtitle="Unidades"
           />
           <Card
-            title="Productos Vendidos"
-            value={productosVendidos}
-            icon="🛒"
-            subtitle="Este período"
-          />
-          <Card
-            title="Categorías"
-            value={new Set(products.map(p => p.categoria)).size}
+            title="Productos"
+            value={products.length}
             icon="🏷️"
-            subtitle="Tipos de productos"
+            subtitle="Diferentes tipos"
+          />
+          <Card
+            title="Ventas"
+            value={sales.length}
+            icon="🛒"
+            subtitle="Registradas"
           />
         </div>
 
-        {/* Sección de Productos */}
+        {/* PRODUCTOS */}
         <div className="dashboard-section" style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <div>
-              <h2>Productos en Stock</h2>
-              <p className="products-count">{products.length} producto(s)</p>
-            </div>
+            <h2>Productos en Stock</h2>
             {user?.role === 'admin' && (
-              <button className="btn btn-primary" onClick={handleOpenAddProductModal}>
+              <button className="btn btn-primary" onClick={() => setIsProductModalOpen(true)}>
                 + Nuevo Producto
               </button>
             )}
@@ -383,21 +212,17 @@ export default function TiendaPage() {
           <Table
             columns={productColumns}
             data={products}
-            onEdit={user?.role === 'admin' ? handleEditProduct : (user?.role === 'receptionist' ? null : handleEditProduct)}
-            onDelete={user?.role === 'admin' ? handleDeleteProduct : (user?.role === 'receptionist' ? null : handleDeleteProduct)}
+            onDelete={user?.role === 'admin' ? (p) => eliminarProducto(p.id) : null}
             actions={user?.role === 'admin'}
           />
         </div>
 
-        {/* Sección de Ventas */}
+        {/* VENTAS */}
         <div className="dashboard-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <div>
-              <h2>Registro de Ventas</h2>
-              <p className="products-count">{sales.length} venta(s)</p>
-            </div>
+            <h2>Registro de Ventas</h2>
             {(user?.role === 'admin' || user?.role === 'receptionist') && (
-              <button className="btn btn-primary" onClick={handleOpenAddSaleModal}>
+              <button className="btn btn-primary" onClick={() => setIsSaleModalOpen(true)}>
                 + Nueva Venta
               </button>
             )}
@@ -405,150 +230,93 @@ export default function TiendaPage() {
           <Table
             columns={saleColumns}
             data={sales}
-            onEdit={user?.role !== 'receptionist' ? handleEditSale : handleEditSale}
-            onDelete={user?.role !== 'receptionist' ? handleDeleteSale : handleDeleteSale}
+            onDelete={(s) => eliminarVenta(s.id)}
             actions={true}
           />
         </div>
 
-        {/* Modal para agregar/editar producto */}
+        {/* Modal Producto */}
         <Modal
           isOpen={isProductModalOpen}
-          title={isEditMode ? `Editar: ${editingProduct?.nombre}` : 'Nuevo Producto'}
-          onClose={() => {
-            setIsProductModalOpen(false)
-            resetProductForm()
-          }}
-          onConfirm={handleSaveProduct}
-          confirmText={productSaving ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Guardar'}
+          title="Nuevo Producto"
+          onClose={() => setIsProductModalOpen(false)}
+          onConfirm={crearProducto}
+          confirmText="Guardar"
         >
           <form className="form-grid">
             <div className="form-group">
-              <label htmlFor="nombre">Nombre del Producto *</label>
+              <label>Nombre</label>
               <input
-                id="nombre"
                 type="text"
-                name="nombre"
-                placeholder="Ej: Botella de Agua"
+                placeholder="Nombre del producto"
                 value={productForm.nombre}
-                onChange={handleProductFormChange}
+                onChange={(e) => setProductForm({ ...productForm, nombre: e.target.value })}
               />
             </div>
-
             <div className="form-group">
-              <label htmlFor="descripcion">Descripción</label>
+              <label>Precio</label>
               <input
-                id="descripcion"
-                type="text"
-                name="descripcion"
-                placeholder="Ej: Botella reutilizable de 1L"
-                value={productForm.descripcion}
-                onChange={handleProductFormChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="precio">Precio ($) *</label>
-              <input
-                id="precio"
                 type="number"
-                name="precio"
-                placeholder="Ej: 10"
-                value={productForm.precio}
-                onChange={handleProductFormChange}
-                min="0"
                 step="0.01"
+                placeholder="0.00"
+                value={productForm.precio}
+                onChange={(e) => setProductForm({ ...productForm, precio: e.target.value })}
               />
             </div>
-
             <div className="form-group">
-              <label htmlFor="stock">Stock *</label>
+              <label>Stock</label>
               <input
-                id="stock"
                 type="number"
-                name="stock"
-                placeholder="Ej: 50"
+                placeholder="0"
                 value={productForm.stock}
-                onChange={handleProductFormChange}
-                min="0"
+                onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
               />
             </div>
-
             <div className="form-group">
-              <label htmlFor="categoria">Categoría *</label>
-              <select
-                id="categoria"
-                name="categoria"
+              <label>Categoría</label>
+              <input
+                type="text"
+                placeholder="Ej: Bebidas"
                 value={productForm.categoria}
-                onChange={handleProductFormChange}
-              >
-                <option value="">Selecciona categoría</option>
-                <option value="Bebidas">Bebidas</option>
-                <option value="Aseo">Aseo</option>
-                <option value="Textiles">Textiles</option>
-                <option value="Aromatizantes">Aromatizantes</option>
-                <option value="Alimentos">Alimentos</option>
-              </select>
+                onChange={(e) => setProductForm({ ...productForm, categoria: e.target.value })}
+              />
             </div>
           </form>
-          <p className="form-note">* Campos requeridos</p>
         </Modal>
 
-        {/* Modal para agregar/editar venta */}
+        {/* Modal Venta */}
         <Modal
           isOpen={isSaleModalOpen}
-          title={isEditSaleMode ? 'Editar Venta' : 'Registrar Nueva Venta'}
-          onClose={() => {
-            setIsSaleModalOpen(false)
-            resetSaleForm()
-          }}
-          onConfirm={handleSaveSale}
-          confirmText={saleSaving ? 'Guardando...' : isEditSaleMode ? 'Actualizar' : 'Registrar'}
+          title="Registrar Venta"
+          onClose={() => setIsSaleModalOpen(false)}
+          onConfirm={crearVenta}
+          confirmText="Registrar"
         >
           <form className="form-grid">
             <div className="form-group">
-              <label htmlFor="producto">Producto *</label>
+              <label>Producto</label>
               <select
-                id="producto"
-                name="producto"
-                value={saleForm.producto}
-                onChange={handleSaleFormChange}
+                value={saleForm.producto_id}
+                onChange={(e) => setSaleForm({ ...saleForm, producto_id: e.target.value })}
               >
                 <option value="">Selecciona un producto</option>
                 {products.map(p => (
-                  <option key={p.id} value={p.nombre}>
+                  <option key={p.id} value={p.id}>
                     {p.nombre} (Stock: {p.stock})
                   </option>
                 ))}
               </select>
             </div>
-
             <div className="form-group">
-              <label htmlFor="cantidad">Cantidad *</label>
+              <label>Cantidad</label>
               <input
-                id="cantidad"
                 type="number"
-                name="cantidad"
-                placeholder="Ej: 2"
+                placeholder="0"
                 value={saleForm.cantidad}
-                onChange={handleSaleFormChange}
-                min="1"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="huésped">Nombre del Huésped *</label>
-              <input
-                id="huésped"
-                type="text"
-                name="huésped"
-                placeholder="Ej: Juan García"
-                value={saleForm.huésped}
-                onChange={handleSaleFormChange}
+                onChange={(e) => setSaleForm({ ...saleForm, cantidad: e.target.value })}
               />
             </div>
           </form>
-          <p className="form-note">* Campos requeridos</p>
         </Modal>
       </div>
     </DashboardLayout>

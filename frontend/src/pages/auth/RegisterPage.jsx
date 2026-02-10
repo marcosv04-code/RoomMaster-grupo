@@ -66,7 +66,7 @@ export default function RegisterPage() {
     setRole(e.target.value)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -87,19 +87,42 @@ export default function RegisterPage() {
     }
 
     try {
-      const userName = role === 'admin' ? 'Administrador' : 'Recepcionista'
-      const userData = {
-        id: 1,
-        name: formData.name,
-        email: formData.email,
-        role: role
-      }
+      // Enviar solicitud al backend
+      const response = await fetch('http://localhost/roommaster_api/register.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: formData.name,
+          email: formData.email,
+          contraseña: formData.password,
+          rol: role
+        })
+      })
+      
+      const data = await response.json()
 
-      login(userData)
-      localStorage.setItem('token', 'fake-jwt-token-' + Date.now())
-      navigate('/dashboard')
+      if (data.success) {
+        // Guardar datos en localStorage
+        localStorage.setItem('token', data.datos.token)
+        
+        const userData = {
+          id: data.datos.id,
+          name: data.datos.nombre,
+          email: data.datos.email,
+          role: data.datos.rol
+        }
+        
+        // Hacer login automático
+        login(userData)
+        
+        // Redirigir al dashboard
+        navigate('/dashboard')
+      } else {
+        setError(data.mensaje || 'Error al registrarse')
+      }
     } catch (err) {
-      setError('Error al registrarse')
+      setError('Error de conexión. Verifica que el backend está activo.')
+      console.error(err)
     }
   }
 

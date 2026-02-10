@@ -20,11 +20,11 @@ export default function LoginPage() {
     password: '' 
   })
   
-  // Estado para guardar el rol seleccionado (admin o receptionist)
-  const [role, setRole] = useState('admin')
-  
   // Estado para mostrar mensajes de error
   const [error, setError] = useState('')
+  
+  // Estado para carga
+  const [loading, setLoading] = useState(false)
   
   // Hook para navegar a otras páginas
   const navigate = useNavigate()
@@ -45,54 +45,61 @@ export default function LoginPage() {
   }
 
   /**
-   * Maneja el cambio del selector de rol
-   * Permite cambiar entre Administrador y Recepcionista
-   * 
-   * @param {Event} e - Evento del input radio
-   */
-  const handleRoleChange = (e) => {
-    setRole(e.target.value)
-  }
-
-  /**
    * Maneja el envío del formulario de login
-   * Valida datos, crea usuario y redirige al dashboard
+   * Llama al backend para autenticar al usuario
    * 
    * @param {Event} e - Evento del formulario
    */
-  const handleSubmit = (e) => {
-    e.preventDefault()  // Prevenir que la página se recargue
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
     
     // VALIDACIÓN: Verificar que los campos estén completos
     if (!formData.email || !formData.password) {
       setError('Por favor completa todos los campos')
+      setLoading(false)
       return
     }
 
-    // NOTA: Este es un sistema de demostración (mock)
-    // En una aplicación real, aquí harías una llamada HTTP a tu servidor
     try {
-      // Crear nombre según el rol seleccionado
-      const userName = role === 'admin' ? 'Administrador' : 'Recepcionista'
+      // Llamar al backend
+      const response = await fetch('http://localhost/roommaster_api/login.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          contraseña: formData.password
+        })
+      })
       
-      // Crear objeto de usuario con los datos actuales
-      const userData = {
-        id: 1,
-        name: userName,
-        email: formData.email,
-        role: role  // 'admin' o 'receptionist'
+      const data = await response.json()
+
+      if (data.success) {
+        // Guardar token en localStorage
+        localStorage.setItem('token', data.datos.token)
+        
+        // Crear userData del contexto
+        const userData = {
+          id: data.datos.usuario.id,
+          name: data.datos.usuario.nombre,
+          email: data.datos.usuario.email,
+          role: data.datos.usuario.rol
+        }
+        
+        // Llamar login del contexto
+        login(userData)
+        
+        // Redirigir al dashboard
+        navigate('/dashboard')
+      } else {
+        setError(data.mensaje || 'Error al iniciar sesión')
       }
-      
-      // Llamar la función login del contexto
-      login(userData)
-      
-      // Guardar token falso (reemplazar con token real del servidor)
-      localStorage.setItem('token', 'fake-jwt-token-' + Date.now())
-      
-      // Redirigir al dashboard
-      navigate('/dashboard')
     } catch (err) {
-      setError('Error al iniciar sesión')
+      setError('Error de conexión. Verifica que el backend está activo.')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -153,36 +160,8 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Tipo de usuario</label>
-                <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <input
-                      type="radio"
-                      name="role"
-                      value="admin"
-                      checked={role === 'admin'}
-                      onChange={handleRoleChange}
-                      style={{ marginRight: '8px' }}
-                    />
-                    <span>🔑 Administrador</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <input
-                      type="radio"
-                      name="role"
-                      value="receptionist"
-                      checked={role === 'receptionist'}
-                      onChange={handleRoleChange}
-                      style={{ marginRight: '8px' }}
-                    />
-                    <span>👤 Recepcionista</span>
-                  </label>
-                </div>
-              </div>
-
-              <button type="submit" className="btn btn-primary btn-block">
-                Iniciar Sesión
+              <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </button>
             </form>
 

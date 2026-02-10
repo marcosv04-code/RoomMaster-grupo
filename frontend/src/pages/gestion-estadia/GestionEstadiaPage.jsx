@@ -1,188 +1,166 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import './ModulePage.css'
 
-/**
- * GestionEstadiaPage: Gestión de estadías y reservas
- * 
- * Permite administrar:
- * - Crear nueva estadía (reserva)
- * - Ver todas las estadías
- * - Editar estadía existente
- * - Eliminar estadía
- * 
- * Es el módulo principal para recepcionistas
- */
+const API = 'http://localhost/roommaster/backend'
+
 export default function GestionEstadiaPage() {
-  // ============ ESTADOS ============
-  
-  // Lista de estadías (reservas de huéspedes)
-  const [stays, setStays] = useState([
-    { id: 1, cliente: 'Carlos López', habitacion: '101', fechaEntrada: '2026-02-05', fechaSalida: '2026-02-10', estado: 'Activa' },
-    { id: 2, cliente: 'María García', habitacion: '102', fechaEntrada: '2026-02-03', fechaSalida: '2026-02-05', estado: 'Pendiente' },
-  ])
-  
-  // Control de modal
+  const [stays, setStays] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editingStay, setEditingStay] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
   
-  // Datos del formulario
   const [formData, setFormData] = useState({
-    cliente: '',
-    habitacion: '',
-    fechaEntrada: '',
-    fechaSalida: '',
-    estado: 'Pendiente',
+    cliente_id: '',
+    habitacion_id: '',
+    fecha_entrada: '',
+    fecha_salida: '',
+    numero_huespedes: '',
+    estado: 'activa',
   })
 
-  // ============ CONFIGURACIÓN ============
-  
-  /**
-   * Columnas que se mostrarán en la tabla de estadías
-   */
   const columns = [
-    { key: 'cliente', label: 'Cliente' },
-    { key: 'habitacion', label: 'Habitación' },
-    { key: 'fechaEntrada', label: 'Entrada' },
-    { key: 'fechaSalida', label: 'Salida' },
+    { key: 'id', label: 'ID' },
+    { key: 'cliente_id', label: 'Cliente ID' },
+    { key: 'habitacion_id', label: 'Habitación' },
+    { key: 'fecha_entrada', label: 'Entrada' },
+    { key: 'fecha_salida', label: 'Salida' },
     { key: 'estado', label: 'Estado' },
   ]
 
-  // ============ FUNCIONES AUXILIARES ============
-  
-  /**
-   * Limpia los datos del formulario
-   */
+  useEffect(() => {
+    cargarEstadias()
+  }, [])
+
+  async function cargarEstadias() {
+    try {
+      setLoading(true)
+      const res = await fetch(`${API}/estadias.php`)
+      const data = await res.json()
+      if (data.success) setStays(data.datos)
+    } catch (err) {
+      alert('Error al cargar estadías')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const resetForm = () => {
     setFormData({
-      cliente: '',
-      habitacion: '',
-      fechaEntrada: '',
-      fechaSalida: '',
-      estado: 'Pendiente',
+      cliente_id: '',
+      habitacion_id: '',
+      fecha_entrada: '',
+      fecha_salida: '',
+      numero_huespedes: '',
+      estado: 'activa',
     })
     setIsEditMode(false)
     setEditingStay(null)
   }
 
-  // ============ FUNCIONES CRUD ============
-  
-  /**
-   * Abre el modal para crear una nueva estadía
-   */
   const handleOpenAddModal = () => {
     resetForm()
     setIsModalOpen(true)
   }
 
-  /**
-   * Abre el modal para editar una estadía existente
-   * Carga los datos en el formulario
-   * 
-   * @param {Object} stay - Datos de la estadía a editar
-   */
   const handleEdit = (stay) => {
     setEditingStay(stay)
     setFormData({
-      cliente: stay.cliente,
-      habitacion: stay.habitacion,
-      fechaEntrada: stay.fechaEntrada,
-      fechaSalida: stay.fechaSalida,
+      cliente_id: stay.cliente_id,
+      habitacion_id: stay.habitacion_id,
+      fecha_entrada: stay.fecha_entrada,
+      fecha_salida: stay.fecha_salida,
+      numero_huespedes: stay.numero_huespedes,
       estado: stay.estado,
     })
     setIsEditMode(true)
     setIsModalOpen(true)
   }
 
-  /**
-   * Guarda una estadía nueva o actualiza una existente
-   * Validaciones:
-   * - Todos los campos son requeridos
-   * - Se muestra confirmación al usuario
-   */
   const handleSaveStay = async () => {
-    // VALIDACIÓN: Verificar que todos los campos estén completos
-    if (!formData.cliente || !formData.habitacion || !formData.fechaEntrada || !formData.fechaSalida) {
-      alert('Por favor completa todos los campos requeridos')
+    if (!formData.cliente_id || !formData.habitacion_id || !formData.fecha_entrada || !formData.fecha_salida) {
+      alert('Completa todos los campos requeridos')
       return
     }
 
     setSaving(true)
     try {
       if (isEditMode && editingStay) {
-        // ACTUALIZACIÓN: Modificar estadía existente
-        setStays(stays.map(stay =>
-          stay.id === editingStay.id ? { ...stay, ...formData } : stay
-        ))
-        alert('✓ Estadía actualizada exitosamente')
-      } else {
-        // CREACIÓN: Agregar nueva estadía
-        const newStay = {
-          id: Math.max(...stays.map(s => s.id), 0) + 1,  // ID auto-incrementado
-          ...formData,
+        // Actualizar
+        const res = await fetch(`${API}/estadias.php`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingStay.id, ...formData })
+        })
+        const data = await res.json()
+        if (data.success) {
+          cargarEstadias()
+          alert('✓ Estadía actualizada')
+        } else {
+          alert(data.mensaje)
         }
-        setStays([...stays, newStay])
-        alert('✓ Estadía agregada exitosamente')
+      } else {
+        // Crear
+        const res = await fetch(`${API}/estadias.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        })
+        const data = await res.json()
+        if (data.success) {
+          cargarEstadias()
+          alert('✓ Estadía creada')
+        } else {
+          alert(data.mensaje)
+        }
       }
       setIsModalOpen(false)
       resetForm()
-    } catch (error) {
-      console.error('Error al guardar estadía:', error)
-      alert('Error al guardar la estadía')
+    } catch (err) {
+      alert('Error al guardar')
+      console.error(err)
     } finally {
       setSaving(false)
     }
   }
 
-  /**
-   * Elimina una estadía después de confirmar
-   * 
-   * @param {Object} stay - Estadía a eliminar
-   */
-  const handleDelete = (stay) => {
-    // CONFIRMACIÓN: Pedir autorización al usuario
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de que deseas eliminar la estadía de ${stay.cliente}?`
-    )
-
-    if (!confirmDelete) return
-
+  const handleDelete = async (stay) => {
+    if (!confirm('¿Estás seguro?')) return
     try {
-      // ELIMINACIÓN: Filtrar la estadía de la lista
-      setStays(stays.filter(s => s.id !== stay.id))
-      alert('✓ Estadía eliminada exitosamente')
-    } catch (error) {
-      console.error('Error al eliminar estadía:', error)
-      alert('Error al eliminar la estadía')
+      const res = await fetch(`${API}/estadias.php`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: stay.id })
+      })
+      const data = await res.json()
+      if (data.success) {
+        cargarEstadias()
+        alert('✓ Eliminada')
+      } else {
+        alert(data.mensaje)
+      }
+    } catch (err) {
+      alert('Error al eliminar')
+      console.error(err)
     }
   }
 
-  /**
-   * Actualiza los campos del formulario cuando se escriben
-   * Facilita el flujo de datos de forma controlada
-   * 
-   * @param {Event} e - Evento del input
-   */
   const handleFormChange = (e) => {
     const { name, value } = e.target
-    // Mantener otros campos intactos usando spread operator
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   return (
     <DashboardLayout>
       <div className="module-page">
         <h1>Gestión de Estadía</h1>
-        <p className="page-subtitle">Administra y controla todas las estadías y reservas de tus huéspedes</p>
+        <p className="page-subtitle">Administra y controla todas las estadías y reservas</p>
         
-        {/* ENCABEZADO: Botón para agregar nueva estadía */}
         <div className="page-header">
           <div></div>
           <button className="btn btn-primary" onClick={handleOpenAddModal}>
@@ -190,18 +168,19 @@ export default function GestionEstadiaPage() {
           </button>
         </div>
 
-        {/* TABLA: Mostrar todas las estadías */}
-        <Table
-          columns={columns}
-          data={stays}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        {loading ? <p>Cargando...</p> : (
+          <Table
+            columns={columns}
+            data={stays}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            actions={true}
+          />
+        )}
 
-        {/* MODAL: Formulario para crear/editar estadía */}
         <Modal
           isOpen={isModalOpen}
-          title={isEditMode ? `✏️ Editar Estadía: ${editingStay?.cliente}` : '+ Nueva Estadía'}
+          title={isEditMode ? 'Editar Estadía' : '+ Nueva Estadía'}
           onClose={() => {
             setIsModalOpen(false)
             resetForm()
@@ -211,58 +190,68 @@ export default function GestionEstadiaPage() {
         >
           <form className="form-grid">
             <div className="form-group">
-              <label>👤 Cliente</label>
+              <label>Cliente ID</label>
               <input 
-                type="text" 
-                name="cliente"
-                value={formData.cliente}
+                type="number" 
+                name="cliente_id"
+                value={formData.cliente_id}
                 onChange={handleFormChange}
-                placeholder="Nombre del cliente" 
+                placeholder="ID del cliente" 
+                required
               />
             </div>
             <div className="form-group">
-              <label>🏨 Habitación</label>
-              <select
-                name="habitacion"
-                value={formData.habitacion}
+              <label>Habitación ID</label>
+              <input
+                type="number"
+                name="habitacion_id"
+                value={formData.habitacion_id}
                 onChange={handleFormChange}
-              >
-                <option value="">Selecciona una habitación</option>
-                <option value="101">101</option>
-                <option value="102">102</option>
-                <option value="103">103</option>
-                <option value="104">104</option>
-              </select>
+                placeholder="ID habitación"
+                required
+              />
             </div>
             <div className="form-group">
-              <label>📅 Fecha Entrada</label>
+              <label>Fecha Entrada</label>
               <input 
                 type="date" 
-                name="fechaEntrada"
-                value={formData.fechaEntrada}
+                name="fecha_entrada"
+                value={formData.fecha_entrada}
                 onChange={handleFormChange}
+                required
               />
             </div>
             <div className="form-group">
-              <label>📅 Fecha Salida</label>
+              <label>Fecha Salida</label>
               <input 
                 type="date" 
-                name="fechaSalida"
-                value={formData.fechaSalida}
+                name="fecha_salida"
+                value={formData.fecha_salida}
                 onChange={handleFormChange}
+                required
               />
             </div>
             <div className="form-group">
-              <label>📊 Estado</label>
+              <label>Número de Huéspedes</label>
+              <input 
+                type="number" 
+                name="numero_huespedes"
+                value={formData.numero_huespedes}
+                onChange={handleFormChange}
+                placeholder="0"
+              />
+            </div>
+            <div className="form-group">
+              <label>Estado</label>
               <select
                 name="estado"
                 value={formData.estado}
                 onChange={handleFormChange}
               >
-                <option value="Pendiente">Pendiente</option>
-                <option value="Activa">Activa</option>
-                <option value="Completada">Completada</option>
-                <option value="Cancelada">Cancelada</option>
+                <option value="activa">Activa</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="completada">Completada</option>
+                <option value="cancelada">Cancelada</option>
               </select>
             </div>
           </form>

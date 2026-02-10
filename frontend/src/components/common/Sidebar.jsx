@@ -28,7 +28,7 @@ export default function Sidebar() {
       <div className="sidebar-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <img src={logo} alt="RoomMaster" className="logo-img" style={{ width: '40px', height: '40px', cursor: 'pointer' }} onClick={() => navigate('/dashboard')} />
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#ffffff' }}>RoomMaster</h1>
+          <h1 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>RoomMaster</h1>
         </div>
         <p className="tagline">Hotel Management</p>
       </div>

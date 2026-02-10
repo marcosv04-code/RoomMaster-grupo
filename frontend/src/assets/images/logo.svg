@@ -1,0 +1,30 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="90" r="70" fill="#1e5a96" stroke="white" stroke-width="3"/>
+  
+  <!-- Outer circle border -->
+  <circle cx="100" cy="90" r="75" fill="none" stroke="white" stroke-width="2"/>
+  
+  <!-- Inner circle border -->
+  <circle cx="100" cy="90" r="65" fill="none" stroke="white" stroke-width="2"/>
+  
+  <!-- Bed icon -->
+  <g transform="translate(100, 90)">
+    <!-- Bed frame -->
+    <rect x="-30" y="-10" width="60" height="35" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Bed pillows -->
+    <circle cx="-15" cy="-5" r="8" fill="white"/>
+    <circle cx="15" cy="-5" r="8" fill="white"/>
+    
+    <!-- Bed blanket -->
+    <path d="M -25 5 Q -25 15 0 18 Q 25 15 25 5" fill="white" opacity="0.9"/>
+  </g>
+  
+  <!-- Pin pointer -->
+  <path d="M100 160 L85 145 C75 135 70 120 70 105 C70 82.9 82 75 100 75 C118 75 130 82.9 130 105 C130 120 125 135 115 145 L100 160Z" 
+        fill="white" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+  
+  <!-- Bottom accent line -->
+  <line x1="85" y1="145" x2="115" y2="145" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>

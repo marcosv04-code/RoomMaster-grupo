@@ -30,7 +30,7 @@ export default function Sidebar() {
           <img src={logo} alt="RoomMaster" className="logo-img" style={{ width: '40px', height: '40px', cursor: 'pointer' }} onClick={() => navigate('/dashboard')} />
           <h1 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>RoomMaster</h1>
         </div>
-        <p className="tagline">Hotel Management</p>
+        <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.95, fontWeight: '500', color: 'white', marginLeft: '50px' }}>Hotel Management</p>
       </div>
 
       <nav className="sidebar-nav">

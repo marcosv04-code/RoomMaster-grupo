@@ -3,9 +3,11 @@ import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
+import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
 export default function FacturacionPage() {
+  const { user } = useAuth()
   const [invoices, setInvoices] = useState([
     { id: 1, numero: 'FAC-001', cliente: 'Carlos López', monto: 450, estado: 'Pagada', fecha: '2026-02-01' },
     { id: 2, numero: 'FAC-002', cliente: 'María García', monto: 320, estado: 'Pendiente', fecha: '2026-02-03' },
@@ -71,9 +73,11 @@ export default function FacturacionPage() {
 
         <div className="page-header">
           <div></div>
-          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-            + Nueva Factura
-          </button>
+          {(user?.role === 'admin' || user?.role === 'receptionist') && (
+            <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+              + Nueva Factura
+            </button>
+          )}
         </div>
 
         <Table
@@ -81,6 +85,7 @@ export default function FacturacionPage() {
           data={invoices}
           onEdit={(invoice) => console.log('Editar:', invoice)}
           onDelete={(invoice) => setInvoices(invoices.filter(i => i.id !== invoice.id))}
+          actions={true}
         />
 
         <Modal

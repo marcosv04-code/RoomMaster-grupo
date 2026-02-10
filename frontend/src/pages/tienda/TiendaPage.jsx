@@ -3,9 +3,11 @@ import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
+import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
 export default function TiendaPage() {
+  const { user } = useAuth()
   const [products, setProducts] = useState([
     { id: 1, nombre: 'Botella de Agua Premium', precio: 8, stock: 120, categoria: 'Bebidas', descripcion: 'Botella reutilizable de 1L', vendidas: 450 },
     { id: 2, nombre: 'Kit de Aseo (Champo + Jabón)', precio: 12, stock: 95, categoria: 'Aseo', descripcion: 'Conjunto de higiene personal', vendidas: 320 },
@@ -372,15 +374,18 @@ export default function TiendaPage() {
               <h2>Productos en Stock</h2>
               <p className="products-count">{products.length} producto(s)</p>
             </div>
-            <button className="btn btn-primary" onClick={handleOpenAddProductModal}>
-              + Nuevo Producto
-            </button>
+            {user?.role === 'admin' && (
+              <button className="btn btn-primary" onClick={handleOpenAddProductModal}>
+                + Nuevo Producto
+              </button>
+            )}
           </div>
           <Table
             columns={productColumns}
             data={products}
-            onEdit={handleEditProduct}
-            onDelete={handleDeleteProduct}
+            onEdit={user?.role === 'admin' ? handleEditProduct : (user?.role === 'receptionist' ? null : handleEditProduct)}
+            onDelete={user?.role === 'admin' ? handleDeleteProduct : (user?.role === 'receptionist' ? null : handleDeleteProduct)}
+            actions={user?.role === 'admin'}
           />
         </div>
 
@@ -391,15 +396,18 @@ export default function TiendaPage() {
               <h2>Registro de Ventas</h2>
               <p className="products-count">{sales.length} venta(s)</p>
             </div>
-            <button className="btn btn-primary" onClick={handleOpenAddSaleModal}>
-              + Nueva Venta
-            </button>
+            {(user?.role === 'admin' || user?.role === 'receptionist') && (
+              <button className="btn btn-primary" onClick={handleOpenAddSaleModal}>
+                + Nueva Venta
+              </button>
+            )}
           </div>
           <Table
             columns={saleColumns}
             data={sales}
-            onEdit={handleEditSale}
-            onDelete={handleDeleteSale}
+            onEdit={user?.role !== 'receptionist' ? handleEditSale : handleEditSale}
+            onDelete={user?.role !== 'receptionist' ? handleDeleteSale : handleDeleteSale}
+            actions={true}
           />
         </div>
 

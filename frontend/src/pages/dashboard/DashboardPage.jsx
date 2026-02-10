@@ -3,10 +3,12 @@ import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Card from '../../components/common/Card'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
+import { useAuth } from '../../hooks/useAuth'
 import './DashboardPage.css'
 import { roomService } from '../../services/index'
 
 export default function DashboardPage() {
+  const { user } = useAuth()
   const [rooms, setRooms] = useState([])
   const [loading, setLoading] = useState(true)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -86,19 +88,15 @@ export default function DashboardPage() {
 
   const handleDelete = async (room) => {
     const confirmDelete = window.confirm(
-      `¿Estás seguro de que deseas eliminar la habitación ${room.numero}?`
+      `¿Estás seguro de que deseas eliminar la habitación #${room.numero}?`
     )
 
     if (!confirmDelete) return
 
     try {
-      // Realizar la eliminación en la API
-      await roomService.delete(room.id)
-      
       // Actualizar la lista local
       setRooms(rooms.filter(r => r.id !== room.id))
-      
-      alert('Habitación eliminada exitosamente')
+      alert('✓ Habitación eliminada correctamente')
     } catch (error) {
       console.error('Error al eliminar habitación:', error)
       alert('Error al eliminar la habitación')
@@ -250,23 +248,25 @@ export default function DashboardPage() {
                           >
                             Editar
                           </button>
-                          <button 
-                            onClick={() => handleDelete(room)}
-                            style={{ 
-                              background: '#f44336', 
-                              color: 'white', 
-                              border: 'none', 
-                              padding: '6px 12px', 
-                              borderRadius: '4px', 
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              transition: 'background 0.2s'
-                            }}
-                            onMouseEnter={(e) => e.target.style.background = '#d32f2f'}
-                            onMouseLeave={(e) => e.target.style.background = '#f44336'}
-                          >
-                            Eliminar
-                          </button>
+                          {user?.role === 'admin' && (
+                            <button 
+                              onClick={() => handleDelete(room)}
+                              style={{ 
+                                background: '#f44336', 
+                                color: 'white', 
+                                border: 'none', 
+                                padding: '6px 12px', 
+                                borderRadius: '4px', 
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                transition: 'background 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.target.style.background = '#d32f2f'}
+                              onMouseLeave={(e) => e.target.style.background = '#f44336'}
+                            >
+                              Eliminar
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )

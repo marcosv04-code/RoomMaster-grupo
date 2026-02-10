@@ -4,7 +4,24 @@ import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import './ModulePage.css'
 
+/**
+ * ClientesPage: Gestión completa de clientes
+ * 
+ * Este módulo permite:
+ * - Ver lista de todos los clientes
+ * - Crear nuevo cliente
+ * - Editar cliente existente
+ * - Eliminar cliente
+ * 
+ * Patrones utilizados:
+ * - CRUD (Create, Read, Update, Delete)
+ * - React Hooks (useState)
+ * - Componentes reutilizables (Table, Modal)
+ */
 export default function ClientesPage() {
+  // ============ ESTADOS ============
+  
+  // Lista de clientes (inicialmente con datos de ejemplo)
   const [clients, setClients] = useState([
     { 
       id: 1, 
@@ -30,10 +47,13 @@ export default function ClientesPage() {
     },
   ])
   
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [editingClient, setEditingClient] = useState(null)
-  const [saving, setSaving] = useState(false)
+  // Control de modal
+  const [isModalOpen, setIsModalOpen] = useState(false)        // ¿Está abierto el modal?
+  const [isEditMode, setIsEditMode] = useState(false)          // ¿Estamos editando o creando?
+  const [editingClient, setEditingClient] = useState(null)     // Cliente que se está editando
+  const [saving, setSaving] = useState(false)                  // ¿Se está guardando?
+  
+  // Datos del formulario (se limpian al cancelar)
   const [formData, setFormData] = useState({
     nombre: '',
     documento: '',
@@ -45,7 +65,12 @@ export default function ClientesPage() {
     codigoPostal: '',
   })
 
-  // Columnas de la tabla
+  // ============ CONFIGURACIÓN ============
+  
+  /**
+   * Columnas que se mostrarán en la tabla
+   * Cada objeto define qué campo mostrar y cómo etiquetarlo
+   */
   const columns = [
     { key: 'nombre', label: 'Nombre' },
     { key: 'documento', label: 'Documento' },
@@ -54,7 +79,12 @@ export default function ClientesPage() {
     { key: 'ciudad', label: 'Ciudad' },
   ]
 
-  // Limpiar formulario
+  // ============ FUNCIONES AUXILIARES ============
+  
+  /**
+   * Limpia todos los campos del formulario
+   * Se usa cuando se cancela o se guarda
+   */
   const resetForm = () => {
     setFormData({
       nombre: '',
@@ -70,13 +100,22 @@ export default function ClientesPage() {
     setEditingClient(null)
   }
 
-  // Abrir modal para agregar cliente
+  // ============ FUNCIONES CRUD ============
+  
+  /**
+   * Abre el modal para crear un nuevo cliente
+   */
   const handleOpenAddModal = () => {
     resetForm()
     setIsModalOpen(true)
   }
 
-  // Abrir modal para editar cliente
+  /**
+   * Abre el modal para editar un cliente existente
+   * Carga los datos del cliente en el formulario
+   * 
+   * @param {Object} client - Datos del cliente a editar
+   */
   const handleEdit = (client) => {
     setEditingClient(client)
     setFormData({

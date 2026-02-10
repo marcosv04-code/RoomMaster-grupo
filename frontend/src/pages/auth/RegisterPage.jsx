@@ -10,6 +10,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   })
+  const [role, setRole] = useState('admin')
   const [error, setError] = useState('')
   const [passwordStrength, setPasswordStrength] = useState(0)
   const navigate = useNavigate()
@@ -61,6 +62,10 @@ export default function RegisterPage() {
     }
   }
 
+  const handleRoleChange = (e) => {
+    setRole(e.target.value)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     setError('')
@@ -82,11 +87,12 @@ export default function RegisterPage() {
     }
 
     try {
+      const userName = role === 'admin' ? 'Administrador' : 'Recepcionista'
       const userData = {
         id: 1,
         name: formData.name,
         email: formData.email,
-        role: 'Administrador'
+        role: role
       }
 
       login(userData)
@@ -156,6 +162,34 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   placeholder="tu@email.com"
                 />
+              </div>
+
+              <div className="form-group">
+                <label>Tipo de usuario</label>
+                <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="admin"
+                      checked={role === 'admin'}
+                      onChange={handleRoleChange}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span>🔑 Administrador</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="receptionist"
+                      checked={role === 'receptionist'}
+                      onChange={handleRoleChange}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <span>👤 Recepcionista</span>
+                  </label>
+                </div>
               </div>
 
               <div className="form-group">

@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
+import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
 export default function InventarioPage() {
+  const { user } = useAuth()
   // Habitaciones disponibles
   const [rooms] = useState([
     { id: 1, numero: 101 },
@@ -303,16 +305,19 @@ export default function InventarioPage() {
               </p>
             )}
           </div>
-          <button className="btn btn-primary" onClick={handleOpenAddModal}>
-            + Agregar Item
-          </button>
+          {user?.role === 'admin' && (
+            <button className="btn btn-primary" onClick={handleOpenAddModal}>
+              + Agregar Item
+            </button>
+          )}
         </div>
 
         <Table
           columns={columns}
           data={displayedItems}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={user?.role === 'admin' ? handleEdit : null}
+          onDelete={user?.role === 'admin' ? handleDelete : null}
+          actions={user?.role === 'admin'}
         />
 
         {/* Modal para seleccionar habitación en vista global */}

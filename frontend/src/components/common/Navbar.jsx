@@ -8,13 +8,10 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-content">
         <div className="navbar-left">
-          <h2>Bienvenido a RoomMaster</h2>
+          {/* Header removido */}
         </div>
         <div className="navbar-right">
-          <div className="user-section">
-            <span className="user-name">{user?.name || 'Usuario'}</span>
-            <span className="user-role">{user?.role || 'Guest'}</span>
-          </div>
+          {/* Sección de usuario removida - se mostrará dentro de cada módulo */}
         </div>
       </div>
     </nav>

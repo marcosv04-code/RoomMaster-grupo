@@ -211,6 +211,21 @@ CREATE TABLE actividades (
   ip_usuario VARCHAR(45)
 );
 
+-- 11. TABLA DE PERSONAL DE LIMPIEZA
+-- ============================================
+-- Personal encargado de la limpieza del hotel
+CREATE TABLE personal_limpieza (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  telefono VARCHAR(20) NOT NULL,
+  documento_identidad VARCHAR(50),
+  turno VARCHAR(20) DEFAULT 'Diurno', -- 'Diurno', 'Nocturno', 'Mixto'
+  estado VARCHAR(20) DEFAULT 'activo', -- 'activo', 'inactivo'
+  fecha_contratacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+  fecha_modificacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 
 
 
@@ -274,6 +289,10 @@ INSERT INTO ventas (factura_id, estadia_id, producto_id, cantidad, precio_unitar
 (1, 2, 4, 1, 15.00, 15.00, 'María González'),
 (2, 1, 2, 1, 2.00, 2.00, 'Juan Pérez'),
 (3, 2, 3, 2, 6.00, 12.00, 'María González');
+
+-- Insertar personal de limpieza de ejemplo
+INSERT INTO personal_limpieza (nombre, email, telefono, documento_identidad, turno, estado) VALUES
+('Rosa María Pérez', 'rosa@roommaster.com', '3001234567', '1234567890', 'Diurno', 'activo');
 
 
 -- ============================================

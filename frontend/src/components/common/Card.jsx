@@ -1,4 +1,5 @@
 import './Card.css'
+import Icon from './Icon'
 
 /**
  * Card: Componente para mostrar una métrica o información destacada
@@ -11,7 +12,7 @@ import './Card.css'
  * Props:
  * - title: String - Nombre de la métrica (ej: "Habitaciones Disponibles")
  * - value: String/Number - Valor a mostrar (ej: "8")
- * - icon: String - Emoji o icono (ej: "🏨")
+ * - icon: String - Nombre del icono (ej: "hotel", "users", "money", "chart")
  * - subtitle: String - Texto pequeño debajo (ej: "de 15 habitaciones")
  * - className: String - Clase CSS adicional (opcional)
  * 
@@ -19,7 +20,7 @@ import './Card.css'
  * <Card 
  *   title="Habitaciones Disponibles" 
  *   value="8" 
- *   icon="🏨"
+ *   icon="hotel"
  *   subtitle="de 15 habitaciones"
  * />
  */
@@ -28,8 +29,10 @@ export default function Card({ title, value, icon, subtitle, className }) {
     // Contenedor principal de la tarjeta
     <div className={`stat-card ${className}`}>
       
-      {/* ICONO: Emoji o símbolo visual */}
-      <div className="card-icon">{icon}</div>
+      {/* ICONO: SVG Icon con contenedor para estilos */}
+      <div className="card-icon">
+        <Icon name={icon} size={32} className="white" />
+      </div>
       
       {/* CONTENIDO: Información de la métrica */}
       <div className="card-content">

@@ -1,6 +1,7 @@
 import './Sidebar.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import Icon from './Icon'
 import logo from '../../assets/images/logo.svg'
 
 /**
@@ -28,17 +29,17 @@ export default function Sidebar() {
    * Cada item tiene:
    * - label: nombre mostrado en el menú
    * - path: ruta a la que navega
-   * - icon: emoji usado como icono
+   * - icon: nombre del icono SVG a usar
    */
   const allMenuItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: '📊' },
-    { label: 'Gestión de Estadía', path: '/gestion-estadia', icon: '🏨' },
-    { label: 'Inventario', path: '/inventario', icon: '📦' },
-    { label: 'Clientes', path: '/clientes', icon: '👥' },
-    { label: 'Tienda', path: '/tienda', icon: '🛍️' },
-    { label: 'Reportes', path: '/reportes', icon: '📈' },
-    { label: 'Facturación', path: '/facturacion', icon: '💳' },
-    { label: 'Perfil', path: '/perfil', icon: '⚙️' },
+    { label: 'Dashboard', path: '/dashboard', icon: 'chart' },
+    { label: 'Gestión de Estadía', path: '/gestion-estadia', icon: 'hotel' },
+    { label: 'Inventario', path: '/inventario', icon: 'package' },
+    { label: 'Clientes', path: '/clientes', icon: 'users' },
+    { label: 'Tienda', path: '/tienda', icon: 'trending' },
+    { label: 'Reportes', path: '/reportes', icon: 'trending' },
+    { label: 'Facturación', path: '/facturacion', icon: 'credit-card' },
+    { label: 'Perfil', path: '/perfil', icon: 'user' },
   ]
 
   // Mostrar todos los items para ambos roles
@@ -56,24 +57,20 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      {/* ENCABEZADO: Logo y nombre de la aplicación */}
       <div className="sidebar-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          {/* Logo de la aplicación - clickeable */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '8px' }}>
           <img 
             src={logo} 
             alt="RoomMaster" 
             className="logo-img" 
-            style={{ width: '40px', height: '40px', cursor: 'pointer' }} 
+            style={{ width: '50px', height: '50px', cursor: 'pointer' }} 
             onClick={() => navigate('/dashboard')} 
           />
-          {/* Nombre de la aplicación */}
-          <h1 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>
+          <h1 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#ffffff', lineHeight: 1, textAlign: 'center' }}>
             RoomMaster
           </h1>
         </div>
-        {/* Subtítulo */}
-        <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.95, fontWeight: '500', color: 'white', marginLeft: '50px' }}>
+        <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.9, fontWeight: '500', color: 'white', textAlign: 'center' }}>
           Hotel Management
         </p>
       </div>
@@ -88,7 +85,7 @@ export default function Sidebar() {
                 className="menu-item"
                 onClick={() => navigate(item.path)}
               >
-                <span className="menu-icon">{item.icon}</span>
+                <Icon name={item.icon} size={20} className="white" />
                 <span className="menu-label">{item.label}</span>
               </button>
             </li>

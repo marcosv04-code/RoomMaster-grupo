@@ -2,6 +2,7 @@ import { useState } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
+import Icon from '../../components/common/Icon'
 import './ModulePage.css'
 
 /**
@@ -204,7 +205,10 @@ export default function ClientesPage() {
   return (
     <DashboardLayout>
       <div className="module-page">
-        <h1>Gestión de Clientes</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <Icon name="users" size={32} className="primary" />
+          <h1 style={{ margin: 0 }}>Gestión de Clientes</h1>
+        </div>
         <p className="page-subtitle">Mantén un registro completo de todos tus clientes y huéspedes</p>
         
         <div className="page-header">

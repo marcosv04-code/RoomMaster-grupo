@@ -3,10 +3,11 @@ import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
+import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
-const API = 'http://localhost/roommaster/backend'
+const API = 'http://localhost/RoomMaster_Prueba/backend'
 
 export default function FacturacionPage() {
   const { user } = useAuth()
@@ -105,7 +106,10 @@ export default function FacturacionPage() {
   return (
     <DashboardLayout>
       <div className="module-page">
-        <h1>Facturación y Cobro</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <Icon name="money" size={32} className="primary" />
+          <h1 style={{ margin: 0 }}>Facturación y Cobro</h1>
+        </div>
         <p className="page-subtitle">Crea facturas, registra cobros y gestiona la contabilidad de tu hotel</p>
 
         {error && <div className="error-message" style={{ color: 'red', marginBottom: '20px' }}>{error}</div>}
@@ -114,19 +118,19 @@ export default function FacturacionPage() {
           <Card
             title="Ingresos Totales"
             value={`$${totalIngresos.toFixed(2)}`}
-            icon="💰"
+            icon="money"
             subtitle={`${invoices.length} facturas`}
           />
           <Card
             title="Ingresos Pagados"
             value={`$${totalPagado.toFixed(2)}`}
-            icon="✅"
+            icon="check"
             subtitle="Cobrados"
           />
           <Card
             title="Pendiente de Pago"
             value={`$${pendiente.toFixed(2)}`}
-            icon="⏳"
+            icon="activity"
             subtitle="Por cobrar"
           />
         </div>

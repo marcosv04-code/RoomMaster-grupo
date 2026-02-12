@@ -21,7 +21,7 @@
 .page-subtitle {
   font-size: 14px;
   color: var(--color-text-secondary);
-  margin: -20px 0 20px 0;
+  margin: 0 0 32px 0;
 }
 
 .form-grid {

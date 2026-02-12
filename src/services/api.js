@@ -1,7 +1,7 @@
 /**
  * ============================================
  * CONFIGURACIÓN DEL API PARA ROOMMASTER
- * Backend: PHP en localhost/roommaster/backend
+ * Backend: PHP en localhost/RoomMaster_Prueba/backend
  * Frontend: React en localhost:3002
  * ============================================
  */
@@ -13,7 +13,7 @@ import axios from 'axios';
 // ============================================
 
 // Si copiaste en: C:/xampp/htdocs/roommaster/
-const API_BASE_URL = 'http://localhost/roommaster/backend';
+const API_BASE_URL = 'http://localhost/RoomMaster_Prueba/backend';
 
 // Si copiaste en otra carpeta, cambia aquí:
 // const API_BASE_URL = 'http://localhost/tuCarpeta/backend';

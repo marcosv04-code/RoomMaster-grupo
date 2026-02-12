@@ -17,7 +17,7 @@ $datos = obtenerDatos();
 if ($metodo === 'GET') {
     $estado = $datos['estado'] ?? null;
     
-    $sql = "SELECT e.*, c.nombre as cliente_nombre, h.numero_habitacion FROM estadias e 
+    $sql = "SELECT e.*, c.nombre as cliente_nombre, h.numero_habitacion, h.tipo as tipo_habitacion, h.precio_noche FROM estadias e 
             INNER JOIN clientes c ON e.cliente_id = c.id 
             INNER JOIN habitaciones h ON e.habitacion_id = h.id";
     
@@ -49,21 +49,34 @@ else if ($metodo === 'POST') {
     $fecha_entrada = escapar($conexion, $datos['fecha_entrada']);
     $fecha_salida = escapar($conexion, $datos['fecha_salida']);
     $numero_huespedes = intval($datos['numero_huespedes'] ?? 1);
+    $notas = escapar($conexion, $datos['notas'] ?? '');
+    $estado = escapar($conexion, $datos['estado'] ?? 'activa');
     
     // Calcular noches
     $diff = strtotime($fecha_salida) - strtotime($fecha_entrada);
     $numero_noches = ceil($diff / (60 * 60 * 24));
     
-    // Validar que la habitación esté disponible
-    $verificar = $conexion->query("SELECT estado FROM habitaciones WHERE id = $habitacion_id");
-    $hab = $verificar->fetch_assoc();
-    
-    if ($hab['estado'] === 'ocupada') {
-        responder(false, 'La habitación sta ocupada', null, 400);
+    if ($numero_noches <= 0) {
+        responder(false, 'La fecha de salida debe ser posterior a la de entrada', null, 400);
     }
     
-    $sql = "INSERT INTO estadias (cliente_id, habitacion_id, fecha_entrada, fecha_salida, numero_huespedes, numero_noches, estado) 
-            VALUES ($cliente_id, $habitacion_id, '$fecha_entrada', '$fecha_salida', $numero_huespedes, $numero_noches, 'activa')";
+    // Validar que la habitación esté disponible
+    $verificar = $conexion->query("SELECT estado, precio_noche FROM habitaciones WHERE id = $habitacion_id");
+    $hab = $verificar->fetch_assoc();
+    
+    if (!$hab) {
+        responder(false, 'La habitación no existe', null, 400);
+    }
+    
+    if ($hab['estado'] === 'ocupada') {
+        responder(false, 'La habitación está ocupada', null, 400);
+    }
+    
+    // Calcular precio total
+    $precio_total = $hab['precio_noche'] * $numero_noches;
+    
+    $sql = "INSERT INTO estadias (cliente_id, habitacion_id, fecha_entrada, fecha_salida, numero_huespedes, numero_noches, estado, notas, precio_total) 
+            VALUES ($cliente_id, $habitacion_id, '$fecha_entrada', '$fecha_salida', $numero_huespedes, $numero_noches, '$estado', '$notas', $precio_total)";
     
     $resultado = ejecutarAccion($conexion, $sql);
     
@@ -71,14 +84,16 @@ else if ($metodo === 'POST') {
         responder(false, $resultado['error'], null, 500);
     }
     
-    // Marcar habitación como ocupada
-    $sql_hab = "UPDATE habitaciones SET estado = 'ocupada' WHERE id = $habitacion_id";
-    $conexion->query($sql_hab);
+    // Marcar habitación como ocupada si la estadía es activa
+    if ($estado === 'activa') {
+        $sql_hab = "UPDATE habitaciones SET estado = 'ocupada' WHERE id = $habitacion_id";
+        $conexion->query($sql_hab);
+    }
     
     responder(true, 'Estadía creada exitosamente', ['id' => $resultado['id']], 201);
 }
 
-// PUT - Actualizar estadía (finalizar)
+// PUT - Actualizar estadía (finalizar o cambiar estado)
 else if ($metodo === 'PUT') {
     $error = validarCampos($datos, ['id']);
     if ($error) {
@@ -86,21 +101,32 @@ else if ($metodo === 'PUT') {
     }
     
     $id = intval($datos['id']);
-    $estado = escapar($conexion, $datos['estado'] ?? 'completada');
-    $precio_total = floatval($datos['precio_total'] ?? 0);
+    $campos = [];
     
-    // Obtener info de la estadía
-    $est = $conexion->query("SELECT habitacion_id FROM estadias WHERE id = $id");
-    $est_fila = $est->fetch_assoc();
-    $habitacion_id = $est_fila['habitacion_id'];
-    
-    $sql = "UPDATE estadias SET estado = '$estado'";
-    
-    if ($precio_total > 0) {
-        $sql .= ", precio_total = $precio_total";
+    if (isset($datos['estado'])) {
+        $campos[] = "estado = '" . escapar($conexion, $datos['estado']) . "'";
+    }
+    if (isset($datos['notas'])) {
+        $campos[] = "notas = '" . escapar($conexion, $datos['notas']) . "'";
+    }
+    if (isset($datos['numero_huespedes'])) {
+        $campos[] = "numero_huespedes = " . intval($datos['numero_huespedes']);
+    }
+    if (isset($datos['precio_total'])) {
+        $campos[] = "precio_total = " . floatval($datos['precio_total']);
     }
     
-    $sql .= " WHERE id = $id";
+    if (empty($campos)) {
+        responder(false, 'No hay campos para actualizar', null, 400);
+    }
+    
+    // Obtener info actual de la estadía
+    $est = $conexion->query("SELECT habitacion_id, estado FROM estadias WHERE id = $id");
+    $est_fila = $est->fetch_assoc();
+    $habitacion_id = $est_fila['habitacion_id'];
+    $estado_anterior = $est_fila['estado'];
+    
+    $sql = "UPDATE estadias SET " . implode(', ', $campos) . " WHERE id = $id";
     
     $resultado = ejecutarAccion($conexion, $sql);
     
@@ -108,13 +134,61 @@ else if ($metodo === 'PUT') {
         responder(false, $resultado['error'], null, 500);
     }
     
-    // Si se completó, marcar habitación como disponible
-    if ($estado === 'completada') {
+    // Manejo del estado para actualizar disponibilidad de habitaciones
+    $nuevo_estado = $datos['estado'] ?? $estado_anterior;
+    
+    if ($nuevo_estado === 'completada' && $estado_anterior === 'activa') {
+        // Al completar, marcar habitación como disponible
+        $sql_hab = "UPDATE habitaciones SET estado = 'disponible' WHERE id = $habitacion_id";
+        $conexion->query($sql_hab);
+    } else if ($nuevo_estado === 'activa' && $estado_anterior !== 'activa') {
+        // Si vuelve a activa, marcar como ocupada
+        $sql_hab = "UPDATE habitaciones SET estado = 'ocupada' WHERE id = $habitacion_id";
+        $conexion->query($sql_hab);
+    } else if ($nuevo_estado === 'cancelada' && $estado_anterior === 'activa') {
+        // Si se cancela, marcar como disponible
         $sql_hab = "UPDATE habitaciones SET estado = 'disponible' WHERE id = $habitacion_id";
         $conexion->query($sql_hab);
     }
     
     responder(true, 'Estadía actualizada exitosamente');
+}
+
+// DELETE - Eliminar estadía
+else if ($metodo === 'DELETE') {
+    $error = validarCampos($datos, ['id']);
+    if ($error) {
+        responder(false, $error, null, 400);
+    }
+    
+    $id = intval($datos['id']);
+    
+    // Obtener info de la estadía
+    $est = $conexion->query("SELECT habitacion_id, estado FROM estadias WHERE id = $id");
+    $est_fila = $est->fetch_assoc();
+    
+    if (!$est_fila) {
+        responder(false, 'La estadía no existe', null, 404);
+    }
+    
+    $habitacion_id = $est_fila['habitacion_id'];
+    $estado = $est_fila['estado'];
+    
+    $sql = "DELETE FROM estadias WHERE id = $id";
+    
+    $resultado = ejecutarAccion($conexion, $sql);
+    
+    if (isset($resultado['error'])) {
+        responder(false, $resultado['error'], null, 500);
+    }
+    
+    // Si la estadía era activa, marcar habitación como disponible
+    if ($estado === 'activa') {
+        $sql_hab = "UPDATE habitaciones SET estado = 'disponible' WHERE id = $habitacion_id";
+        $conexion->query($sql_hab);
+    }
+    
+    responder(true, 'Estadía eliminada exitosamente');
 }
 
 else {

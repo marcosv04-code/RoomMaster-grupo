@@ -60,6 +60,8 @@ html, body {
   background-color: var(--color-background);
   line-height: 1.6;
   transition: var(--transition);
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {

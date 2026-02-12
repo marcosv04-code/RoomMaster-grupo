@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import Icon from '../../components/common/Icon'
+import logo from '../../assets/images/logo.svg'
 import './AuthPage.css'
 
 /**
@@ -26,11 +28,49 @@ export default function LoginPage() {
   // Estado para carga
   const [loading, setLoading] = useState(false)
   
+  // Estado para fortaleza de contraseña
+  const [passwordStrength, setPasswordStrength] = useState(0)
+  
   // Hook para navegar a otras páginas
   const navigate = useNavigate()
   
   // Obtener la función login del contexto de autenticación
   const { login } = useAuth()
+
+  const validatePasswordStrength = (password) => {
+    let strength = 0
+    const checks = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    }
+
+    if (checks.length) strength += 20
+    if (checks.uppercase) strength += 20
+    if (checks.lowercase) strength += 20
+    if (checks.number) strength += 20
+    if (checks.special) strength += 20
+
+    return { strength, checks }
+  }
+
+  const getPasswordStrengthLabel = (strength) => {
+    if (strength < 40) return 'Muy débil'
+    if (strength < 60) return 'Débil'
+    if (strength < 80) return 'Normal'
+    if (strength < 100) return 'Fuerte'
+    return 'Muy fuerte'
+  }
+
+  const getPasswordStrengthColor = (strength) => {
+    if (strength < 40) return '#f44336'
+    if (strength < 60) return '#ff9800'
+    if (strength < 80) return '#ffc107'
+    if (strength < 100) return '#8bc34a'
+    return '#4caf50'
+  }
 
   /**
    * Maneja cambios en los campos del formulario (email, password)
@@ -42,6 +82,12 @@ export default function LoginPage() {
     const { name, value } = e.target
     // Usar spread operator para no perder los otros campos
     setFormData(prev => ({ ...prev, [name]: value }))
+
+    // Calcular fortaleza de contraseña si es el campo de password
+    if (name === 'password') {
+      const { strength } = validatePasswordStrength(value)
+      setPasswordStrength(strength)
+    }
   }
 
   /**
@@ -62,9 +108,16 @@ export default function LoginPage() {
       return
     }
 
+    // VALIDACIÓN: Verificar que la contraseña tenga mínimo 8 caracteres
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener mínimo 8 caracteres')
+      setLoading(false)
+      return
+    }
+
     try {
       // Llamar al backend
-      const response = await fetch('http://localhost/roommaster_api/login.php', {
+      const response = await fetch('http://localhost/RoomMaster_Prueba/backend/login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,6 +140,9 @@ export default function LoginPage() {
           role: data.datos.usuario.rol
         }
         
+        console.log('Login exitoso - Datos del usuario:', userData)
+        console.log('Backend retornó:', data.datos)
+        
         // Llamar login del contexto
         login(userData)
         
@@ -105,26 +161,30 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      <button className="back-to-home" onClick={() => navigate('/')} title="Volvera a inicio">
+        ←
+      </button>
       <div className="auth-container">
         <div className="auth-box">
           <div className="auth-box-left">
+            <img src={logo} alt="RoomMaster" className="auth-logo" />
             <h1>RoomMaster</h1>
             <p>Gestión completa para tu hotel. Controla todo desde un solo lugar.</p>
             <div className="auth-features">
               <div className="auth-feature">
-                <span className="auth-feature-icon">📊</span>
+                <Icon name="chart" size={20} className="white" />
                 <p className="auth-feature-text">Dashboard en tiempo real</p>
               </div>
               <div className="auth-feature">
-                <span className="auth-feature-icon">🏨</span>
+                <Icon name="hotel" size={20} className="white" />
                 <p className="auth-feature-text">Gestión de reservas y huéspedes</p>
               </div>
               <div className="auth-feature">
-                <span className="auth-feature-icon">💳</span>
+                <Icon name="credit-card" size={20} className="white" />
                 <p className="auth-feature-text">Facturación automática</p>
               </div>
               <div className="auth-feature">
-                <span className="auth-feature-icon">📦</span>
+                <Icon name="package" size={20} className="white" />
                 <p className="auth-feature-text">Control de inventario</p>
               </div>
             </div>
@@ -158,6 +218,52 @@ export default function LoginPage() {
                   onChange={handleChange}
                   placeholder="••••••••"
                 />
+                {formData.password && (
+                  <>
+                    <div className="password-strength-bar">
+                      <div 
+                        className="password-strength-fill"
+                        style={{
+                          width: `${passwordStrength}%`,
+                          backgroundColor: getPasswordStrengthColor(passwordStrength)
+                        }}
+                      ></div>
+                    </div>
+                    <p className="password-strength-label" style={{ color: getPasswordStrengthColor(passwordStrength) }}>
+                      Fortaleza: {getPasswordStrengthLabel(passwordStrength)}
+                    </p>
+
+                    <div className="password-requirements">
+                      {(() => {
+                        const { checks: passwordChecks } = validatePasswordStrength(formData.password)
+                        return (
+                          <>
+                            <div className={`requirement ${passwordChecks.length ? 'valid' : 'invalid'}`}>
+                              <span>{passwordChecks.length ? '✓' : '✗'}</span>
+                              <span>Mínimo 8 caracteres</span>
+                            </div>
+                            <div className={`requirement ${passwordChecks.uppercase ? 'valid' : 'invalid'}`}>
+                              <span>{passwordChecks.uppercase ? '✓' : '✗'}</span>
+                              <span>Al menos una mayúscula</span>
+                            </div>
+                            <div className={`requirement ${passwordChecks.lowercase ? 'valid' : 'invalid'}`}>
+                              <span>{passwordChecks.lowercase ? '✓' : '✗'}</span>
+                              <span>Al menos una minúscula</span>
+                            </div>
+                            <div className={`requirement ${passwordChecks.number ? 'valid' : 'invalid'}`}>
+                              <span>{passwordChecks.number ? '✓' : '✗'}</span>
+                              <span>Al menos un número</span>
+                            </div>
+                            <div className={`requirement ${passwordChecks.special ? 'valid' : 'invalid'}`}>
+                              <span>{passwordChecks.special ? '✓' : '✗'}</span>
+                              <span>Carácter especial (opcional)</span>
+                            </div>
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </>
+                )}
               </div>
 
               <button type="submit" className="btn btn-primary btn-block" disabled={loading}>

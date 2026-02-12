@@ -71,4 +71,46 @@ function ejecutarAccion($conexion, $sql) {
     return ['exito' => true, 'id' => $conexion->insert_id];
 }
 
+// Función para validar rol del usuario
+function validarRol($rol_requerido, $rol_usuario) {
+    // Limpiar espacios y convertir a minúsculas
+    $rol_usuario = strtolower(trim($rol_usuario ?? ''));
+    $rol_requerido = strtolower(trim($rol_requerido));
+    
+    // Permitir si el rol del usuario coincide
+    if ($rol_usuario === $rol_requerido) {
+        return true;
+    }
+    
+    // Admin puede hacer todo
+    if ($rol_usuario === 'admin') {
+        return true;
+    }
+    
+    return false;
+}
+
+// Función para validar múltiples roles
+function validarRoles($roles_requeridos, $rol_usuario) {
+    if (!is_array($roles_requeridos)) {
+        $roles_requeridos = [$roles_requeridos];
+    }
+    
+    $rol_usuario = strtolower($rol_usuario ?? '');
+    
+    // Admin puede hacer todo
+    if ($rol_usuario === 'admin') {
+        return true;
+    }
+    
+    // Verificar si el rol está en la lista permitida
+    foreach ($roles_requeridos as $rol) {
+        if ($rol_usuario === strtolower($rol)) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 ?>

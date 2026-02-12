@@ -3,10 +3,11 @@ import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
+import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
-const API = 'http://localhost/roommaster/backend'
+const API = 'http://localhost/RoomMaster_Prueba/backend'
 
 export default function TiendaPage() {
   const { user } = useAuth()
@@ -167,34 +168,37 @@ export default function TiendaPage() {
   return (
     <DashboardLayout>
       <div className="module-page">
-        <h1>Tienda</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <Icon name="package" size={32} className="primary" />
+          <h1 style={{ margin: 0 }}>Tienda</h1>
+        </div>
         <p className="page-subtitle">Gestiona inventario de productos y ventas</p>
 
         {error && <div style={{ color: 'red', marginBottom: '20px' }}>{error}</div>}
 
-        <div className="stats-grid" style={{ marginBottom: '40px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
           <Card
             title="Ingresos"
             value={`$${totalVentas.toFixed(2)}`}
-            icon="💰"
+            icon="money"
             subtitle="Total de ventas"
           />
           <Card
             title="Stock Total"
             value={stockTotal}
-            icon="📦"
+            icon="package"
             subtitle="Unidades"
           />
           <Card
             title="Productos"
             value={products.length}
-            icon="🏷️"
+            icon="trending"
             subtitle="Diferentes tipos"
           />
           <Card
             title="Ventas"
             value={sales.length}
-            icon="🛒"
+            icon="chart"
             subtitle="Registradas"
           />
         </div>

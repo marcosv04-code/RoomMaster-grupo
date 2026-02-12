@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
+import Card from '../../components/common/Card'
+import Icon from '../../components/common/Icon'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import './ModulePage.css'
 
-const API = 'http://localhost/roommaster/backend'
+const API = 'http://localhost/RoomMaster_Prueba/backend'
 
 export default function GestionEstadiaPage() {
   const [stays, setStays] = useState([])
+  const [clients, setClients] = useState([])
+  const [rooms, setRooms] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editingStay, setEditingStay] = useState(null)
@@ -21,19 +25,23 @@ export default function GestionEstadiaPage() {
     fecha_salida: '',
     numero_huespedes: '',
     estado: 'activa',
+    notas: '',
   })
 
   const columns = [
     { key: 'id', label: 'ID' },
-    { key: 'cliente_id', label: 'Cliente ID' },
-    { key: 'habitacion_id', label: 'Habitación' },
+    { key: 'cliente_nombre', label: 'Cliente' },
+    { key: 'numero_habitacion', label: 'Habitación' },
     { key: 'fecha_entrada', label: 'Entrada' },
     { key: 'fecha_salida', label: 'Salida' },
-    { key: 'estado', label: 'Estado' },
+    { key: 'numero_huespedes', label: 'Huéspedes' },
+    { key: 'estado', label: 'Estado', render: (val) => <span style={{ textTransform: 'capitalize', fontWeight: '600', color: val === 'activa' ? '#4CAF50' : val === 'completada' ? '#2196F3' : val === 'cancelada' ? '#f44336' : '#999' }}>{val}</span> },
   ]
 
   useEffect(() => {
     cargarEstadias()
+    cargarClientes()
+    cargarHabitaciones()
   }, [])
 
   async function cargarEstadias() {
@@ -50,6 +58,26 @@ export default function GestionEstadiaPage() {
     }
   }
 
+  async function cargarClientes() {
+    try {
+      const res = await fetch(`${API}/clientes.php`)
+      const data = await res.json()
+      if (data.success) setClients(data.datos)
+    } catch (err) {
+      console.error('Error al cargar clientes:', err)
+    }
+  }
+
+  async function cargarHabitaciones() {
+    try {
+      const res = await fetch(`${API}/habitaciones.php`)
+      const data = await res.json()
+      if (data.success) setRooms(data.datos)
+    } catch (err) {
+      console.error('Error al cargar habitaciones:', err)
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       cliente_id: '',
@@ -58,6 +86,7 @@ export default function GestionEstadiaPage() {
       fecha_salida: '',
       numero_huespedes: '',
       estado: 'activa',
+      notas: '',
     })
     setIsEditMode(false)
     setEditingStay(null)
@@ -77,6 +106,7 @@ export default function GestionEstadiaPage() {
       fecha_salida: stay.fecha_salida,
       numero_huespedes: stay.numero_huespedes,
       estado: stay.estado,
+      notas: stay.notas || '',
     })
     setIsEditMode(true)
     setIsModalOpen(true)
@@ -158,29 +188,65 @@ export default function GestionEstadiaPage() {
   return (
     <DashboardLayout>
       <div className="module-page">
-        <h1>Gestión de Estadía</h1>
-        <p className="page-subtitle">Administra y controla todas las estadías y reservas</p>
-        
-        <div className="page-header">
-          <div></div>
-          <button className="btn btn-primary" onClick={handleOpenAddModal}>
-            + Nueva Estadía
-          </button>
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <Icon name="hotel" size={32} className="primary" />
+            <h1 style={{ margin: 0 }}>Gestión de Estadías</h1>
+          </div>
+          <p className="page-subtitle">Administra todas las estadías y hospedajes de tu hotel</p>
         </div>
 
-        {loading ? <p>Cargando...</p> : (
-          <Table
-            columns={columns}
-            data={stays}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            actions={true}
+        {/* ESTADÍSTICAS */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+          <Card
+            title="Estadías Activas"
+            value={stays.filter(s => s.estado === 'activa').length}
+            icon="chart"
+            subtitle="En curso"
           />
-        )}
+          <Card
+            title="Completadas"
+            value={stays.filter(s => s.estado === 'completada').length}
+            icon="check"
+            subtitle="Finalizadas"
+          />
+          <Card
+            title="Canceladas"
+            value={stays.filter(s => s.estado === 'cancelada').length}
+            icon="activity"
+            subtitle="Anuladas"
+          />
+          <Card
+            title="Total Huéspedes"
+            value={stays.reduce((sum, s) => sum + (parseInt(s.numero_huespedes) || 0), 0)}
+            icon="users"
+            subtitle="En todas las estadías"
+          />
+        </div>
+
+        {/* TABLA DE ESTADÍAS */}
+        <div className="dashboard-section" style={{ marginBottom: '32px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h2>Registro de Estadías</h2>
+            <button className="btn btn-primary" onClick={handleOpenAddModal}>
+              + Nueva Estadía
+            </button>
+          </div>
+
+          {loading ? <p>Cargando...</p> : (
+            <Table
+              columns={columns}
+              data={stays}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              actions={true}
+            />
+          )}
+        </div>
 
         <Modal
           isOpen={isModalOpen}
-          title={isEditMode ? 'Editar Estadía' : '+ Nueva Estadía'}
+          title={isEditMode ? '✏️ Editar Estadía' : '➕ Nueva Estadía'}
           onClose={() => {
             setIsModalOpen(false)
             resetForm()
@@ -190,29 +256,37 @@ export default function GestionEstadiaPage() {
         >
           <form className="form-grid">
             <div className="form-group">
-              <label>Cliente ID</label>
-              <input 
-                type="number" 
+              <label>👤 Cliente</label>
+              <select 
                 name="cliente_id"
                 value={formData.cliente_id}
                 onChange={handleFormChange}
-                placeholder="ID del cliente" 
                 required
-              />
+              >
+                <option value="">Selecciona un cliente</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
-              <label>Habitación ID</label>
-              <input
-                type="number"
+              <label>🏨 Habitación</label>
+              <select
                 name="habitacion_id"
                 value={formData.habitacion_id}
                 onChange={handleFormChange}
-                placeholder="ID habitación"
                 required
-              />
+              >
+                <option value="">Selecciona una habitación</option>
+                {rooms.map(r => (
+                  <option key={r.id} value={r.id}>
+                    #{r.numero_habitacion} - {r.tipo} (${r.precio_noche}/noche)
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
-              <label>Fecha Entrada</label>
+              <label>📅 Fecha Entrada</label>
               <input 
                 type="date" 
                 name="fecha_entrada"
@@ -222,7 +296,7 @@ export default function GestionEstadiaPage() {
               />
             </div>
             <div className="form-group">
-              <label>Fecha Salida</label>
+              <label>📅 Fecha Salida</label>
               <input 
                 type="date" 
                 name="fecha_salida"
@@ -232,13 +306,15 @@ export default function GestionEstadiaPage() {
               />
             </div>
             <div className="form-group">
-              <label>Número de Huéspedes</label>
+              <label>👥 Número de Huéspedes</label>
               <input 
                 type="number" 
                 name="numero_huespedes"
                 value={formData.numero_huespedes}
                 onChange={handleFormChange}
                 placeholder="0"
+                min="1"
+                max="10"
               />
             </div>
             <div className="form-group">
@@ -249,10 +325,19 @@ export default function GestionEstadiaPage() {
                 onChange={handleFormChange}
               >
                 <option value="activa">Activa</option>
-                <option value="pendiente">Pendiente</option>
                 <option value="completada">Completada</option>
                 <option value="cancelada">Cancelada</option>
               </select>
+            </div>
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label>📝 Notas</label>
+              <textarea
+                name="notas"
+                value={formData.notas}
+                onChange={handleFormChange}
+                placeholder="Notas adicionales sobre la estadía"
+                rows="3"
+              />
             </div>
           </form>
         </Modal>

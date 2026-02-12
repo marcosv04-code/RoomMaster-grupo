@@ -27,16 +27,22 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const storedUser = localStorage.getItem('user')
     
+    console.log('AuthContext - Verificando usuario almacenado:', storedUser)
+    
     if (storedUser) {
       try {
         // Convertir el JSON guardado en objeto JavaScript
-        setUser(JSON.parse(storedUser))
+        const parsedUser = JSON.parse(storedUser)
+        console.log('AuthContext - Usuario recuperado:', parsedUser)
+        setUser(parsedUser)
         setIsAuthenticated(true)
       } catch (error) {
         console.error('Error al recuperar usuario:', error)
         // Si hay error, limpiar el localStorage
         localStorage.removeItem('user')
       }
+    } else {
+      console.log('AuthContext - No hay usuario guardado')
     }
     
     // Finalizar la carga

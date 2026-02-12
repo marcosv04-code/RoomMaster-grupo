@@ -1,27 +1,29 @@
-<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Blue background -->
-  <rect width="200" height="200" fill="#1e5a96"/>
-  
-  <!-- Outer circle -->
-  <circle cx="100" cy="100" r="90" fill="none" stroke="white" stroke-width="3"/>
-  
-  <!-- Inner circle -->
-  <circle cx="100" cy="100" r="80" fill="none" stroke="white" stroke-width="2"/>
-  
-  <!-- Bed icon -->
-  <g transform="translate(100, 100)">
-    <!-- Bed frame -->
-    <rect x="-35" y="-12" width="70" height="40" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" rx="3"/>
-    
-    <!-- Bed pillows -->
-    <circle cx="-18" cy="-6" r="9" fill="white"/>
-    <circle cx="18" cy="-6" r="9" fill="white"/>
-    
-    <!-- Bed blanket -->
-    <path d="M -28 5 Q -28 16 0 20 Q 28 16 28 5" fill="white" opacity="0.85"/>
-  </g>
-  
-  <!-- Location pin pointer at bottom -->
-  <path d="M100 170 L75 145 C60 130 50 115 50 100 C50 70 70 55 100 55 C130 55 150 70 150 100 C150 115 140 130 125 145 L100 170Z" 
-        fill="white" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+ width="212.000000pt" height="195.000000pt" viewBox="0 0 212.000000 195.000000"
+ preserveAspectRatio="xMidYMid meet">
+
+<g transform="translate(0.000000,195.000000) scale(0.120000,-0.120000)"
+fill="#0E5BA8" stroke="none">
+<path d="M940 1669 c-69 -13 -180 -73 -236 -126 -89 -85 -153 -232 -154 -349
+0 -93 78 -274 201 -464 67 -104 279 -390 289 -390 10 0 181 226 263 348 88
+132 187 320 211 401 57 193 -54 435 -242 530 -112 56 -217 72 -332 50z m205
+-74 c172 -45 286 -174 316 -355 10 -66 0 -141 -32 -225 -26 -69 -116 -168
+-187 -204 -109 -56 -241 -64 -352 -22 -113 43 -221 156 -256 269 -30 98 -14
+254 34 332 107 173 293 253 477 205z"/>
+<path d="M964 1550 c-108 -23 -207 -104 -258 -210 -28 -58 -31 -75 -31 -155 0
+-80 3 -97 31 -155 40 -85 100 -144 182 -183 59 -28 77 -32 152 -32 75 0 93 4
+152 32 81 38 146 102 185 181 25 51 28 68 28 157 0 87 -3 107 -27 157 -70 151
+-253 243 -414 208z m-86 -197 l3 -43 214 0 c202 0 215 -1 225 -19 11 -21 14
+-248 4 -275 -5 -12 -20 -16 -59 -16 -57 0 -65 7 -65 61 l0 29 -159 0 -160 0
+-3 -42 -3 -43 -54 -3 c-35 -2 -57 1 -62 9 -9 15 -12 349 -3 373 5 14 17 16 63
+14 l56 -3 3 -42z"/>
+<path d="M810 1200 c0 -93 4 -150 10 -150 6 0 10 20 10 45 l0 45 209 0 c229 0
+219 3 217 -62 -1 -16 2 -28 6 -28 4 0 8 25 8 55 l0 55 -204 0 c-112 0 -211 3
+-220 6 -13 5 -16 23 -16 95 0 53 -4 89 -10 89 -6 0 -10 -57 -10 -150z"/>
+<path d="M880 1235 c0 -13 28 -15 195 -15 167 0 195 2 195 15 0 13 -28 15
+-195 15 -167 0 -195 -2 -195 -15z"/>
+</g>
 </svg>

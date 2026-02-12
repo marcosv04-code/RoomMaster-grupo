@@ -1,6 +1,7 @@
 import './LandingPage.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import Icon from '../../components/common/Icon'
 import logo from '../../assets/images/logo.svg'
 
 export default function LandingPage() {
@@ -17,6 +18,7 @@ export default function LandingPage() {
             <h1 className="app-logo" style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#1565c0' }}>RoomMaster</h1>
           </div>
           <nav className="header-nav">
+            <a href="#inicio" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'auto' }) }}>Inicio</a>
             <a href="#features">Características</a>
             <a href="#pricing">Precios</a>
             <a href="#contact">Contacto</a>
@@ -39,10 +41,10 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="hero-section">
+      <section id="inicio" className="hero-section">
         <div className="hero-content">
           <h2>Software de Gestión Hotelera Completo</h2>
-          <p>Controla reservas, facturación, inventario y estadías en una única plataforma. Automatiza procesos, aumenta eficiencia y mejora la experiencia de tus huéspedes con RoomMaster.</p>
+          <p>Controla facturación, inventario y estadías en una única plataforma. Automatiza procesos, aumenta eficiencia y mejora la experiencia de tus huéspedes con RoomMaster.</p>
           {!isAuthenticated && (
             <button 
               className="btn btn-primary btn-large" 
@@ -59,22 +61,22 @@ export default function LandingPage() {
         <h2>Características Principales</h2>
         <div className="features-grid">
           <div className="feature-card">
-            <span className="feature-icon">🏨</span>
+            <Icon name="hotel" size={48} className="primary" />
             <h3>Gestión de Estadía</h3>
-            <p>Control completo de reservas y registros de huéspedes</p>
+            <p>Control completo de registros de huéspedes y estadías</p>
           </div>
           <div className="feature-card">
-            <span className="feature-icon">📊</span>
+            <Icon name="chart" size={48} className="primary" />
             <h3>Dashboard Inteligente</h3>
             <p>Reportes y estadísticas en tiempo real</p>
           </div>
           <div className="feature-card">
-            <span className="feature-icon">💳</span>
+            <Icon name="credit-card" size={48} className="primary" />
             <h3>Facturación Automática</h3>
             <p>Cobros y facturas de forma simplificada</p>
           </div>
           <div className="feature-card">
-            <span className="feature-icon">📦</span>
+            <Icon name="package" size={48} className="primary" />
             <h3>Inventario</h3>
             <p>Control de habitaciones e inventario por sala</p>
           </div>
@@ -91,12 +93,12 @@ export default function LandingPage() {
               <p className="pricing-description">Para hoteles pequeños</p>
             </div>
             <div className="pricing-amount">
-              <span className="price">$99</span>
+              <span className="price">$399.000</span>
               <span className="period">/mes</span>
             </div>
             <ul className="pricing-features">
               <li>✓ Hasta 20 habitaciones</li>
-              <li>✓ Gestión de reservas</li>
+              <li>✓ Gestión de estadías</li>
               <li>✓ Dashboard básico</li>
               <li>✓ Reportes simples</li>
               <li>✗ Facturación avanzada</li>
@@ -112,12 +114,12 @@ export default function LandingPage() {
               <p className="pricing-description">Para hoteles medianos</p>
             </div>
             <div className="pricing-amount">
-              <span className="price">$249</span>
+              <span className="price">$999.000</span>
               <span className="period">/mes</span>
             </div>
             <ul className="pricing-features">
               <li>✓ Hasta 100 habitaciones</li>
-              <li>✓ Gestión completa de reservas</li>
+              <li>✓ Gestión completa de estadías</li>
               <li>✓ Dashboard avanzado</li>
               <li>✓ Reportes detallados</li>
               <li>✓ Facturación automática</li>
@@ -132,7 +134,7 @@ export default function LandingPage() {
               <p className="pricing-description">Para cadenas hoteleras</p>
             </div>
             <div className="pricing-amount">
-              <span className="price">$499</span>
+              <span className="price">$1.999.000</span>
               <span className="period">/mes</span>
             </div>
             <ul className="pricing-features">
@@ -148,6 +150,124 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section className="testimonials-section">
+        <div className="testimonials-container">
+          <h2>Lo que dicen nuestros clientes</h2>
+          <p className="testimonials-subtitle">Descubre cómo RoomMaster ha transformado la gestión de hoteles</p>
+          
+          <div className="testimonials-grid">
+            <div className="testimonial-card">
+              <div className="testimonial-header">
+                <div className="testimonial-avatar">MC</div>
+                <div className="testimonial-info">
+                  <h4>María Contreras</h4>
+                  <p>Gerenta, Hotel Luna Azul</p>
+                </div>
+              </div>
+              <div className="testimonial-rating">
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+              </div>
+              <p className="testimonial-text">"RoomMaster ha revolucionado la forma en que gestionamos nuestro hotel. Los reportes en tiempo real nos han ayudado a aumentar la ocupación en un 25%. Altamente recomendado."</p>
+            </div>
+
+            <div className="testimonial-card">
+              <div className="testimonial-header">
+                <div className="testimonial-avatar">JR</div>
+                <div className="testimonial-info">
+                  <h4>Jorge Ramírez</h4>
+                  <p>Propietario, Hostal Colinas</p>
+                </div>
+              </div>
+              <div className="testimonial-rating">
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+              </div>
+              <p className="testimonial-text">"La facturación automática me ahorró horas de trabajo administrativo cada semana. El soporte del equipo es excepcional y muy receptivo a nuestras necesidades."</p>
+            </div>
+
+            <div className="testimonial-card">
+              <div className="testimonial-header">
+                <div className="testimonial-avatar">SP</div>
+                <div className="testimonial-info">
+                  <h4>Sandra Pérez</h4>
+                  <p>Administradora, Resort Paraíso</p>
+                </div>
+              </div>
+              <div className="testimonial-rating">
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+              </div>
+              <p className="testimonial-text">"La integración con nuestros sistemas existentes fue sin problemas. Ahora todo el equipo puede acceder a la información desde cualquier lugar. ¡Excelente producto!"</p>
+            </div>
+
+            <div className="testimonial-card">
+              <div className="testimonial-header">
+                <div className="testimonial-avatar">CA</div>
+                <div className="testimonial-info">
+                  <h4>Carlos Andrade</h4>
+                  <p>Director de Operaciones, Hotel Premium</p>
+                </div>
+              </div>
+              <div className="testimonial-rating">
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+              </div>
+              <p className="testimonial-text">"Desde que usamos RoomMaster, reducimos errores administrativos en un 90%. El dashboard intuitivo hace que el equipo sea más productivo."</p>
+            </div>
+
+            <div className="testimonial-card">
+              <div className="testimonial-header">
+                <div className="testimonial-avatar">LM</div>
+                <div className="testimonial-info">
+                  <h4>Laura Moreno</h4>
+                  <p>Jefa de Recepción, Hotel Ejecutivo</p>
+                </div>
+              </div>
+              <div className="testimonial-rating">
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star empty-star">★</span>
+              </div>
+              <p className="testimonial-text">"Muy buena herramienta. La interfaz es amigable y el equipo de soporte responde rápidamente. Mi única sugerencia sería agregar más reportes personalizados."</p>
+            </div>
+
+            <div className="testimonial-card">
+              <div className="testimonial-header">
+                <div className="testimonial-avatar">RF</div>
+                <div className="testimonial-info">
+                  <h4>Roberto Fuentes</h4>
+                  <p>Gerente General, Cadena Hotelera Sur</p>
+                </div>
+              </div>
+              <div className="testimonial-rating">
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+                <span className="star">★</span>
+              </div>
+              <p className="testimonial-text">"Para una pequeña cadena como la nuestra, RoomMaster es perfecto. Manejo de múltiples propiedades se volvió mucho más simple. Excelente relación precio-valor."</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Contact Section */}
       <section id="contact" className="contact-section">
         <div className="contact-container">
@@ -157,21 +277,21 @@ export default function LandingPage() {
           <div className="contact-content">
             <div className="contact-info">
               <div className="contact-item">
-                <span className="contact-icon">📧</span>
+                <Icon name="email" size={32} className="primary" />
                 <div>
                   <h4>Email</h4>
                   <p>soporte@roommaster.com</p>
                 </div>
               </div>
               <div className="contact-item">
-                <span className="contact-icon">📱</span>
+                <Icon name="phone" size={32} className="primary" />
                 <div>
                   <h4>Teléfono</h4>
                   <p>+1 (555) 123-4567</p>
                 </div>
               </div>
               <div className="contact-item">
-                <span className="contact-icon">📍</span>
+                <Icon name="location" size={32} className="primary" />
                 <div>
                   <h4>Ubicación</h4>
                   <p>123 Av. Principal, Santiago, Chile</p>

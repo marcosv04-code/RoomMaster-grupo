@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Card from '../../components/common/Card'
+import Icon from '../../components/common/Icon'
 import './ModulePage.css'
 
 export default function ReportesPage() {
@@ -68,28 +69,28 @@ export default function ReportesPage() {
         <h1>Reportes</h1>
         <p className="page-subtitle">Análisis del desempeño de tu hotel</p>
 
-        {/* FILTRO DE PERÍODO */}
+        {/* FILTRO DE PE­RÍODO */}
         <div style={{ marginBottom: '32px', display: 'flex', gap: '12px' }}>
           <button
             className={`btn ${period === 'week' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setPeriod('week')}
-            style={{ padding: '8px 16px', fontSize: '13px' }}
+            style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            📅 Esta Semana
+            <Icon name="activity" size={14} /> Esta Semana
           </button>
           <button
             className={`btn ${period === 'month' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setPeriod('month')}
-            style={{ padding: '8px 16px', fontSize: '13px' }}
+            style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            📊 Este Mes
+            <Icon name="chart" size={14} /> Este Mes
           </button>
           <button
             className={`btn ${period === 'year' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setPeriod('year')}
-            style={{ padding: '8px 16px', fontSize: '13px' }}
+            style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            📈 Este Año
+            <Icon name="trending" size={14} /> Este Año
           </button>
         </div>
 
@@ -98,32 +99,35 @@ export default function ReportesPage() {
           <Card
             title="Huéspedes"
             value={currentData.totalGuests}
-            icon="👥"
+            icon="users"
             subtitle={`Total en el período`}
           />
           <Card
             title="Ocupación"
             value={`${currentData.occupancyRate}%`}
-            icon="🏨"
+            icon="hotel"
             subtitle="Tasa promedio"
           />
           <Card
             title="Ingresos Promedio"
             value={`$${currentData.revenuePerRoom}`}
-            icon="💵"
+            icon="money"
             subtitle="Por habitación"
           />
           <Card
             title="Huéspedes Nuevos"
             value={currentData.newGuests}
-            icon="🆕"
+            icon="user"
             subtitle={`${((currentData.newGuests / currentData.totalGuests) * 100).toFixed(1)}% del total`}
           />
         </div>
 
         {/* REPORTE 1: OCUPACIÓN E INGRESOS */}
         <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <h2>📊 Tendencia de Ocupación e Ingresos</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <Icon name="chart" size={24} className="primary" />
+            <h2 style={{ margin: 0 }}>Tendencia de Ocupación e Ingresos</h2>
+          </div>
           <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
             Visualiza cómo han variado los niveles de ocupación y los ingresos en el período seleccionado
           </p>

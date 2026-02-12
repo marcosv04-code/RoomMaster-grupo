@@ -6,7 +6,7 @@
  */
 
 // URL base del API
-const API_URL = 'http://localhost/roommaster/backend';
+const API_URL = 'http://localhost/RoomMaster_Prueba/backend';
 
 // ============================================
 // 1. FUNCIONES BÁSICAS

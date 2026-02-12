@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import Icon from '../../components/common/Icon'
+import logo from '../../assets/images/logo.svg'
 import './AuthPage.css'
 
 export default function RegisterPage() {
@@ -16,7 +18,6 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
 
-  // Validar fortaleza de contraseña
   const validatePasswordStrength = (password) => {
     let strength = 0
     const checks = {
@@ -75,9 +76,8 @@ export default function RegisterPage() {
       return
     }
 
-    const { checks } = validatePasswordStrength(formData.password)
-    if (!checks.length || !checks.uppercase || !checks.lowercase || !checks.number) {
-      setError('La contraseña no cumple con los requisitos de seguridad')
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener mínimo 8 caracteres')
       return
     }
 
@@ -88,7 +88,7 @@ export default function RegisterPage() {
 
     try {
       // Enviar solicitud al backend
-      const response = await fetch('http://localhost/roommaster_api/register.php', {
+      const response = await fetch('http://localhost/RoomMaster_Prueba/backend/register.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,26 +132,30 @@ export default function RegisterPage() {
 
   return (
     <div className="auth-page">
+      <button className="back-to-home" onClick={() => navigate('/')} title="Volver a inicio">
+        ←
+      </button>
       <div className="auth-container">
         <div className="auth-box">
           <div className="auth-box-left">
+            <img src={logo} alt="RoomMaster" className="auth-logo" />
             <h1>RoomMaster</h1>
             <p>Únete a los hoteles que ya optimizan su gestión con nosotros.</p>
             <div className="auth-features">
               <div className="auth-feature">
-                <span className="auth-feature-icon">⚡</span>
+                <Icon name="lightning" size={20} className="white" />
                 <p className="auth-feature-text">Comienza gratis</p>
               </div>
               <div className="auth-feature">
-                <span className="auth-feature-icon">🚀</span>
+                <Icon name="rocket" size={20} className="white" />
                 <p className="auth-feature-text">Implementación rápida</p>
               </div>
               <div className="auth-feature">
-                <span className="auth-feature-icon">👥</span>
+                <Icon name="users" size={20} className="white" />
                 <p className="auth-feature-text">Soporte profesional</p>
               </div>
               <div className="auth-feature">
-                <span className="auth-feature-icon">🔒</span>
+                <Icon name="lock" size={20} className="white" />
                 <p className="auth-feature-text">100% seguro</p>
               </div>
             </div>
@@ -189,26 +193,26 @@ export default function RegisterPage() {
 
               <div className="form-group">
                 <label>Tipo de usuario</label>
-                <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', gap: '14px', marginTop: '6px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '13px' }}>
                     <input
                       type="radio"
                       name="role"
                       value="admin"
                       checked={role === 'admin'}
                       onChange={handleRoleChange}
-                      style={{ marginRight: '8px' }}
+                      style={{ marginRight: '6px' }}
                     />
                     <span>🔑 Administrador</span>
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '13px' }}>
                     <input
                       type="radio"
                       name="role"
                       value="receptionist"
                       checked={role === 'receptionist'}
                       onChange={handleRoleChange}
-                      style={{ marginRight: '8px' }}
+                      style={{ marginRight: '6px' }}
                     />
                     <span>👤 Recepcionista</span>
                   </label>
@@ -259,7 +263,7 @@ export default function RegisterPage() {
                       </div>
                       <div className={`requirement ${passwordChecks.special ? 'valid' : 'invalid'}`}>
                         <span>{passwordChecks.special ? '✓' : '✗'}</span>
-                        <span>Carácter especial (opcional pero recomendado)</span>
+                        <span>Carácter especial (opcional)</span>
                       </div>
                     </div>
                   </>
@@ -276,9 +280,6 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   placeholder="••••••••"
                 />
-                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                  <p className="password-mismatch">Las contraseñas no coinciden</p>
-                )}
               </div>
 
               <button type="submit" className="btn btn-primary btn-block">

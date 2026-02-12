@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
+import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
@@ -255,7 +256,10 @@ export default function InventarioPage() {
   return (
     <DashboardLayout>
       <div className="module-page">
-        <h1>Inventario</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <Icon name="package" size={32} className="primary" />
+          <h1 style={{ margin: 0 }}>Inventario</h1>
+        </div>
         <p className="page-subtitle">Registra y controla el inventario de cada habitación del hotel</p>
 
         {/* Toggle de vista */}

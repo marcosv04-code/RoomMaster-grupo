@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
+import Icon from '../../components/common/Icon'
 import { useTheme } from '../../hooks/useTheme'
 import './ModulePage.css'
 
@@ -80,7 +81,10 @@ export default function PerfilPage() {
   return (
     <DashboardLayout>
       <div className="module-page">
-        <h1>Perfil y Configuración</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <Icon name="user" size={32} className="primary" />
+          <h1 style={{ margin: 0 }}>Perfil y Configuración</h1>
+        </div>
         <p className="page-subtitle">Gestiona tu información personal y preferencias</p>
 
         {savedMessage && (

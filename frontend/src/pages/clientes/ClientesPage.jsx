@@ -1,80 +1,80 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import Icon from '../../components/common/Icon'
+import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
+
+const API = 'http://localhost/RoomMaster_Prueba/backend'
 
 /**
  * ClientesPage: Gestión completa de clientes
  * 
  * Este módulo permite:
- * - Ver lista de todos los clientes
+ * - Ver lista de todos los clientes desde BD
  * - Crear nuevo cliente
  * - Editar cliente existente
  * - Eliminar cliente
  * 
- * Patrones utilizados:
- * - CRUD (Create, Read, Update, Delete)
- * - React Hooks (useState)
- * - Componentes reutilizables (Table, Modal)
+ * Conectado a: /backend/clientes.php
  */
 export default function ClientesPage() {
+  const { user } = useAuth()
+  
   // ============ ESTADOS ============
   
-  // Lista de clientes (inicialmente con datos de ejemplo)
-  const [clients, setClients] = useState([
-    { 
-      id: 1, 
-      nombre: 'Carlos López', 
-      documento: '12345678A',
-      email: 'carlos@email.com', 
-      telefono: '+34 600 123 456', 
-      direccion: 'Calle Principal 123',
-      ciudad: 'Madrid',
-      pais: 'España',
-      codigoPostal: '28001'
-    },
-    { 
-      id: 2, 
-      nombre: 'María García', 
-      documento: '87654321B',
-      email: 'maria@email.com', 
-      telefono: '+34 600 789 012', 
-      direccion: 'Avenida Central 456',
-      ciudad: 'Barcelona',
-      pais: 'España',
-      codigoPostal: '08002'
-    },
-  ])
+  // Lista de clientes desde la BD
+  const [clients, setClients] = useState([])
   
   // Control de modal
   const [isModalOpen, setIsModalOpen] = useState(false)        // ¿Está abierto el modal?
   const [isEditMode, setIsEditMode] = useState(false)          // ¿Estamos editando o creando?
   const [editingClient, setEditingClient] = useState(null)     // Cliente que se está editando
   const [saving, setSaving] = useState(false)                  // ¿Se está guardando?
+  const [loading, setLoading] = useState(true)                 // Cargando datos
   
   // Datos del formulario (se limpian al cancelar)
   const [formData, setFormData] = useState({
     nombre: '',
-    documento: '',
+    documento_identidad: '',
     email: '',
     telefono: '',
-    direccion: '',
     ciudad: '',
-    pais: '',
-    codigoPostal: '',
   })
+
+  // ============ CARGAR DATOS ============
+  
+  // Cargar clientes al montar el componente
+  useEffect(() => {
+    fetchClientes()
+  }, [])
+
+  const fetchClientes = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch(`${API}/clientes.php`)
+      const data = await res.json()
+      if (data.success) {
+        setClients(data.datos || [])
+      } else {
+        console.error('Error:', data.mensaje)
+      }
+    } catch (error) {
+      console.error('Error al cargar clientes:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // ============ CONFIGURACIÓN ============
   
   /**
    * Columnas que se mostrarán en la tabla
-   * Cada objeto define qué campo mostrar y cómo etiquetarlo
    */
   const columns = [
     { key: 'nombre', label: 'Nombre' },
-    { key: 'documento', label: 'Documento' },
+    { key: 'documento_identidad', label: 'Documento' },
     { key: 'email', label: 'Email' },
     { key: 'telefono', label: 'Teléfono' },
     { key: 'ciudad', label: 'Ciudad' },
@@ -89,13 +89,10 @@ export default function ClientesPage() {
   const resetForm = () => {
     setFormData({
       nombre: '',
-      documento: '',
+      documento_identidad: '',
       email: '',
       telefono: '',
-      direccion: '',
       ciudad: '',
-      pais: '',
-      codigoPostal: '',
     })
     setIsEditMode(false)
     setEditingClient(null)
@@ -120,14 +117,11 @@ export default function ClientesPage() {
   const handleEdit = (client) => {
     setEditingClient(client)
     setFormData({
-      nombre: client.nombre,
-      documento: client.documento,
-      email: client.email,
-      telefono: client.telefono,
-      direccion: client.direccion,
-      ciudad: client.ciudad,
-      pais: client.pais,
-      codigoPostal: client.codigoPostal,
+      nombre: client.nombre || '',
+      documento_identidad: client.documento_identidad || '',
+      email: client.email || '',
+      telefono: client.telefono || '',
+      ciudad: client.ciudad || '',
     })
     setIsEditMode(true)
     setIsModalOpen(true)
@@ -135,7 +129,7 @@ export default function ClientesPage() {
 
   // Guardar o actualizar cliente
   const handleSaveClient = async () => {
-    if (!formData.nombre || !formData.documento || !formData.email) {
+    if (!formData.nombre || !formData.documento_identidad || !formData.email) {
       alert('Por favor completa los campos requeridos: Nombre, Documento y Email')
       return
     }
@@ -151,20 +145,43 @@ export default function ClientesPage() {
     try {
       if (isEditMode && editingClient) {
         // Actualizar cliente existente
-        setClients(clients.map(client =>
-          client.id === editingClient.id
-            ? { ...client, ...formData }
-            : client
-        ))
-        alert('Cliente actualizado exitosamente')
+        const res = await fetch(`${API}/clientes.php`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingClient.id,
+            nombre: formData.nombre,
+            email: formData.email,
+            telefono: formData.telefono
+          })
+        })
+        const data = await res.json()
+        if (data.success) {
+          alert('✓ Cliente actualizado exitosamente')
+          fetchClientes()
+        } else {
+          alert('Error: ' + data.mensaje)
+        }
       } else {
         // Agregar nuevo cliente
-        const newClient = {
-          id: Math.max(...clients.map(c => c.id), 0) + 1,
-          ...formData,
+        const res = await fetch(`${API}/clientes.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: formData.nombre,
+            documento_identidad: formData.documento_identidad,
+            email: formData.email,
+            telefono: formData.telefono,
+            ciudad: formData.ciudad
+          })
+        })
+        const data = await res.json()
+        if (data.success) {
+          alert('✓ Cliente agregado exitosamente')
+          fetchClientes()
+        } else {
+          alert('Error: ' + data.mensaje)
         }
-        setClients([...clients, newClient])
-        alert('Cliente agregado exitosamente')
       }
       setIsModalOpen(false)
       resetForm()
@@ -185,8 +202,18 @@ export default function ClientesPage() {
     if (!confirmDelete) return
 
     try {
-      setClients(clients.filter(c => c.id !== client.id))
-      alert('Cliente eliminado exitosamente')
+      const res = await fetch(`${API}/clientes.php`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: client.id })
+      })
+      const data = await res.json()
+      if (data.success) {
+        alert('✓ Cliente eliminado exitosamente')
+        fetchClientes()
+      } else {
+        alert('Error: ' + data.mensaje)
+      }
     } catch (error) {
       console.error('Error al eliminar cliente:', error)
       alert('Error al eliminar el cliente')
@@ -213,19 +240,25 @@ export default function ClientesPage() {
         
         <div className="page-header">
           <div>
-            <p className="clients-count">Total: {clients.length} cliente(s)</p>
+            <p className="clients-count">Total: {loading ? '...' : clients.length} cliente(s)</p>
           </div>
-          <button className="btn btn-primary" onClick={handleOpenAddModal}>
+          <button className="btn btn-primary" onClick={handleOpenAddModal} disabled={loading}>
             + Nuevo Cliente
           </button>
         </div>
 
-        <Table
-          columns={columns}
-          data={clients}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        {loading ? (
+          <p style={{ textAlign: 'center', padding: '20px' }}>Cargando clientes...</p>
+        ) : clients.length === 0 ? (
+          <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No hay clientes registrados</p>
+        ) : (
+          <Table
+            columns={columns}
+            data={clients}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
 
         {/* Modal para agregar/editar cliente */}
         <Modal
@@ -252,13 +285,13 @@ export default function ClientesPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="documento">Número de Documento *</label>
+              <label htmlFor="documento_identidad">Número de Documento *</label>
               <input
-                id="documento"
+                id="documento_identidad"
                 type="text"
-                name="documento"
+                name="documento_identidad"
                 placeholder="Ej: 12345678A"
-                value={formData.documento}
+                value={formData.documento_identidad}
                 onChange={handleFormChange}
               />
             </div>
@@ -288,18 +321,6 @@ export default function ClientesPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="direccion">Dirección</label>
-              <input
-                id="direccion"
-                type="text"
-                name="direccion"
-                placeholder="Calle Principal 123"
-                value={formData.direccion}
-                onChange={handleFormChange}
-              />
-            </div>
-
-            <div className="form-group">
               <label htmlFor="ciudad">Ciudad</label>
               <input
                 id="ciudad"
@@ -307,30 +328,6 @@ export default function ClientesPage() {
                 name="ciudad"
                 placeholder="Ej: Madrid"
                 value={formData.ciudad}
-                onChange={handleFormChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="codigoPostal">Código Postal</label>
-              <input
-                id="codigoPostal"
-                type="text"
-                name="codigoPostal"
-                placeholder="Ej: 28001"
-                value={formData.codigoPostal}
-                onChange={handleFormChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="pais">País</label>
-              <input
-                id="pais"
-                type="text"
-                name="pais"
-                placeholder="Ej: España"
-                value={formData.pais}
                 onChange={handleFormChange}
               />
             </div>

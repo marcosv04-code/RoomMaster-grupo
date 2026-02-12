@@ -2,22 +2,23 @@ import { useState } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Icon from '../../components/common/Icon'
 import { useTheme } from '../../hooks/useTheme'
+import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
+
+const API = 'http://localhost/RoomMaster_Prueba/backend'
 
 export default function PerfilPage() {
   const { isDarkMode, toggleTheme } = useTheme()
+  const { user } = useAuth()
   
   const [userProfile, setUserProfile] = useState({
-    nombre: 'Carlos Rodríguez',
-    email: 'carlos@roommaster.com',
-    hotel: 'Hotel Grand Plaza',
-    telefono: '+57 (1) 555-0123',
-    ciudad: 'Bogotá, Colombia',
-    direccion: 'Calle 45 #23-67, Bogotá',
+    nombre: user?.name || 'Usuario',
+    email: user?.email || '',
+    rol: user?.role || '',
   })
 
-  const [editProfile, setEditProfile] = useState(false)
-  const [formData, setFormData] = useState(userProfile)
+  const [editingName, setEditingName] = useState(false)
+  const [editNameValue, setEditNameValue] = useState(userProfile.nombre)
 
   const [passwordData, setPasswordData] = useState({
     actual: '',
@@ -29,21 +30,9 @@ export default function PerfilPage() {
     notificacionesEmail: true,
     notificacionesPush: true,
     backupAutomatico: true,
-    dosFactores: false,
   })
 
   const [savedMessage, setSavedMessage] = useState('')
-
-  const handleSaveProfile = () => {
-    if (!formData.nombre.trim() || !formData.email.trim()) {
-      alert('Nombre y email son requeridos')
-      return
-    }
-    setUserProfile(formData)
-    setEditProfile(false)
-    setSavedMessage('✓ Perfil actualizado correctamente')
-    setTimeout(() => setSavedMessage(''), 3000)
-  }
 
   const handleChangePassword = (e) => {
     e.preventDefault()
@@ -55,13 +44,38 @@ export default function PerfilPage() {
       alert('Las contraseñas no coinciden')
       return
     }
-    if (passwordData.nueva.length < 8) {
-      alert('La contraseña debe tener al menos 8 caracteres')
+    if (passwordData.nueva.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres')
       return
     }
-    setPasswordData({ actual: '', nueva: '', confirmar: '' })
-    setSavedMessage('✓ Contraseña actualizada correctamente')
-    setTimeout(() => setSavedMessage(''), 3000)
+
+    // Cambiar contraseña en el backend
+    cambiarContraseña()
+  }
+
+  async function cambiarContraseña() {
+    try {
+      const res = await fetch(`${API}/usuarios.php`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user?.id,
+          contraseña_actual: passwordData.actual,
+          contraseña_nueva: passwordData.nueva
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPasswordData({ actual: '', nueva: '', confirmar: '' })
+        setSavedMessage('✓ Contraseña actualizada correctamente')
+        setTimeout(() => setSavedMessage(''), 3000)
+      } else {
+        alert('Error: ' + data.mensaje)
+      }
+    } catch (error) {
+      console.error('Error al cambiar contraseña:', error)
+      alert('Error al cambiar la contraseña')
+    }
   }
 
   const handleToggleSetting = (setting) => {
@@ -76,6 +90,49 @@ export default function PerfilPage() {
       setSavedMessage('✓ Configuración actualizada')
     }
     setTimeout(() => setSavedMessage(''), 2000)
+  }
+
+  const handleEditName = () => {
+    setEditingName(true)
+    setEditNameValue(userProfile.nombre)
+  }
+
+  const handleCancelEditName = () => {
+    setEditingName(false)
+    setEditNameValue(userProfile.nombre)
+  }
+
+  const handleSaveName = async () => {
+    if (!editNameValue.trim()) {
+      alert('El nombre no puede estar vacío')
+      return
+    }
+
+    try {
+      const res = await fetch(`${API}/usuarios.php`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user?.id,
+          nombre: editNameValue.trim()
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setUserProfile(prev => ({
+          ...prev,
+          nombre: editNameValue.trim()
+        }))
+        setEditingName(false)
+        setSavedMessage('✓ Nombre actualizado correctamente')
+        setTimeout(() => setSavedMessage(''), 3000)
+      } else {
+        alert('Error: ' + data.mensaje)
+      }
+    } catch (error) {
+      console.error('Error al actualizar nombre:', error)
+      alert('Error al actualizar el nombre')
+    }
   }
 
   return (
@@ -103,145 +160,118 @@ export default function PerfilPage() {
 
         {/* SECCIÓN 1: INFORMACIÓN PERSONAL */}
         <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2>👤 Información Personal</h2>
-            {!editProfile && (
-              <button 
-                className="btn btn-primary"
-                onClick={() => {
-                  setEditProfile(true)
-                  setFormData(userProfile)
-                }}
-                style={{ padding: '8px 16px', fontSize: '13px' }}
-              >
-                Editar
-              </button>
-            )}
+          <h2 style={{ marginBottom: '24px' }}>👤 Información Personal</h2>
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #2196F3, #1565c0)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '40px'
+              }}>
+                👤
+              </div>
+              <div style={{ flex: 1 }}>
+                {editingName ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <input
+                      type="text"
+                      value={editNameValue}
+                      onChange={(e) => setEditNameValue(e.target.value)}
+                      style={{
+                        padding: '8px 12px',
+                        fontSize: '16px',
+                        fontWeight: '700',
+                        border: '2px solid #2196F3',
+                        borderRadius: '4px',
+                        flex: 1,
+                        maxWidth: '300px'
+                      }}
+                      autoFocus
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') handleSaveName()
+                      }}
+                    />
+                    <button
+                      onClick={handleSaveName}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      onClick={handleCancelEditName}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '20px', fontWeight: '700' }}>{userProfile.nombre}</div>
+                    <button
+                      onClick={handleEditName}
+                      style={{
+                        padding: '4px 8px',
+                        background: '#2196F3',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Editar
+                    </button>
+                  </div>
+                )}
+                <div style={{ fontSize: '14px', color: '#666' }}>{userProfile.email}</div>
+                <div style={{ fontSize: '12px', color: '#999', marginTop: '4px', textTransform: 'uppercase', fontWeight: '600' }}>Rol: {userProfile.rol}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #2196F3' }}>
+                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>📧 CORREO ELECTRÓNICO</div>
+                <div style={{ fontSize: '15px', fontWeight: '600' }}>{userProfile.email}</div>
+              </div>
+
+              <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #FF9800' }}>
+                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>👥 ROL</div>
+                <div style={{ fontSize: '15px', fontWeight: '600', textTransform: 'capitalize' }}>{userProfile.rol}</div>
+              </div>
+
+              <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #4CAF50' }}>
+                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>ℹ️ ESTADO</div>
+                <div style={{ fontSize: '15px', fontWeight: '600' }}>Activo</div>
+              </div>
+            </div>
+
+            <p style={{ color: '#999', fontSize: '12px', marginTop: '16px' }}>💡 La información personal la administra el personal de administración. Contacta a tu gestor para cambios.</p>
           </div>
-
-          {!editProfile ? (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #2196F3, #1565c0)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '40px'
-                }}>
-                  👤
-                </div>
-                <div>
-                  <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px' }}>{userProfile.nombre}</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>{userProfile.email}</div>
-                  <div style={{ fontSize: '14px', color: '#999', marginTop: '4px' }}>{userProfile.hotel}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-                <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #2196F3' }}>
-                  <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>📧 CORREO ELECTRÓNICO</div>
-                  <div style={{ fontSize: '15px', fontWeight: '600' }}>{userProfile.email}</div>
-                </div>
-
-                <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #4CAF50' }}>
-                  <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>📞 TELÉFONO</div>
-                  <div style={{ fontSize: '15px', fontWeight: '600' }}>{userProfile.telefono}</div>
-                </div>
-
-                <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #FF9800' }}>
-                  <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>🏨 HOTEL</div>
-                  <div style={{ fontSize: '15px', fontWeight: '600' }}>{userProfile.hotel}</div>
-                </div>
-
-                <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #9C27B0' }}>
-                  <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>📍 CIUDAD</div>
-                  <div style={{ fontSize: '15px', fontWeight: '600' }}>{userProfile.ciudad}</div>
-                </div>
-
-                <div style={{ gridColumn: 'span 1', padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #00BCD4' }}>
-                  <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>🏠 DIRECCIÓN</div>
-                  <div style={{ fontSize: '15px', fontWeight: '600' }}>{userProfile.direccion}</div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Nombre Completo</label>
-                  <input
-                    type="text"
-                    value={formData.nombre}
-                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                    placeholder="Tu nombre completo"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Correo Electrónico</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="tu@email.com"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Nombre del Hotel</label>
-                  <input
-                    type="text"
-                    value={formData.hotel}
-                    onChange={(e) => setFormData({ ...formData, hotel: e.target.value })}
-                    placeholder="Nombre de tu hotel"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Teléfono</label>
-                  <input
-                    type="tel"
-                    value={formData.telefono}
-                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                    placeholder="+57 (1) 555-0000"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Ciudad</label>
-                  <input
-                    type="text"
-                    value={formData.ciudad}
-                    onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-                    placeholder="Tu ciudad"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Dirección</label>
-                  <input
-                    type="text"
-                    value={formData.direccion}
-                    onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                    placeholder="Dirección completa"
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-                <button className="btn btn-primary" onClick={handleSaveProfile}>
-                  Guardar Cambios
-                </button>
-                <button className="btn btn-secondary" onClick={() => setEditProfile(false)}>
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* SECCIÓN 2: SEGURIDAD */}
@@ -284,7 +314,7 @@ export default function PerfilPage() {
               </div>
 
               <div style={{ marginTop: '12px', fontSize: '12px', color: '#999', marginBottom: '16px' }}>
-                ℹ️ La contraseña debe tener al menos 8 caracteres
+                ℹ️ La contraseña debe tener al menos 6 caracteres
               </div>
 
               <button type="submit" className="btn btn-primary">
@@ -292,100 +322,68 @@ export default function PerfilPage() {
               </button>
             </form>
           </div>
-
-          <div style={{ marginTop: '24px' }}>
-            <div style={{ padding: '16px', background: '#e8f5e9', borderRadius: '8px', borderLeft: '4px solid #4CAF50', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>🔐 Autenticación de Dos Factores</div>
-                <div style={{ fontSize: '13px', color: '#666' }}>Añade una capa extra de seguridad a tu cuenta</div>
-              </div>
-              <label style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={settings.dosFactores}
-                  onChange={() => handleToggleSetting('dosFactores')}
-                  style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-                />
-              </label>
-            </div>
-          </div>
         </div>
 
-        {/* SECCIÓN 3: NOTIFICACIONES */}
+        {/* SECCIÓN 3: CONFIGURACIÓN */}
         <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <h2>🔔 Notificaciones</h2>
+          <h2>⚙️ Configuración</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginTop: '24px' }}>
-            <div style={{ padding: '16px', background: '#e3f2fd', borderRadius: '8px', borderLeft: '4px solid #2196F3', display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div style={{ padding: '16px', background: '#e3f2fd', borderRadius: '8px', borderLeft: '4px solid #2196F3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>📧 Notificaciones por Email</div>
                 <div style={{ fontSize: '12px', color: '#666' }}>Recibe alertas por correo</div>
               </div>
-              <label style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={settings.notificacionesEmail}
-                  onChange={() => handleToggleSetting('notificacionesEmail')}
-                  style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                />
-              </label>
+              <input
+                type="checkbox"
+                checked={settings.notificacionesEmail}
+                onChange={() => handleToggleSetting('notificacionesEmail')}
+                style={{ cursor: 'pointer', width: '20px', height: '20px' }}
+              />
             </div>
 
-            <div style={{ padding: '16px', background: '#f3e5f5', borderRadius: '8px', borderLeft: '4px solid #9C27B0', display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div style={{ padding: '16px', background: '#f3e5f5', borderRadius: '8px', borderLeft: '4px solid #9C27B0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>🔔 Notificaciones Push</div>
                 <div style={{ fontSize: '12px', color: '#666' }}>Alertas en tiempo real</div>
               </div>
-              <label style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={settings.notificacionesPush}
-                  onChange={() => handleToggleSetting('notificacionesPush')}
-                  style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                />
-              </label>
+              <input
+                type="checkbox"
+                checked={settings.notificacionesPush}
+                onChange={() => handleToggleSetting('notificacionesPush')}
+                style={{ cursor: 'pointer', width: '20px', height: '20px' }}
+              />
             </div>
 
-            <div style={{ padding: '16px', background: '#fff3e0', borderRadius: '8px', borderLeft: '4px solid #FF9800', display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div style={{ padding: '16px', background: '#e8f5e9', borderRadius: '8px', borderLeft: '4px solid #4CAF50', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>💾 Backup Automático</div>
-                <div style={{ fontSize: '12px', color: '#666' }}>Respaldo diario de datos</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>Respaldar datos automáticamente</div>
               </div>
-              <label style={{ cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={settings.backupAutomatico}
-                  onChange={() => handleToggleSetting('backupAutomatico')}
-                  style={{ cursor: 'pointer', width: '18px', height: '18px' }}
-                />
-              </label>
+              <input
+                type="checkbox"
+                checked={settings.backupAutomatico}
+                onChange={() => handleToggleSetting('backupAutomatico')}
+                style={{ cursor: 'pointer', width: '20px', height: '20px' }}
+              />
             </div>
-          </div>
-        </div>
 
-        {/* SECCIÓN 4: APARIENCIA */}
-        <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <h2>🎨 Apariencia</h2>
-
-          <div style={{ padding: '16px', background: isDarkMode ? '#2a2a2a' : '#f0f4f8', borderRadius: '8px', borderLeft: `4px solid ${isDarkMode ? '#FFC107' : '#2196F3'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
-            <div>
-              <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>🌙 Tema Oscuro</div>
-              <div style={{ fontSize: '12px', color: isDarkMode ? '#aaa' : '#666' }}>
-                {isDarkMode ? 'Modo oscuro activo' : 'Activa el modo oscuro para la noche'}
+            <div style={{ padding: '16px', background: '#fff3e0', borderRadius: '8px', borderLeft: '4px solid #FF9800', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>🌙 Tema Oscuro</div>
+                <div style={{ fontSize: '12px', color: '#666' }}>Modo oscuro para la vista</div>
               </div>
-            </div>
-            <label style={{ cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={isDarkMode}
                 onChange={() => handleToggleSetting('temaOscuro')}
                 style={{ cursor: 'pointer', width: '20px', height: '20px' }}
               />
-            </label>
+            </div>
           </div>
         </div>
 
-        {/* SECCIÓN 5: ACERCA DE */}
+        {/* SECCIÓN 4: ACERCA DE */}
         <div className="dashboard-section">
           <h2>ℹ️ Acerca de RoomMaster</h2>
 

@@ -1,13 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import './ModulePage.css'
 
+const API = 'http://localhost/RoomMaster_Prueba/backend'
+
 export default function ReportesPage() {
   const [period, setPeriod] = useState('month')
+  const [reportData, setReportData] = useState({
+    dashboard: { huespedes_actuales: 0, habitaciones_disponibles: 0, ingresos_mes: 0, pendiente_cobro: 0 },
+    ingresos_por_estado: [],
+    ocupacion_por_tipo: [],
+    productos_vendidos: [],
+    clientes: []
+  })
+  const [loading, setLoading] = useState(true)
 
-  // Datos simulados por período
+  // Cargar reportes al montar
+  useEffect(() => {
+    fetchReportes()
+  }, [])
+
+  async function fetchReportes() {
+    try {
+      setLoading(true)
+      const res = await fetch(`${API}/reportes.php?tipo=general`)
+      const data = await res.json()
+      if (data.success) {
+        setReportData(data.datos)
+      }
+    } catch (error) {
+      console.error('Error al cargar reportes:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Datos simulados por período (para mantener gráficos ejemplo)
   const dataByPeriod = {
     week: {
       occupancyData: [
@@ -95,34 +125,69 @@ export default function ReportesPage() {
         </div>
 
         {/* MÉTRICAS PRINCIPALES */}
-        <div className="stats-grid" style={{ marginBottom: '40px' }}>
-          <Card
-            title="Huéspedes"
-            value={currentData.totalGuests}
-            icon="users"
-            subtitle={`Total en el período`}
-          />
-          <Card
-            title="Ocupación"
-            value={`${currentData.occupancyRate}%`}
-            icon="hotel"
-            subtitle="Tasa promedio"
-          />
-          <Card
-            title="Ingresos Promedio"
-            value={`$${currentData.revenuePerRoom}`}
-            icon="money"
-            subtitle="Por habitación"
-          />
-          <Card
-            title="Huéspedes Nuevos"
-            value={currentData.newGuests}
-            icon="user"
-            subtitle={`${((currentData.newGuests / currentData.totalGuests) * 100).toFixed(1)}% del total`}
-          />
-        </div>
+        {loading ? (
+          <p style={{ textAlign: 'center', padding: '40px' }}>Cargando reportes...</p>
+        ) : (
+          <>
+            <div className="stats-grid" style={{ marginBottom: '40px' }}>
+              <Card
+                title="Huéspedes Activos"
+                value={reportData.dashboard?.huespedes_actuales || 0}
+                icon="users"
+                subtitle="Estadías activas"
+              />
+              <Card
+                title="Habitaciones Disponibles"
+                value={reportData.dashboard?.habitaciones_disponibles || 0}
+                icon="hotel"
+                subtitle="Listas para ocupar"
+              />
+              <Card
+                title="Ingresos Mes"
+                value={`$${(reportData.dashboard?.ingresos_mes || 0).toFixed(2)}`}
+                icon="money"
+                subtitle="Facturas pagadas"
+              />
+              <Card
+                title="Pendiente de Cobro"
+                value={`$${(reportData.dashboard?.pendiente_cobro || 0).toFixed(2)}`}
+                icon="activity"
+                subtitle="Por cobrar"
+              />
+            </div>
 
-        {/* REPORTE 1: OCUPACIÓN E INGRESOS */}
+            {/* Datos por período (simulados) */}
+            <div className="dashboard-section" style={{ marginBottom: '40px' }}>
+              <h2 style={{ marginBottom: '24px' }}>Tendencias por Período</h2>
+              <div className="stats-grid">
+                <Card
+                  title="Huéspedes"
+                  value={currentData.totalGuests}
+                  icon="users"
+                  subtitle={`Total en el período`}
+                />
+                <Card
+                  title="Ocupación"
+                  value={`${currentData.occupancyRate}%`}
+                  icon="hotel"
+                  subtitle="Tasa promedio"
+                />
+                <Card
+                  title="Ingresos Promedio"
+                  value={`$${currentData.revenuePerRoom}`}
+                  icon="money"
+                  subtitle="Por habitación"
+                />
+                <Card
+                  title="Huéspedes Nuevos"
+                  value={currentData.newGuests}
+                  icon="user"
+                  subtitle={`${((currentData.newGuests / currentData.totalGuests) * 100).toFixed(1)}% del total`}
+                />
+              </div>
+            </div>
+
+            {/* REPORTE 1: OCUPACIÓN E INGRESOS */}
         <div className="dashboard-section" style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <Icon name="chart" size={24} className="primary" />
@@ -255,6 +320,8 @@ export default function ReportesPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </DashboardLayout>
   )

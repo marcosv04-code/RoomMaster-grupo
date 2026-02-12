@@ -22,7 +22,7 @@ function responder($success, $mensaje = '', $datos = null, $codigo = 200) {
 function obtenerDatos() {
     $metodo = $_SERVER['REQUEST_METHOD'];
     
-    if ($metodo === 'POST' || $metodo === 'PUT') {
+    if ($metodo === 'POST' || $metodo === 'PUT' || $metodo === 'DELETE') {
         $input = file_get_contents('php://input');
         $datos = json_decode($input, true);
         return $datos ?? $_POST;
@@ -48,27 +48,39 @@ function escapar($conexion, $valor) {
 
 // Función para ejecutar consulta y retornar resultados
 function ejecutarConsulta($conexion, $sql) {
-    $resultado = $conexion->query($sql);
-    
-    if (!$resultado) {
-        return ['error' => $conexion->error];
+    try {
+        $resultado = $conexion->query($sql);
+        
+        if (!$resultado) {
+            error_log("Error en query: " . $conexion->error);
+            return ['error' => $conexion->error];
+        }
+        
+        $datos = [];
+        while ($fila = $resultado->fetch_assoc()) {
+            $datos[] = $fila;
+        }
+        
+        return $datos;
+    } catch (Exception $e) {
+        error_log("Excepción en ejecutarConsulta: " . $e->getMessage());
+        return ['error' => $e->getMessage()];
     }
-    
-    $datos = [];
-    while ($fila = $resultado->fetch_assoc()) {
-        $datos[] = $fila;
-    }
-    
-    return $datos;
 }
 
 // Función para ejecutar INSERT/UPDATE/DELETE
 function ejecutarAccion($conexion, $sql) {
-    if (!$conexion->query($sql)) {
-        return ['error' => $conexion->error];
+    try {
+        if (!$conexion->query($sql)) {
+            error_log("Error en acción: " . $conexion->error);
+            return ['error' => $conexion->error];
+        }
+        
+        return ['exito' => true, 'id' => $conexion->insert_id];
+    } catch (Exception $e) {
+        error_log("Excepción en ejecutarAccion: " . $e->getMessage());
+        return ['error' => $e->getMessage()];
     }
-    
-    return ['exito' => true, 'id' => $conexion->insert_id];
 }
 
 // Función para validar rol del usuario

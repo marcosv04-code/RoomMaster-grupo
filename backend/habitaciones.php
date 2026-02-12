@@ -79,13 +79,13 @@ else if ($metodo === 'POST') {
     $sql = "INSERT INTO habitaciones (numero_habitacion, piso, tipo, capacidad, precio_noche, amenidades, descripcion, estado) 
             VALUES ('$numero_habitacion', $piso, '$tipo', $capacidad, $precio_noche, '$amenidades', '$descripcion', '$estado')";
     
-    $resultado = ejecutarConsulta($conexion, $sql);
+    $resultado = ejecutarAccion($conexion, $sql);
     
     if (isset($resultado['error'])) {
         responder(false, $resultado['error'], null, 400);
     }
     
-    responder(true, 'Habitación creada', ['id' => $conexion->insert_id]);
+    responder(true, 'Habitación creada', ['id' => $resultado['id']]);
 }
 
 // PUT - Actualizar habitación
@@ -148,7 +148,7 @@ else if ($metodo === 'PUT') {
     
     $sql = "UPDATE habitaciones SET " . implode(', ', $campos) . ", fecha_creacion = CURRENT_TIMESTAMP WHERE id = $id";
     
-    $resultado = ejecutarConsulta($conexion, $sql);
+    $resultado = ejecutarAccion($conexion, $sql);
     
     if (isset($resultado['error'])) {
         responder(false, $resultado['error'], null, 400);
@@ -204,7 +204,7 @@ else if ($metodo === 'DELETE') {
     
     $sql = "UPDATE habitaciones SET activa = FALSE WHERE id = $id";
     
-    $resultado = ejecutarConsulta($conexion, $sql);
+    $resultado = ejecutarAccion($conexion, $sql);
     
     if (isset($resultado['error'])) {
         responder(false, $resultado['error'], null, 400);

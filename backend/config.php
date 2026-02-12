@@ -27,7 +27,6 @@ if ($conexion->connect_error) {
 // Configurar charset UTF-8
 $conexion->set_charset("utf8");
 
-// Configurar modo error SQL
-$conexion->report_mode = MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT;
-
+// NO usar report_mode para evitar excepciones no capturadas
+// Si necesitas debugging, usa error_log() en su lugar
 ?>

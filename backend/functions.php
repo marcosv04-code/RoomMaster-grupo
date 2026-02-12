@@ -10,7 +10,7 @@
 function responder($success, $mensaje = '', $datos = null, $codigo = 200) {
     http_response_code($codigo);
     $respuesta = [
-        'success' => $success,
+        'exito' => $success,
         'mensaje' => $mensaje,
         'datos' => $datos
     ];

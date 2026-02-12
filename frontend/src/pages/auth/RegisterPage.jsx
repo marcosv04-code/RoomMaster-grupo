@@ -101,7 +101,7 @@ export default function RegisterPage() {
       
       const data = await response.json()
 
-      if (data.success) {
+      if (data.exito) {
         // Guardar datos en localStorage
         localStorage.setItem('token', data.datos.token)
         

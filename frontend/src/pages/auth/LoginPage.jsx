@@ -128,7 +128,7 @@ export default function LoginPage() {
       
       const data = await response.json()
 
-      if (data.success) {
+      if (data.exito) {
         // Guardar token en localStorage
         localStorage.setItem('token', data.datos.token)
         

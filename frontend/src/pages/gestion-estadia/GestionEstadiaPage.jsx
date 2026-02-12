@@ -6,7 +6,7 @@ import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import './ModulePage.css'
 
-const API = 'http://localhost/RoomMaster_Prueba/backend'
+const API = import.meta.env.VITE_API_URL || 'http://localhost/RoomMaster_Prueba/backend'
 
 export default function GestionEstadiaPage() {
   const [stays, setStays] = useState([])

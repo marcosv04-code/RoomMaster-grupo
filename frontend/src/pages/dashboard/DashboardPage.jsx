@@ -8,7 +8,7 @@ import { useAuth } from '../../hooks/useAuth'
 import './DashboardPage.css'
 import { roomService } from '../../services/index'
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost/RoomMaster_Prueba/backend'
+const API = 'http://localhost/RoomMaster_Prueba/backend'
 
 export default function DashboardPage() {
   const { user } = useAuth()

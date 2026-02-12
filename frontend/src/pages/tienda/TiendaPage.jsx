@@ -7,7 +7,7 @@ import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost/RoomMaster_Prueba/backend'
+const API = 'http://localhost/RoomMaster_Prueba/backend'
 
 export default function TiendaPage() {
   const { user } = useAuth()

@@ -27,7 +27,7 @@ export default function ReportesPage() {
       setLoading(true)
       const res = await fetch(`${API}/reportes.php?tipo=general`)
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         setReportData(data.datos)
       }
     } catch (error) {

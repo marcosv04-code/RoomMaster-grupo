@@ -81,6 +81,40 @@ else if ($metodo === 'POST') {
     responder(true, 'Venta registrada exitosamente', ['id' => $resultado['id']], 201);
 }
 
+// DELETE - Eliminar venta
+else if ($metodo === 'DELETE') {
+    $error = validarCampos($datos, ['id']);
+    if ($error) {
+        responder(false, $error, null, 400);
+    }
+    
+    $id = intval($datos['id']);
+    
+    // Obtener datos de la venta
+    $venta = $conexion->query("SELECT producto_id, cantidad FROM ventas WHERE id = $id");
+    $venta_fila = $venta->fetch_assoc();
+    
+    if (!$venta_fila) {
+        responder(false, 'Venta no encontrada', null, 404);
+    }
+    
+    // Devolver stock
+    $producto_id = $venta_fila['producto_id'];
+    $cantidad = $venta_fila['cantidad'];
+    $sql_stock = "UPDATE inventario SET cantidad_actual = cantidad_actual + $cantidad WHERE producto_id = $producto_id";
+    $conexion->query($sql_stock);
+    
+    // Eliminar venta
+    $sql = "DELETE FROM ventas WHERE id = $id";
+    $resultado = ejecutarAccion($conexion, $sql);
+    
+    if (isset($resultado['error'])) {
+        responder(false, $resultado['error'], null, 500);
+    }
+    
+    responder(true, 'Venta eliminada', null, 200);
+}
+
 else {
     responder(false, 'Método no permitido', null, 405);
 }

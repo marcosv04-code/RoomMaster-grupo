@@ -49,7 +49,7 @@ export default function GestionEstadiaPage() {
       setLoading(true)
       const res = await fetch(`${API}/estadias.php`)
       const data = await res.json()
-      if (data.success) setStays(data.datos)
+      if (data.exito) setStays(data.datos)
     } catch (err) {
       alert('Error al cargar estadías')
       console.error(err)
@@ -62,7 +62,7 @@ export default function GestionEstadiaPage() {
     try {
       const res = await fetch(`${API}/clientes.php`)
       const data = await res.json()
-      if (data.success) setClients(data.datos)
+      if (data.exito) setClients(data.datos)
     } catch (err) {
       console.error('Error al cargar clientes:', err)
     }
@@ -72,7 +72,7 @@ export default function GestionEstadiaPage() {
     try {
       const res = await fetch(`${API}/habitaciones.php`)
       const data = await res.json()
-      if (data.success) setRooms(data.datos)
+      if (data.exito) setRooms(data.datos)
     } catch (err) {
       console.error('Error al cargar habitaciones:', err)
     }
@@ -128,7 +128,7 @@ export default function GestionEstadiaPage() {
           body: JSON.stringify({ id: editingStay.id, ...formData })
         })
         const data = await res.json()
-        if (data.success) {
+        if (data.exito) {
           cargarEstadias()
           alert('✓ Estadía actualizada')
         } else {
@@ -142,7 +142,7 @@ export default function GestionEstadiaPage() {
           body: JSON.stringify(formData)
         })
         const data = await res.json()
-        if (data.success) {
+        if (data.exito) {
           cargarEstadias()
           alert('✓ Estadía creada')
         } else {
@@ -168,7 +168,7 @@ export default function GestionEstadiaPage() {
         body: JSON.stringify({ id: stay.id })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         cargarEstadias()
         alert('✓ Eliminada')
       } else {

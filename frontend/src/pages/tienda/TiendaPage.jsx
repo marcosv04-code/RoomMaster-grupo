@@ -13,6 +13,7 @@ export default function TiendaPage() {
   const { user } = useAuth()
   const [products, setProducts] = useState([])
   const [sales, setSales] = useState([])
+  const [stays, setStays] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -28,6 +29,7 @@ export default function TiendaPage() {
   // Modal ventas
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
   const [saleForm, setSaleForm] = useState({
+    estadia_id: '',
     producto_id: '',
     cantidad: '',
   })
@@ -36,13 +38,14 @@ export default function TiendaPage() {
   useEffect(() => {
     cargarProductos()
     cargarVentas()
+    cargarEstadias()
   }, [])
 
   async function cargarProductos() {
     try {
       const res = await fetch(`${API}/productos.php`)
       const data = await res.json()
-      if (data.success) setProducts(data.datos)
+      if (data.exito) setProducts(data.datos)
     } catch (err) {
       console.error(err)
     }
@@ -52,7 +55,17 @@ export default function TiendaPage() {
     try {
       const res = await fetch(`${API}/ventas.php`)
       const data = await res.json()
-      if (data.success) setSales(data.datos)
+      if (data.exito) setSales(data.datos)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  async function cargarEstadias() {
+    try {
+      const res = await fetch(`${API}/estadias.php`)
+      const data = await res.json()
+      if (data.exito) setStays(data.datos)
     } catch (err) {
       console.error(err)
     }
@@ -75,7 +88,7 @@ export default function TiendaPage() {
         })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         cargarProductos()
         setProductForm({ nombre: '', precio: '', stock: '', categoria: '' })
         setIsProductModalOpen(false)
@@ -88,7 +101,7 @@ export default function TiendaPage() {
   }
 
   async function crearVenta() {
-    if (!saleForm.producto_id || !saleForm.cantidad) {
+    if (!saleForm.estadia_id || !saleForm.producto_id || !saleForm.cantidad) {
       alert('Completa todos los campos')
       return
     }
@@ -97,15 +110,16 @@ export default function TiendaPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          estadia_id: parseInt(saleForm.estadia_id),
           producto_id: parseInt(saleForm.producto_id),
           cantidad: parseInt(saleForm.cantidad),
         })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         cargarVentas()
         cargarProductos()
-        setSaleForm({ producto_id: '', cantidad: '' })
+        setSaleForm({ estadia_id: '', producto_id: '', cantidad: '' })
         setIsSaleModalOpen(false)
       } else {
         alert(data.mensaje)
@@ -124,7 +138,7 @@ export default function TiendaPage() {
         body: JSON.stringify({ id })
       })
       const data = await res.json()
-      if (data.success) cargarProductos()
+      if (data.exito) cargarProductos()
     } catch (err) {
       alert('Error al eliminar')
     }
@@ -139,12 +153,15 @@ export default function TiendaPage() {
         body: JSON.stringify({ id })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         cargarVentas()
         cargarProductos()
+      } else {
+        alert(data.mensaje || 'Error al eliminar venta')
       }
     } catch (err) {
-      alert('Error al eliminar')
+      console.error(err)
+      alert('Error al eliminar venta: ' + err.message)
     }
   }
 
@@ -297,6 +314,20 @@ export default function TiendaPage() {
           confirmText="Registrar"
         >
           <form className="form-grid">
+            <div className="form-group">
+              <label>Estadía</label>
+              <select
+                value={saleForm.estadia_id}
+                onChange={(e) => setSaleForm({ ...saleForm, estadia_id: e.target.value })}
+              >
+                <option value="">Selecciona una estadía</option>
+                {stays.map(s => (
+                  <option key={s.id} value={s.id}>
+                    Cliente #{s.cliente_id} - Hab. {s.habitacion_id}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="form-group">
               <label>Producto</label>
               <select

@@ -68,6 +68,15 @@ else if ($metodo === 'POST') {
     }
     
     $numero_habitacion = escapar($conexion, $datos['numero_habitacion']);
+    
+    // Verificar si ya existe una habitación con ese número
+    $sql_check = "SELECT id FROM habitaciones WHERE numero_habitacion = '$numero_habitacion' AND activa = TRUE";
+    $resultado_check = $conexion->query($sql_check);
+    
+    if ($resultado_check && $resultado_check->num_rows > 0) {
+        responder(false, 'Ya existe una habitación con ese número', null, 400);
+    }
+    
     $piso = intval($datos['piso'] ?? 1);
     $tipo = escapar($conexion, $datos['tipo']);
     $capacidad = intval($datos['capacidad']);

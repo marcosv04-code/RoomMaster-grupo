@@ -2,423 +2,414 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
+import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
+const API = 'http://localhost/RoomMaster_Prueba/backend'
+
 export default function InventarioPage() {
   const { user } = useAuth()
-  // Habitaciones disponibles
-  const [rooms] = useState([
-    { id: 1, numero: 101 },
-    { id: 2, numero: 102 },
-    { id: 3, numero: 103 },
-    { id: 4, numero: 104 },
-  ])
-
-  // Items del inventario con asociación a habitaciones
-  const [items, setItems] = useState([
-    { id: 1, nombre: 'Sábanas', cantidad: 45, unidad: 'piezas', estado: 'Normal', habitacionId: 1 },
-    { id: 2, nombre: 'Toallas', cantidad: 80, unidad: 'piezas', estado: 'Normal', habitacionId: 1 },
-    { id: 3, nombre: 'Almohadas', cantidad: 12, unidad: 'piezas', estado: 'Bajo', habitacionId: 1 },
-    { id: 4, nombre: 'Sábanas', cantidad: 35, unidad: 'piezas', estado: 'Normal', habitacionId: 2 },
-    { id: 5, nombre: 'Toallas', cantidad: 50, unidad: 'piezas', estado: 'Normal', habitacionId: 2 },
-    { id: 6, nombre: 'Almohadas', cantidad: 8, unidad: 'piezas', estado: 'Bajo', habitacionId: 3 },
-  ])
-
-  // Estados del componente
-  const [viewMode, setViewMode] = useState('por-habitacion') // 'por-habitacion' o 'global'
-  const [selectedRoomId, setSelectedRoomId] = useState(1)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [editingItem, setEditingItem] = useState(null)
-  const [formData, setFormData] = useState({
-    nombre: '',
-    cantidad: '',
-    unidad: 'piezas',
-  })
-  const [saving, setSaving] = useState(false)
   
-  // Estados para seleccionar habitación en vista global
-  const [isSelectingRoom, setIsSelectingRoom] = useState(false)
-  const [selectingAction, setSelectingAction] = useState(null) // 'edit' o 'delete'
-  const [currentGroupedItem, setCurrentGroupedItem] = useState(null)
+  // DATOS
+  const [inventory, setInventory] = useState([])
+  const [products, setProducts] = useState([])
+  
+  // ESTADOS UI
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalType, setModalType] = useState('') // 'add', 'agregar', 'restar', 'editar'
+  const [editingItem, setEditingItem] = useState(null)
+  
+  // FORMULARIO
+  const [formData, setFormData] = useState({
+    producto_id: '',
+    cantidad_actual: '',
+    cantidad_minima: '',
+    cantidad_maxima: '',
+    ubicacion: '',
+    accion: 'actualizar' // 'agregar', 'restar', 'actualizar'
+  })
 
-  // Función para calcular el estado basado en la cantidad
-  const calculateStatus = (cantidad) => {
-    const num = parseInt(cantidad) || 0
-    if (num <= 10) return 'Bajo'
-    if (num <= 30) return 'Normal'
-    return 'Alto'
+  // CARGAR DATOS AL MONTAR
+  useEffect(() => {
+    cargarInventario()
+    cargarProductos()
+  }, [])
+
+  // FUNCIONES DE CARGA
+  async function cargarInventario() {
+    try {
+      setLoading(true)
+      const res = await fetch(`${API}/inventario.php`)
+      const data = await res.json()
+      if (data.exito) {
+        setInventory(data.datos || [])
+      } else {
+        setError(data.mensaje)
+      }
+    } catch (err) {
+      setError('Error al cargar inventario: ' + err.message)
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Limpiar formulario
+  async function cargarProductos() {
+    try {
+      const res = await fetch(`${API}/productos.php`)
+      const data = await res.json()
+      if (data.exito) {
+        setProducts(data.datos || [])
+      }
+    } catch (err) {
+      console.error('Error al cargar productos:', err)
+    }
+  }
+
+  // FUNCIONES CRUD
   const resetForm = () => {
     setFormData({
-      nombre: '',
-      cantidad: '',
-      unidad: 'piezas',
+      producto_id: '',
+      cantidad_actual: '',
+      cantidad_minima: '',
+      cantidad_maxima: '',
+      ubicacion: '',
+      accion: 'actualizar'
     })
-    setIsEditMode(false)
     setEditingItem(null)
   }
 
-  // Abrir modal para agregar item
-  const handleOpenAddModal = () => {
+  const handleOpenModal = (type, item = null) => {
     resetForm()
-    setIsModalOpen(true)
-  }
-
-  // Abrir modal para editar item
-  const handleEdit = (item) => {
-    // En vista global con múltiples items agrupados, mostrar selector
-    if (viewMode === 'global' && item.originalItems && item.originalItems.length > 1) {
-      setCurrentGroupedItem(item)
-      setSelectingAction('edit')
-      setIsSelectingRoom(true)
-      return
-    }
-
-    // Obtener el item original para editar
-    const itemToEdit = viewMode === 'global' && item.originalItems 
-      ? item.originalItems[0] 
-      : item
-
-    setEditingItem(itemToEdit)
-    setFormData({
-      nombre: itemToEdit.nombre,
-      cantidad: itemToEdit.cantidad,
-      unidad: itemToEdit.unidad,
-    })
-    setIsEditMode(true)
-    setIsModalOpen(true)
-  }
-
-  // Proceder con la edición después de seleccionar habitación
-  const handleProceedEditFromGlobal = (room) => {
-    const itemToEdit = currentGroupedItem.originalItems.find(i => i.habitacionId === room.id)
-    if (itemToEdit) {
-      setEditingItem(itemToEdit)
+    setModalType(type)
+    
+    if (type === 'add') {
+      setEditingItem(null)
+      setFormData({ ...formData, accion: 'actualizar' })
+    } else if (type === 'agregar' || type === 'restar') {
+      setEditingItem(item)
       setFormData({
-        nombre: itemToEdit.nombre,
-        cantidad: itemToEdit.cantidad,
-        unidad: itemToEdit.unidad,
+        ...formData,
+        producto_id: item.producto_id,
+        cantidad_actual: '',
+        accion: type
       })
-      setIsEditMode(true)
-      setIsSelectingRoom(false)
-      setCurrentGroupedItem(null)
-      setSelectingAction(null)
-      setIsModalOpen(true)
+    } else if (type === 'editar') {
+      setEditingItem(item)
+      setFormData({
+        producto_id: item.producto_id,
+        cantidad_actual: item.cantidad_actual,
+        cantidad_minima: item.cantidad_minima,
+        cantidad_maxima: item.cantidad_maxima,
+        ubicacion: item.ubicacion,
+        accion: 'actualizar'
+      })
     }
+    
+    setIsModalOpen(true)
   }
 
-  // Eliminar item
-  const handleDelete = async (item) => {
-    // En vista global con múltiples items agrupados, mostrar selector
-    if (viewMode === 'global' && item.originalItems && item.originalItems.length > 1) {
-      setCurrentGroupedItem(item)
-      setSelectingAction('delete')
-      setIsSelectingRoom(true)
-      return
-    }
-
-    const itemToDelete = viewMode === 'global' && item.originalItems 
-      ? item.originalItems[0] 
-      : item
-
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de que deseas eliminar "${itemToDelete.nombre}"?`
-    )
-
-    if (!confirmDelete) return
-
-    try {
-      setItems(items.filter(i => i.id !== itemToDelete.id))
-      alert('Item eliminado exitosamente')
-    } catch (error) {
-      console.error('Error al eliminar item:', error)
-      alert('Error al eliminar el item')
-    }
-  }
-
-  // Proceder con la eliminación después de seleccionar habitación
-  const handleProceedDeleteFromGlobal = (room) => {
-    const itemToDelete = currentGroupedItem.originalItems.find(i => i.habitacionId === room.id)
-    if (itemToDelete) {
-      const confirmDelete = window.confirm(
-        `¿Estás seguro de que deseas eliminar "${itemToDelete.nombre}" de la habitación ${room.numero}?`
-      )
-
-      if (!confirmDelete) return
-
-      try {
-        setItems(items.filter(i => i.id !== itemToDelete.id))
-        setIsSelectingRoom(false)
-        setCurrentGroupedItem(null)
-        setSelectingAction(null)
-        alert('Item eliminado exitosamente')
-      } catch (error) {
-        console.error('Error al eliminar item:', error)
-        alert('Error al eliminar el item')
+  const handleSaveInventory = async () => {
+    if (modalType === 'add') {
+      if (!formData.producto_id || !formData.cantidad_actual) {
+        alert('Por favor completa: Producto y Cantidad')
+        return
+      }
+    } else {
+      if (!formData.cantidad_actual) {
+        alert('Por favor ingresa una cantidad')
+        return
       }
     }
-  }
 
-  // Guardar o actualizar item
-  const handleSaveItem = async () => {
-    if (!formData.nombre || !formData.cantidad) {
-      alert('Por favor completa todos los campos')
-      return
-    }
-
-    setSaving(true)
     try {
-      if (isEditMode && editingItem) {
-        // Actualizar item existente con estado calculado
-        const updatedFormData = {
-          ...formData,
-          estado: calculateStatus(formData.cantidad)
+      if (modalType === 'add') {
+        // Crear nuevo inventario
+        const res = await fetch(`${API}/inventario.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            producto_id: parseInt(formData.producto_id),
+            cantidad_actual: parseInt(formData.cantidad_actual),
+            cantidad_minima: parseInt(formData.cantidad_minima) || 10,
+            cantidad_maxima: parseInt(formData.cantidad_maxima) || 100,
+            ubicacion: formData.ubicacion || 'Almacén general'
+          })
+        })
+        const data = await res.json()
+        if (data.exito) {
+          alert('✓ Inventario creado')
+          cargarInventario()
+        } else {
+          alert('Error: ' + data.mensaje)
         }
-        setItems(items.map(item =>
-          item.id === editingItem.id
-            ? { ...item, ...updatedFormData }
-            : item
-        ))
-        alert('Item actualizado exitosamente')
       } else {
-        // Agregar nuevo item con estado calculado
-        const newItem = {
-          id: Math.max(...items.map(i => i.id), 0) + 1,
-          ...formData,
-          estado: calculateStatus(formData.cantidad),
-          habitacionId: selectedRoomId,
+        // Actualizar (agregar, restar o editar)
+        const res = await fetch(`${API}/inventario.php`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingItem.id,
+            cantidad_actual: parseInt(formData.cantidad_actual),
+            cantidad_minima: parseInt(formData.cantidad_minima) || editingItem.cantidad_minima,
+            cantidad_maxima: parseInt(formData.cantidad_maxima) || editingItem.cantidad_maxima,
+            ubicacion: formData.ubicacion || editingItem.ubicacion,
+            accion: formData.accion
+          })
+        })
+        const data = await res.json()
+        if (data.exito) {
+          const acciones = {
+            'agregar': '✓ Stock agregado',
+            'restar': '✓ Stock restado',
+            'actualizar': '✓ Inventario actualizado'
+          }
+          alert(acciones[formData.accion])
+          cargarInventario()
+        } else {
+          alert('Error: ' + data.mensaje)
         }
-        setItems([...items, newItem])
-        alert('Item agregado exitosamente')
       }
       setIsModalOpen(false)
       resetForm()
-    } catch (error) {
-      console.error('Error al guardar item:', error)
-      alert('Error al guardar el item')
-    } finally {
-      setSaving(false)
+    } catch (err) {
+      alert('Error: ' + err.message)
+      console.error(err)
     }
   }
 
-  // Handles para el formulario
-  const handleFormChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+  const handleDelete = async (item) => {
+    if (!confirm('¿Eliminar inventario de ' + item.nombre_producto + '?')) return
+    try {
+      const res = await fetch(`${API}/inventario.php`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id })
+      })
+      const data = await res.json()
+      if (data.exito) {
+        alert('✓ Eliminado')
+        cargarInventario()
+      } else {
+        alert('Error: ' + data.mensaje)
+      }
+    } catch (err) {
+      alert('Error: ' + err.message)
+    }
   }
 
-  // Filtrar y agrupar items según el modo de vista
-  const displayedItems = viewMode === 'por-habitacion'
-    ? items.filter(item => item.habitacionId === selectedRoomId)
-    : (() => {
-        // Agrupar items por nombre y sumar cantidades en vista global
-        const grouped = {}
-        items.forEach(item => {
-          if (!grouped[item.nombre]) {
-            grouped[item.nombre] = {
-              id: item.id,
-              nombre: item.nombre,
-              cantidad: item.cantidad,
-              unidad: item.unidad,
-              estado: item.estado,
-              originalItems: [item],
-            }
-          } else {
-            grouped[item.nombre].cantidad += item.cantidad
-            grouped[item.nombre].originalItems.push(item)
-          }
-        })
-        return Object.values(grouped)
-      })()
+  // CALCULAR ESTADÍSTICAS
+  const totalProductos = inventory.length
+  const stockBajo = inventory.filter(i => i.cantidad_actual <= i.cantidad_minima).length
+  const stockAlto = inventory.filter(i => i.cantidad_actual >= i.cantidad_maxima).length
 
-  // Columnas de la tabla
-  const columns = viewMode === 'por-habitacion'
-    ? [
-        { key: 'nombre', label: 'Artículo' },
-        { key: 'cantidad', label: 'Cantidad' },
-      ]
-    : [
-        { key: 'nombre', label: 'Artículo' },
-        { key: 'cantidad', label: 'Cantidad' },
-        { key: 'estado', label: 'Estado' },
-      ]
+  // COLUMNAS DE TABLA
+  const columns = [
+    { key: 'nombre_producto', label: 'Producto' },
+    { key: 'categoria', label: 'Categoría' },
+    { 
+      key: 'cantidad_actual', 
+      label: 'Cantidad Actual',
+      render: (v, row) => {
+        const color = v <= row.cantidad_minima ? 'red' : v >= row.cantidad_maxima ? 'green' : 'orange'
+        return <span style={{ color }}>{v}</span>
+      }
+    },
+    { key: 'cantidad_minima', label: 'Mínimo' },
+    { key: 'cantidad_maxima', label: 'Máximo' },
+    { key: 'ubicacion', label: 'Ubicación' },
+    { key: 'ultimo_reabastecimiento', label: 'Ult. Reabastecimiento', render: (v) => new Date(v).toLocaleDateString() }
+  ]
 
-  const selectedRoom = rooms.find(r => r.id === selectedRoomId)
+  // MODAL DINÁMICO
+  const getModalTitle = () => {
+    const titles = {
+      'add': 'Crear Inventario',
+      'agregar': 'Agregar Stock',
+      'restar': 'Restar Stock',
+      'editar': 'Editar Inventario'
+    }
+    return titles[modalType] || 'Inventario'
+  }
 
   return (
     <DashboardLayout>
       <div className="module-page">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
           <Icon name="package" size={32} className="primary" />
-          <h1 style={{ margin: 0 }}>Inventario</h1>
+          <h1 style={{ margin: 0 }}>Gestión de Inventario</h1>
         </div>
-        <p className="page-subtitle">Registra y controla el inventario de cada habitación del hotel</p>
+        <p className="page-subtitle">Control de stock de productos del hotel</p>
 
-        {/* Toggle de vista */}
-        <div className="view-toggle">
-          <button
-            className={`toggle-btn ${viewMode === 'por-habitacion' ? 'active' : ''}`}
-            onClick={() => setViewMode('por-habitacion')}
-          >
-            Por Habitación
-          </button>
-          <button
-            className={`toggle-btn ${viewMode === 'global' ? 'active' : ''}`}
-            onClick={() => setViewMode('global')}
-          >
-            Vista Global
-          </button>
+        {error && <div style={{ color: 'red', marginBottom: '20px', padding: '10px', backgroundColor: '#ffe6e6', borderRadius: '4px' }}>{error}</div>}
+
+        {/* TARJETAS ESTADÍSTICAS */}
+        <div className="stats-grid" style={{ marginBottom: '32px' }}>
+          <Card
+            title="Total de Productos"
+            value={totalProductos}
+            icon="package"
+            subtitle="en inventario"
+          />
+          <Card
+            title="Stock Bajo"
+            value={stockBajo}
+            icon="trending"
+            subtitle="por debajo del mínimo"
+          />
+          <Card
+            title="Stock Alto"
+            value={stockAlto}
+            icon="rocket"
+            subtitle="en o sobre el máximo"
+          />
         </div>
 
-        {/* Selector de habitación - solo se muestra en vista por habitación */}
-        {viewMode === 'por-habitacion' && (
-          <div className="room-selector">
-            <label htmlFor="room-select">Seleccionar Habitación:</label>
-            <select
-              id="room-select"
-              value={selectedRoomId}
-              onChange={(e) => setSelectedRoomId(Number(e.target.value))}
-            >
-              {rooms.map(room => (
-                <option key={room.id} value={room.id}>
-                  Habitación {room.numero}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="page-header">
-          <div>
-            {viewMode === 'por-habitacion' && selectedRoom && (
-              <p className="room-items-count">
-                {displayedItems.length} item(s) en Habitación {selectedRoom.numero}
-              </p>
-            )}
-            {viewMode === 'global' && (
-              <p className="room-items-count">
-                {displayedItems.length} item(s) en total
-              </p>
-            )}
-          </div>
-          {user?.role === 'admin' && (
-            <button className="btn btn-primary" onClick={handleOpenAddModal}>
-              + Agregar Item
+        {/* BOTÓN NUEVO INVENTARIO */}
+        <div className="page-header" style={{ marginBottom: '20px' }}>
+          <div></div>
+          {(user?.role === 'admin' || user?.role === 'gerente') && (
+            <button className="btn btn-primary" onClick={() => handleOpenModal('add')}>
+              + Crear Inventario
             </button>
           )}
         </div>
 
-        <Table
-          columns={columns}
-          data={displayedItems}
-          onEdit={user?.role === 'admin' ? handleEdit : null}
-          onDelete={user?.role === 'admin' ? handleDelete : null}
-          actions={user?.role === 'admin'}
-        />
-
-        {/* Modal para seleccionar habitación en vista global */}
-        <Modal
-          isOpen={isSelectingRoom}
-          title={selectingAction === 'edit' ? 'Seleccionar Habitación para Editar' : 'Seleccionar Habitación para Eliminar'}
-          onClose={() => {
-            setIsSelectingRoom(false)
-            setCurrentGroupedItem(null)
-            setSelectingAction(null)
-          }}
-          confirmText={selectingAction === 'edit' ? 'Editar' : 'Eliminar'}
-          onConfirm={() => {}}
-        >
-          <div className="room-selection-grid">
-            {currentGroupedItem?.originalItems.map((item) => {
-              const room = rooms.find(r => r.id === item.habitacionId)
-              return (
-                <div key={item.id} className="room-selection-item">
-                  <div className="room-info">
-                    <h4>Habitación {room?.numero}</h4>
-                    <p>Cantidad: {item.cantidad}</p>
-                  </div>
-                  <button
-                    className={`btn ${selectingAction === 'edit' ? 'btn-primary' : 'btn-danger'}`}
-                    onClick={() => {
-                      if (selectingAction === 'edit') {
-                        handleProceedEditFromGlobal(room)
-                      } else {
-                        handleProceedDeleteFromGlobal(room)
-                      }
-                    }}
+        {/* TABLA */}
+        {loading ? (
+          <p>Cargando...</p>
+        ) : (
+          <Table
+            columns={columns}
+            data={inventory.map(item => ({
+              ...item,
+              __actions: (
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <button 
+                    onClick={() => handleOpenModal('agregar', item)} 
+                    className="btn btn-small"
+                    style={{ backgroundColor: '#4CAF50', color: 'white', padding: '4px 8px' }}
+                    title="Agregar stock"
                   >
-                    {selectingAction === 'edit' ? 'Editar' : 'Eliminar'}
+                    ➕
+                  </button>
+                  <button 
+                    onClick={() => handleOpenModal('restar', item)} 
+                    className="btn btn-small"
+                    style={{ backgroundColor: '#FF9800', color: 'white', padding: '4px 8px' }}
+                    title="Restar stock"
+                  >
+                    ➖
+                  </button>
+                  <button 
+                    onClick={() => handleOpenModal('editar', item)} 
+                    className="btn btn-small"
+                    title="Editar"
+                  >
+                    ✏️
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(item)}
+                    className="btn btn-danger btn-small"
+                    title="Eliminar"
+                  >
+                    🗑️
                   </button>
                 </div>
               )
-            })}
-          </div>
-        </Modal>
+            }))}
+            actions={true}
+          />
+        )}
 
-        {/* Modal para agregar/editar item */}
+        {/* MODAL */}
         <Modal
           isOpen={isModalOpen}
-          title={isEditMode ? `Editar: ${editingItem?.nombre}` : 'Agregar Item al Inventario'}
-          onClose={() => {
-            setIsModalOpen(false)
-            resetForm()
-          }}
-          onConfirm={handleSaveItem}
-          confirmText={saving ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Agregar'}
+          title={getModalTitle()}
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={handleSaveInventory}
+          confirmText="Guardar"
         >
-          <form className="form-grid">
-            {viewMode === 'por-habitacion' && (
+          <form className="form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            {/* PRODUCTO */}
+            {modalType === 'add' && (
               <div className="form-group">
-                <label>Habitación</label>
-                <input
-                  type="text"
-                  value={`Habitación ${selectedRoom?.numero || ''}`}
-                  disabled
-                />
+                <label>Producto *</label>
+                <select
+                  value={formData.producto_id}
+                  onChange={(e) => setFormData({ ...formData, producto_id: e.target.value })}
+                  required
+                  style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                >
+                  <option value="">Seleccionar producto</option>
+                  {products.map(prod => {
+                    // Verificar si ya existe en inventario
+                    const existe = inventory.some(i => i.producto_id === prod.id)
+                    return (
+                      <option key={prod.id} value={prod.id} disabled={existe}>
+                        {prod.nombre} {existe ? '(Ya en inventario)' : ''}
+                      </option>
+                    )
+                  })}
+                </select>
               </div>
             )}
+
+            {/* CANTIDAD */}
             <div className="form-group">
-              <label htmlFor="nombre">Nombre del Artículo</label>
+              <label>
+                {modalType === 'agregar' ? 'Cantidad a Agregar' : modalType === 'restar' ? 'Cantidad a Restar' : 'Cantidad Actual'} *
+              </label>
               <input
-                id="nombre"
-                type="text"
-                name="nombre"
-                placeholder="Ej: Sábanas"
-                value={formData.nombre}
-                onChange={handleFormChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="cantidad">Cantidad</label>
-              <input
-                id="cantidad"
                 type="number"
-                name="cantidad"
+                value={formData.cantidad_actual}
+                onChange={(e) => setFormData({ ...formData, cantidad_actual: e.target.value })}
                 placeholder="0"
-                value={formData.cantidad}
-                onChange={handleFormChange}
-                min="0"
+                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                required
               />
             </div>
-            {viewMode === 'global' && (
-              <div className="form-group">
-                <label htmlFor="estado">Estado</label>
-                <input
-                  id="estado"
-                  type="text"
-                  value={calculateStatus(formData.cantidad) || 'No definido'}
-                  disabled
-                  placeholder="Se calcula automáticamente"
-                />
-              </div>
+
+            {/* MÍNIMO Y MÁXIMO */}
+            {(modalType === 'add' || modalType === 'editar') && (
+              <>
+                <div className="form-group">
+                  <label>Cantidad Mínima</label>
+                  <input
+                    type="number"
+                    value={formData.cantidad_minima}
+                    onChange={(e) => setFormData({ ...formData, cantidad_minima: e.target.value })}
+                    placeholder="10"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Cantidad Máxima</label>
+                  <input
+                    type="number"
+                    value={formData.cantidad_maxima}
+                    onChange={(e) => setFormData({ ...formData, cantidad_maxima: e.target.value })}
+                    placeholder="100"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Ubicación</label>
+                  <input
+                    type="text"
+                    value={formData.ubicacion}
+                    onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
+                    placeholder="Almacén general"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
+              </>
             )}
           </form>
         </Modal>

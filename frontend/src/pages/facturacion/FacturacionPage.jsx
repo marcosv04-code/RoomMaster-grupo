@@ -11,97 +11,207 @@ const API = 'http://localhost/RoomMaster_Prueba/backend'
 
 export default function FacturacionPage() {
   const { user } = useAuth()
+  
+  // DATOS
   const [invoices, setInvoices] = useState([])
+  const [clients, setClients] = useState([])
+  const [stays, setStays] = useState([])
+  
+  // ESTADOS UI
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [formData, setFormData] = useState({ estadia_id: '', cliente_id: '', subtotal: '', impuesto: '', total: '' })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editingInvoice, setEditingInvoice] = useState(null)
+  
+  // FORMULARIO
+  const [formData, setFormData] = useState({
+    estadia_id: '',
+    cliente_id: '',
+    subtotal: '',
+    impuesto: '',
+    total: '',
+    estado: 'Pendiente',
+    metodo_pago: ''
+  })
 
-  // Cargar facturas
+  // CARGAR DATOS AL MONTAR
   useEffect(() => {
     cargarFacturas()
+    cargarClientes()
+    cargarEstadias()
   }, [])
 
+  // FUNCIONES DE CARGA
   async function cargarFacturas() {
     try {
       setLoading(true)
       const res = await fetch(`${API}/facturas.php`)
       const data = await res.json()
-      if (data.success) {
-        setInvoices(data.datos)
+      if (data.exito) {
+        setInvoices(data.datos || [])
+      } else {
+        setError(data.mensaje)
       }
     } catch (err) {
-      setError('Error al cargar facturas')
+      setError('Error al cargar facturas: ' + err.message)
       console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleCreateInvoice = async () => {
+  async function cargarClientes() {
+    try {
+      const res = await fetch(`${API}/clientes.php`)
+      const data = await res.json()
+      if (data.exito) {
+        setClients(data.datos || [])
+      }
+    } catch (err) {
+      console.error('Error al cargar clientes:', err)
+    }
+  }
+
+  async function cargarEstadias() {
+    try {
+      const res = await fetch(`${API}/estadias.php`)
+      const data = await res.json()
+      if (data.exito) {
+        setStays(data.datos || [])
+      }
+    } catch (err) {
+      console.error('Error al cargar estadías:', err)
+    }
+  }
+
+  // FUNCIONES CRUD
+  const resetForm = () => {
+    setFormData({
+      estadia_id: '',
+      cliente_id: '',
+      subtotal: '',
+      impuesto: '',
+      total: '',
+      estado: 'Pendiente',
+      metodo_pago: ''
+    })
+    setIsEditMode(false)
+    setEditingInvoice(null)
+  }
+
+  const handleOpenModal = () => {
+    resetForm()
+    setIsModalOpen(true)
+  }
+
+  const handleEdit = (invoice) => {
+    setEditingInvoice(invoice)
+    setFormData({
+      estadia_id: invoice.estadia_id || '',
+      cliente_id: invoice.cliente_id || '',
+      subtotal: invoice.subtotal || '',
+      impuesto: invoice.impuesto || '',
+      total: invoice.total || '',
+      estado: invoice.estado || 'Pendiente',
+      metodo_pago: invoice.metodo_pago || ''
+    })
+    setIsEditMode(true)
+    setIsModalOpen(true)
+  }
+
+  const handleSaveInvoice = async () => {
     if (!formData.cliente_id || !formData.total) {
-      alert('Por favor completa todos los campos')
+      alert('Por favor completa: Cliente y Total')
       return
     }
 
     try {
-      const res = await fetch(`${API}/facturas.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          estadia_id: formData.estadia_id || 1,
-          cliente_id: formData.cliente_id,
-          subtotal: parseFloat(formData.subtotal || 0),
-          impuesto: parseFloat(formData.impuesto || 0),
-          total: parseFloat(formData.total)
+      if (isEditMode && editingInvoice) {
+        // Actualizar
+        const res = await fetch(`${API}/facturas.php`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: editingInvoice.id,
+            estado: formData.estado,
+            metodo_pago: formData.metodo_pago
+          })
         })
-      })
-      const data = await res.json()
-      if (data.success) {
-        cargarFacturas()
-        setFormData({ estadia_id: '', cliente_id: '', subtotal: '', impuesto: '', total: '' })
-        setIsModalOpen(false)
+        const data = await res.json()
+        if (data.exito) {
+          alert('✓ Factura actualizada')
+          cargarFacturas()
+        } else {
+          alert('Error: ' + data.mensaje)
+        }
       } else {
-        alert(data.mensaje)
+        // Crear nueva
+        const res = await fetch(`${API}/facturas.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            estadia_id: parseInt(formData.estadia_id) || 1,
+            cliente_id: parseInt(formData.cliente_id),
+            subtotal: parseFloat(formData.subtotal) || 0,
+            impuesto: parseFloat(formData.impuesto) || 0,
+            total: parseFloat(formData.total),
+            estado: formData.estado,
+            metodo_pago: formData.metodo_pago
+          })
+        })
+        const data = await res.json()
+        if (data.exito) {
+          alert('✓ Factura creada: ' + data.datos.numero_factura)
+          cargarFacturas()
+        } else {
+          alert('Error: ' + data.mensaje)
+        }
       }
+      setIsModalOpen(false)
+      resetForm()
     } catch (err) {
-      alert('Error al crear factura')
+      alert('Error al guardar: ' + err.message)
       console.error(err)
     }
   }
 
-  const handleDeleteInvoice = async (id) => {
-    if (!confirm('¿Estás seguro?')) return
+  const handleDelete = async (invoice) => {
+    if (!confirm('¿Eliminar factura ' + invoice.numero_factura + '?')) return
     try {
       const res = await fetch(`${API}/facturas.php`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id: invoice.id })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
+        alert('✓ Factura eliminada')
         cargarFacturas()
       } else {
-        alert(data.mensaje)
+        alert('Error: ' + data.mensaje)
       }
     } catch (err) {
-      alert('Error al eliminar')
-      console.error(err)
+      alert('Error: ' + err.message)
     }
   }
 
-  const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'cliente_id', label: 'Cliente ID' },
-    { key: 'total', label: 'Total', render: (value) => `$${value}` },
-    { key: 'impuesto', label: 'Impuesto', render: (value) => `$${value}` },
-    { key: 'estado', label: 'Estado' },
-    { key: 'fecha_creacion', label: 'Fecha' },
-  ]
-
+  // CALCULAR TOTALES
   const totalIngresos = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
   const totalPagado = invoices.filter(inv => inv.estado === 'Pagada').reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
   const pendiente = invoices.filter(inv => inv.estado === 'Pendiente').reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
+
+  // COLUMNAS DE TABLA
+  const columns = [
+    { key: 'numero_factura', label: 'Factura' },
+    { key: 'cliente_nombre', label: 'Cliente' },
+    { key: 'subtotal', label: 'Subtotal', render: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
+    { key: 'impuesto', label: 'Impuesto', render: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
+    { key: 'total', label: 'Total', render: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
+    { key: 'estado', label: 'Estado' },
+    { key: 'metodo_pago', label: 'Método' },
+    { key: 'fecha_factura', label: 'Fecha', render: (v) => new Date(v).toLocaleDateString() }
+  ]
 
   return (
     <DashboardLayout>
@@ -110,10 +220,11 @@ export default function FacturacionPage() {
           <Icon name="money" size={32} className="primary" />
           <h1 style={{ margin: 0 }}>Facturación y Cobro</h1>
         </div>
-        <p className="page-subtitle">Crea facturas, registra cobros y gestiona la contabilidad de tu hotel</p>
+        <p className="page-subtitle">Gestiona facturas, cobros y registra pagos</p>
 
-        {error && <div className="error-message" style={{ color: 'red', marginBottom: '20px' }}>{error}</div>}
+        {error && <div style={{ color: 'red', marginBottom: '20px', padding: '10px', backgroundColor: '#ffe6e6', borderRadius: '4px' }}>{error}</div>}
 
+        {/* TARJETAS ESTADÍSTICAS */}
         <div className="stats-grid" style={{ marginBottom: '32px' }}>
           <Card
             title="Ingresos Totales"
@@ -122,86 +233,158 @@ export default function FacturacionPage() {
             subtitle={`${invoices.length} facturas`}
           />
           <Card
-            title="Ingresos Pagados"
+            title="Cobrado"
             value={`$${totalPagado.toFixed(2)}`}
-            icon="check"
-            subtitle="Cobrados"
+            icon="check-circle"
+            subtitle="Pagadas"
           />
           <Card
-            title="Pendiente de Pago"
+            title="Por Cobrar"
             value={`$${pendiente.toFixed(2)}`}
             icon="activity"
-            subtitle="Por cobrar"
+            subtitle="Pendientes"
           />
         </div>
 
-        <div className="page-header">
+        {/* BOTÓN NUEVA FACTURA */}
+        <div className="page-header" style={{ marginBottom: '20px' }}>
           <div></div>
           {(user?.role === 'admin' || user?.role === 'receptionist') && (
-            <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+            <button className="btn btn-primary" onClick={handleOpenModal}>
               + Nueva Factura
             </button>
           )}
         </div>
 
-        {loading ? <p>Cargando...</p> : (
+        {/* TABLA */}
+        {loading ? (
+          <p>Cargando...</p>
+        ) : (
           <Table
             columns={columns}
             data={invoices}
-            onEdit={(invoice) => console.log('Editar:', invoice)}
-            onDelete={(invoice) => handleDeleteInvoice(invoice.id)}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
             actions={true}
           />
         )}
 
+        {/* MODAL */}
         <Modal
           isOpen={isModalOpen}
-          title="Nueva Factura"
+          title={isEditMode ? 'Editar Factura' : 'Nueva Factura'}
           onClose={() => setIsModalOpen(false)}
-          onConfirm={handleCreateInvoice}
-          confirmText="Crear Factura"
+          onConfirm={handleSaveInvoice}
+          confirmText={isEditMode ? 'Actualizar' : 'Crear Factura'}
         >
-          <form className="form-grid">
+          <form className="form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            {!isEditMode && (
+              <>
+                {/* ESTADIA */}
+                <div className="form-group">
+                  <label>Estadía (Opcional)</label>
+                  <select
+                    value={formData.estadia_id}
+                    onChange={(e) => setFormData({ ...formData, estadia_id: e.target.value })}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  >
+                    <option value="">Seleccionar estadía</option>
+                    {stays.map(stay => (
+                      <option key={stay.id} value={stay.id}>
+                        Estadía #{stay.id} - Cliente #{stay.cliente_id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* CLIENTE */}
+                <div className="form-group">
+                  <label>Cliente *</label>
+                  <select
+                    value={formData.cliente_id}
+                    onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
+                    required
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  >
+                    <option value="">Seleccionar cliente</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.nombre} (ID: {client.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* SUBTOTAL */}
+                <div className="form-group">
+                  <label>Subtotal ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.subtotal}
+                    onChange={(e) => setFormData({ ...formData, subtotal: e.target.value })}
+                    placeholder="0.00"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
+
+                {/* IMPUESTO */}
+                <div className="form-group">
+                  <label>Impuesto ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.impuesto}
+                    onChange={(e) => setFormData({ ...formData, impuesto: e.target.value })}
+                    placeholder="0.00"
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
+
+                {/* TOTAL */}
+                <div className="form-group">
+                  <label>Total ($) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.total}
+                    onChange={(e) => setFormData({ ...formData, total: e.target.value })}
+                    placeholder="0.00"
+                    required
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* ESTADO */}
             <div className="form-group">
-              <label>Cliente ID</label>
-              <input
-                type="number"
-                placeholder="ID del cliente"
-                value={formData.cliente_id}
-                onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
-                required
-              />
+              <label>Estado</label>
+              <select
+                value={formData.estado}
+                onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+              >
+                <option value="Pendiente">Pendiente</option>
+                <option value="Pagada">Pagada</option>
+                <option value="Cancelada">Cancelada</option>
+              </select>
             </div>
+
+            {/* MÉTODO DE PAGO */}
             <div className="form-group">
-              <label>Subtotal</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.subtotal}
-                onChange={(e) => setFormData({ ...formData, subtotal: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Impuesto</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.impuesto}
-                onChange={(e) => setFormData({ ...formData, impuesto: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Total</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={formData.total}
-                onChange={(e) => setFormData({ ...formData, total: e.target.value })}
-                required
-              />
+              <label>Método de Pago</label>
+              <select
+                value={formData.metodo_pago}
+                onChange={(e) => setFormData({ ...formData, metodo_pago: e.target.value })}
+                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+              >
+                <option value="">Seleccionar</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Cheque">Cheque</option>
+              </select>
             </div>
           </form>
         </Modal>
@@ -209,4 +392,3 @@ export default function FacturacionPage() {
     </DashboardLayout>
   )
 }
-

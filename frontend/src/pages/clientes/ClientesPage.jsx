@@ -55,7 +55,7 @@ export default function ClientesPage() {
       setLoading(true)
       const res = await fetch(`${API}/clientes.php`)
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         setClients(data.datos || [])
       } else {
         console.error('Error:', data.mensaje)
@@ -156,7 +156,7 @@ export default function ClientesPage() {
           })
         })
         const data = await res.json()
-        if (data.success) {
+        if (data.exito) {
           alert('✓ Cliente actualizado exitosamente')
           fetchClientes()
         } else {
@@ -176,7 +176,7 @@ export default function ClientesPage() {
           })
         })
         const data = await res.json()
-        if (data.success) {
+        if (data.exito) {
           alert('✓ Cliente agregado exitosamente')
           fetchClientes()
         } else {
@@ -208,7 +208,7 @@ export default function ClientesPage() {
         body: JSON.stringify({ id: client.id })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         alert('✓ Cliente eliminado exitosamente')
         fetchClientes()
       } else {

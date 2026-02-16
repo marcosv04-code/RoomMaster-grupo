@@ -98,7 +98,28 @@ else if ($metodo === 'PUT') {
         responder(false, $resultado['error'], null, 500);
     }
     
+    
     responder(true, 'Factura actualizada exitosamente');
+}
+
+// DELETE - Eliminar factura
+else if ($metodo === 'DELETE') {
+    $error = validarCampos($datos, ['id']);
+    if ($error) {
+        responder(false, $error, null, 400);
+    }
+    
+    $id = intval($datos['id']);
+    
+    $sql = "DELETE FROM facturas WHERE id = $id";
+    
+    $resultado = ejecutarAccion($conexion, $sql);
+    
+    if (isset($resultado['error'])) {
+        responder(false, $resultado['error'], null, 500);
+    }
+    
+    responder(true, 'Factura eliminada exitosamente');
 }
 
 else {

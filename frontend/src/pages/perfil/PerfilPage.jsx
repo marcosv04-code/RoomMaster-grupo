@@ -65,7 +65,7 @@ export default function PerfilPage() {
         })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         setPasswordData({ actual: '', nueva: '', confirmar: '' })
         setSavedMessage('✓ Contraseña actualizada correctamente')
         setTimeout(() => setSavedMessage(''), 3000)
@@ -118,7 +118,7 @@ export default function PerfilPage() {
         })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         setUserProfile(prev => ({
           ...prev,
           nombre: editNameValue.trim()

@@ -67,7 +67,7 @@ export default function DashboardPage() {
     try {
       const res = await fetch(`${API}/dashboard_stats.php`)
       const data = await res.json()
-      if (data.success) setStats(data.datos)
+      if (data.exito) setStats(data.datos)
     } catch (error) {
       console.error('Error al cargar estadísticas:', error)
     }
@@ -77,7 +77,7 @@ export default function DashboardPage() {
     try {
       const res = await fetch(`${API}/personal_limpieza.php`)
       const data = await res.json()
-      if (data.success) setStaff(data.datos)
+      if (data.exito) setStaff(data.datos)
     } catch (error) {
       console.error('Error al cargar personal:', error)
     }
@@ -101,7 +101,7 @@ export default function DashboardPage() {
       })
 
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         fetchStaff()
         alert(editingStaff ? '✓ Personal actualizado' : '✓ Personal creado')
         setIsStaffModalOpen(false)
@@ -128,7 +128,7 @@ export default function DashboardPage() {
       })
 
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         fetchStaff()
         alert('✓ Personal eliminado')
       } else {
@@ -174,7 +174,7 @@ export default function DashboardPage() {
     try {
       const res = await fetch(`${API}/habitaciones.php`)
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         setRooms(data.datos)
       }
     } catch (error) {
@@ -226,7 +226,7 @@ export default function DashboardPage() {
       })
 
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         fetchRooms()
         setIsEditModalOpen(false)
         setEditingRoom(null)
@@ -275,7 +275,7 @@ export default function DashboardPage() {
       const data = await res.json()
       console.log('Delete response:', data)
       
-      if (data.success) {
+      if (data.exito) {
         fetchRooms()
         alert('✓ Habitación eliminada correctamente')
       } else {
@@ -289,7 +289,7 @@ export default function DashboardPage() {
 
   const handleAddRoom = async () => {
     if (!newRoomForm.numero || !newRoomForm.precio_noche) {
-      alert('Completa los campos requeridos (número y precio)')
+      alert('⚠️ Completa los campos requeridos (número y precio)')
       return
     }
 
@@ -312,17 +312,17 @@ export default function DashboardPage() {
       })
 
       const data = await res.json()
-      if (data.success) {
+      if (data.exito) {
         fetchRooms()
         setIsAddRoomModalOpen(false)
         resetNewRoomForm()
         alert('✓ Habitación agregada correctamente')
       } else {
-        alert('Error: ' + data.mensaje)
+        alert('❌ ' + (data.mensaje || 'Error al agregar habitación'))
       }
     } catch (error) {
       console.error('Error al agregar habitación:', error)
-      alert('Error al agregar la habitación')
+      alert('❌ Error al agregar la habitación: ' + error.message)
     } finally {
       setSaving(false)
     }

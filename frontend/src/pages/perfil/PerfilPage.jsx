@@ -5,7 +5,7 @@ import { useTheme } from '../../hooks/useTheme'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
-const API = 'http://localhost/RoomMaster_Prueba/backend'
+const API = 'http://localhost/RoomMaster-grupo/backend'
 
 export default function PerfilPage() {
   const { isDarkMode, toggleTheme } = useTheme()

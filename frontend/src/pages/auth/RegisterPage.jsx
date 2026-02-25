@@ -88,7 +88,7 @@ export default function RegisterPage() {
 
     try {
       // Enviar solicitud al backend
-      const response = await fetch('http://localhost/RoomMaster_Prueba/backend/register.php', {
+      const response = await fetch('http://localhost/RoomMaster-grupo/backend/register.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

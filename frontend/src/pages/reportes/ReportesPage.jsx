@@ -4,7 +4,7 @@ import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import './ModulePage.css'
 
-const API = 'http://localhost/RoomMaster_Prueba/backend'
+const API = 'http://localhost/RoomMaster-grupo/backend'
 
 export default function ReportesPage() {
   const [period, setPeriod] = useState('month')

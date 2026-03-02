@@ -4,6 +4,7 @@ import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
+import UserRegisterForm from '../../components/forms/UserRegisterForm'
 import { useAuth } from '../../hooks/useAuth'
 import './DashboardPage.css'
 import { roomService } from '../../services/index'
@@ -24,10 +25,12 @@ export default function DashboardPage() {
   })
   const [rooms, setRooms] = useState([])
   const [staff, setStaff] = useState([])
+  const [usuarios, setUsuarios] = useState([])
   const [loading, setLoading] = useState(true)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false)
   const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false)
+  const [isRegisterUserModalOpen, setIsRegisterUserModalOpen] = useState(false)
   const [editingRoom, setEditingRoom] = useState(null)
   const [editingStaff, setEditingStaff] = useState(null)
   const [editForm, setEditForm] = useState({})
@@ -61,6 +64,7 @@ export default function DashboardPage() {
     fetchStats()
     fetchRooms()
     fetchStaff()
+    fetchUsuarios()
   }, [])
 
   const fetchStats = async () => {
@@ -80,6 +84,16 @@ export default function DashboardPage() {
       if (data.exito) setStaff(data.datos)
     } catch (error) {
       console.error('Error al cargar personal:', error)
+    }
+  }
+
+  const fetchUsuarios = async () => {
+    try {
+      const res = await fetch(`${API}/usuarios.php`)
+      const data = await res.json()
+      if (data.exito) setUsuarios(data.datos)
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error)
     }
   }
 
@@ -338,6 +352,32 @@ export default function DashboardPage() {
       amenidades: '',
       estado: 'Disponible',
     })
+  }
+
+  const handleRegisterUser = async (userData, setError, resetForm) => {
+    setSaving(true)
+    try {
+      const res = await fetch(`${API}/register.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      })
+
+      const data = await res.json()
+      if (data.exito) {
+        setIsRegisterUserModalOpen(false)
+        resetForm()
+        fetchUsuarios()
+        alert('✓ Usuario registrado correctamente')
+      } else {
+        setError(data.mensaje || 'Error al registrar usuario')
+      }
+    } catch (error) {
+      console.error('Error al registrar usuario:', error)
+      setError('Error: ' + error.message)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleEditFormChange = (e) => {
@@ -745,6 +785,77 @@ export default function DashboardPage() {
           </div>
         </Modal>
 
+        {/* GESTIÓN DE USUARIOS - SÓLO ADMIN */}
+        {user?.role === 'admin' && (
+          <div className="dashboard-section" style={{ marginBottom: '40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Icon name="users" size={24} className="primary" />
+                <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>Gestión de Usuarios</h2>
+              </div>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => setIsRegisterUserModalOpen(true)}
+              >
+                + Registrar Usuario
+              </button>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f8f9fb', borderBottom: '2px solid #e0e0e0' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Nombre</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Email</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Rol</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usuarios.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
+                        No hay usuarios registrados
+                      </td>
+                    </tr>
+                  ) : (
+                    usuarios.map((usuario) => (
+                      <tr key={usuario.id} style={{ borderBottom: '1px solid #e0e0e0', hover: { background: '#f9f9f9' } }}>
+                        <td style={{ padding: '12px' }}>{usuario.nombre}</td>
+                        <td style={{ padding: '12px' }}>{usuario.email}</td>
+                        <td style={{ padding: '12px' }}>
+                          <span style={{ 
+                            background: usuario.rol === 'recepcion' ? '#e3f2fd' : '#f3e5f5',
+                            color: usuario.rol === 'recepcion' ? '#1565c0' : '#6a1b9a',
+                            padding: '4px 12px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '600'
+                          }}>
+                            {usuario.rol === 'recepcion' ? '👤 Recepcionista' : usuario.rol}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <span style={{
+                            background: usuario.estado === 'activo' ? '#e8f5e9' : '#ffebee',
+                            color: usuario.estado === 'activo' ? '#2e7d32' : '#c62828',
+                            padding: '4px 12px',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: '600'
+                          }}>
+                            {usuario.estado === 'activo' ? '✓ Activo' : '✗ Inactivo'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* PERSONAL DE LIMPIEZA */}
         <div className="dashboard-section" style={{ marginTop: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -953,6 +1064,22 @@ export default function DashboardPage() {
               </select>
             </div>
           </div>
+        </Modal>
+
+        {/* Modal para Registrar Nuevo Usuario */}
+        <Modal
+          isOpen={isRegisterUserModalOpen}
+          title="Registrar Nuevo Usuario"
+          onClose={() => {
+            setIsRegisterUserModalOpen(false)
+          }}
+          showConfirmButton={false}
+        >
+          <UserRegisterForm 
+            onSubmit={handleRegisterUser}
+            isLoading={saving}
+            showRoleSelection={true}
+          />
         </Modal>
       </div>
     </DashboardLayout>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import Icon from '../../components/common/Icon'
 import logo from '../../assets/images/logo.svg'
+import facturacionImage from '../../assets/images/Facturacion.jpg'
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -20,37 +21,32 @@ export default function LandingPage() {
           <nav className="header-nav">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'auto' }) }}>Inicio</a>
             <a href="#features">Características</a>
-            <a href="#pricing">Precios</a>
             <a href="#contact">Contacto</a>
             {isAuthenticated ? (
               <button className="btn btn-primary" onClick={() => navigate('/dashboard')}>
                 Ir al Dashboard
               </button>
             ) : (
-              <>
-                <button className="btn btn-secondary" onClick={() => navigate('/login')}>
-                  Iniciar sesión
-                </button>
-                <button className="btn btn-primary" onClick={() => navigate('/register')}>
-                  Registrarse
-                </button>
-              </>
+              <button className="btn btn-primary" onClick={() => navigate('/login')}>
+                Iniciar sesión
+              </button>
             )}
           </nav>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section id="inicio" className="hero-section">
+      <section id="inicio" className="hero-section" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1564437170735-528793f62a2b?w=1200&h=600&fit=crop)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="hero-overlay"></div>
         <div className="hero-content">
           <h2>Software de Gestión Hotelera Completo</h2>
           <p>Controla facturación, inventario y estadías en una única plataforma. Automatiza procesos, aumenta eficiencia y mejora la experiencia de tus huéspedes con RoomMaster.</p>
           {!isAuthenticated && (
             <button 
               className="btn btn-primary btn-large" 
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/login')}
             >
-              Comienza Ahora
+              Acceder
             </button>
           )}
         </div>
@@ -61,91 +57,28 @@ export default function LandingPage() {
         <h2>Características Principales</h2>
         <div className="features-grid">
           <div className="feature-card">
+            <div className="feature-image" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop)' }}></div>
             <Icon name="hotel" size={48} className="primary" />
             <h3>Gestión de Estadía</h3>
             <p>Control completo de registros de huéspedes y estadías</p>
           </div>
           <div className="feature-card">
+            <div className="feature-image" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop)' }}></div>
             <Icon name="chart" size={48} className="primary" />
             <h3>Dashboard Inteligente</h3>
             <p>Reportes y estadísticas en tiempo real</p>
           </div>
           <div className="feature-card">
+            <div className="feature-image" style={{ backgroundImage: `url(${facturacionImage})` }}></div>
             <Icon name="credit-card" size={48} className="primary" />
             <h3>Facturación Automática</h3>
             <p>Cobros y facturas de forma simplificada</p>
           </div>
           <div className="feature-card">
+            <div className="feature-image" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=250&fit=crop)' }}></div>
             <Icon name="package" size={48} className="primary" />
             <h3>Inventario</h3>
             <p>Control de habitaciones e inventario por sala</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="pricing-section">
-        <h2>Nuestros Planes</h2>
-        <div className="pricing-grid">
-          <div className="pricing-card">
-            <div className="pricing-header">
-              <h3>Básico</h3>
-              <p className="pricing-description">Para hoteles pequeños</p>
-            </div>
-            <div className="pricing-amount">
-              <span className="price">$399.000</span>
-              <span className="period">/mes</span>
-            </div>
-            <ul className="pricing-features">
-              <li>✓ Hasta 20 habitaciones</li>
-              <li>✓ Gestión de estadías</li>
-              <li>✓ Dashboard básico</li>
-              <li>✓ Reportes simples</li>
-              <li>✗ Facturación avanzada</li>
-              <li>✗ API integrada</li>
-            </ul>
-            <button className="btn btn-secondary btn-block">Seleccionar Plan</button>
-          </div>
-
-          <div className="pricing-card pricing-card-featured">
-            <div className="pricing-badge">Más Popular</div>
-            <div className="pricing-header">
-              <h3>Profesional</h3>
-              <p className="pricing-description">Para hoteles medianos</p>
-            </div>
-            <div className="pricing-amount">
-              <span className="price">$999.000</span>
-              <span className="period">/mes</span>
-            </div>
-            <ul className="pricing-features">
-              <li>✓ Hasta 100 habitaciones</li>
-              <li>✓ Gestión completa de estadías</li>
-              <li>✓ Dashboard avanzado</li>
-              <li>✓ Reportes detallados</li>
-              <li>✓ Facturación automática</li>
-              <li>✓ Soporte prioritario</li>
-            </ul>
-            <button className="btn btn-primary btn-block">Seleccionar Plan</button>
-          </div>
-
-          <div className="pricing-card">
-            <div className="pricing-header">
-              <h3>Empresarial</h3>
-              <p className="pricing-description">Para cadenas hoteleras</p>
-            </div>
-            <div className="pricing-amount">
-              <span className="price">$1.999.000</span>
-              <span className="period">/mes</span>
-            </div>
-            <ul className="pricing-features">
-              <li>✓ Ilimitadas habitaciones</li>
-              <li>✓ Multi-propiedad</li>
-              <li>✓ Dashboard personalizado</li>
-              <li>✓ Reportes en tiempo real</li>
-              <li>✓ Facturación avanzada</li>
-              <li>✓ API completa integrada</li>
-            </ul>
-            <button className="btn btn-secondary btn-block">Contactar Ventas</button>
           </div>
         </div>
       </section>
@@ -333,7 +266,6 @@ export default function LandingPage() {
             <h4>Producto</h4>
             <ul>
               <li><a href="#features">Características</a></li>
-              <li><a href="#pricing">Precios</a></li>
               <li><a href="#contact">Contacto</a></li>
               <li><a href="/login">Iniciar Sesión</a></li>
             </ul>

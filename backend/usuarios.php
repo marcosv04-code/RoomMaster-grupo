@@ -13,24 +13,34 @@ require_once 'functions.php';
 $metodo = $_SERVER['REQUEST_METHOD'];
 $datos = obtenerDatos();
 
-// GET - Obtener información de usuario
+// GET - Obtener información de usuario(s)
 if ($metodo === 'GET') {
     $id = $datos['id'] ?? null;
     
-    if (!$id) {
-        responder(false, 'Usuario no especificado', null, 400);
+    if ($id) {
+        // Obtener un usuario específico
+        $id = intval($id);
+        $sql = "SELECT id, nombre, email, rol, hotel, estado, fecha_creacion FROM usuarios WHERE id = $id";
+        
+        $resultado = ejecutarConsulta($conexion, $sql);
+        
+        if (isset($resultado['error']) || empty($resultado)) {
+            responder(false, 'Usuario no encontrado', null, 404);
+        }
+        
+        responder(true, 'Usuario obtenido', $resultado[0]);
+    } else {
+        // Obtener todos los usuarios
+        $sql = "SELECT id, nombre, email, rol, estado, fecha_creacion FROM usuarios WHERE rol != 'admin' ORDER BY nombre ASC";
+        
+        $resultado = ejecutarConsulta($conexion, $sql);
+        
+        if (isset($resultado['error'])) {
+            responder(false, 'Error al obtener usuarios', null, 500);
+        }
+        
+        responder(true, 'Usuarios obtenidos', $resultado ?? []);
     }
-    
-    $id = intval($id);
-    $sql = "SELECT id, nombre, email, rol, hotel, estado, fecha_creacion FROM usuarios WHERE id = $id";
-    
-    $resultado = ejecutarConsulta($conexion, $sql);
-    
-    if (isset($resultado['error']) || empty($resultado)) {
-        responder(false, 'Usuario no encontrado', null, 404);
-    }
-    
-    responder(true, 'Usuario obtenido', $resultado[0]);
 }
 
 // PUT - Actualizar contraseña o nombre de usuario

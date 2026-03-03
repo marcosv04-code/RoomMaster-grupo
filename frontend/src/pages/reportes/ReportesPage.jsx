@@ -2,30 +2,36 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
+import { formatCOP, formatCOPWithDecimals } from '../../utils/currency'
 import './ModulePage.css'
 
 const API = 'http://localhost/RoomMaster-grupo/backend'
 
 export default function ReportesPage() {
-  const [period, setPeriod] = useState('month')
+  const [period, setPeriod] = useState('mes')
   const [reportData, setReportData] = useState({
-    dashboard: { huespedes_actuales: 0, habitaciones_disponibles: 0, ingresos_mes: 0, pendiente_cobro: 0 },
+    dashboard: { 
+      huespedes_actuales: 0, 
+      habitaciones_disponibles: 0, 
+      ingresos_mes: 0, 
+      pendiente_cobro: 0 
+    },
     ingresos_por_estado: [],
     ocupacion_por_tipo: [],
     productos_vendidos: [],
-    clientes: []
+    clientes_frecuentes: []
   })
   const [loading, setLoading] = useState(true)
 
   // Cargar reportes al montar
   useEffect(() => {
     fetchReportes()
-  }, [])
+  }, [period])
 
   async function fetchReportes() {
     try {
       setLoading(true)
-      const res = await fetch(`${API}/reportes.php?tipo=general`)
+      const res = await fetch(`${API}/reportes.php?tipo=general&periodo=${period}`)
       const data = await res.json()
       if (data.exito) {
         setReportData(data.datos)
@@ -37,61 +43,30 @@ export default function ReportesPage() {
     }
   }
 
-  // Datos simulados por período (para mantener gráficos ejemplo)
-  const dataByPeriod = {
-    week: {
-      occupancyData: [
-        { mes: 'Lun', ocupacion: 72, ingresos: 2850 },
-        { mes: 'Mar', ocupacion: 75, ingresos: 2950 },
-        { mes: 'Mié', ocupacion: 78, ingresos: 3050 },
-        { mes: 'Jue', ocupacion: 85, ingresos: 3350 },
-        { mes: 'Vie', ocupacion: 92, ingresos: 3650 },
-        { mes: 'Sab', ocupacion: 98, ingresos: 3950 },
-        { mes: 'Dom', ocupacion: 88, ingresos: 3450 },
-      ],
-      totalGuests: 245,
-      occupancyRate: 84,
-      revenuePerRoom: 391,
-      newGuests: 120,
-      repeatGuests: 125,
-    },
-    month: {
-      occupancyData: [
-        { mes: 'Ene', ocupacion: 65, ingresos: 12500 },
-        { mes: 'Feb', ocupacion: 72, ingresos: 14200 },
-        { mes: 'Mar', ocupacion: 78, ingresos: 15800 },
-        { mes: 'Abr', ocupacion: 85, ingresos: 17500 },
-        { mes: 'May', ocupacion: 88, ingresos: 18900 },
-      ],
-      totalGuests: 1250,
-      occupancyRate: 78,
-      revenuePerRoom: 185,
-      newGuests: 935,
-      repeatGuests: 315,
-    },
-    year: {
-      occupancyData: [
-        { mes: '2022', ocupacion: 58, ingresos: 125000 },
-        { mes: '2023', ocupacion: 68, ingresos: 165000 },
-        { mes: '2024', ocupacion: 75, ingresos: 195000 },
-        { mes: '2025', ocupacion: 82, ingresos: 235000 },
-        { mes: '2026', ocupacion: 88, ingresos: 265000 },
-      ],
-      totalGuests: 8950,
-      occupancyRate: 74,
-      revenuePerRoom: 1850,
-      newGuests: 5320,
-      repeatGuests: 3630,
-    },
+  // Calcular estadísticas desde ingresos por estado
+  const calcularEstadisticas = () => {
+    const ingresos = reportData.ingresos_por_estado || []
+    const pagadas = ingresos.find(i => i.estado === 'Pagada')
+    const pendientes = ingresos.find(i => i.estado === 'Pendiente')
+    
+    const totalFacturas = ingresos.reduce((sum, i) => sum + (i.cantidad || 0), 0)
+    const totalIngresos = ingresos.reduce((sum, i) => sum + (parseFloat(i.total) || 0), 0)
+    
+    return {
+      totalFacturas,
+      totalIngresos,
+      pagadas: {
+        cantidad: pagadas?.cantidad || 0,
+        total: parseFloat(pagadas?.total) || 0
+      },
+      pendientes: {
+        cantidad: pendientes?.cantidad || 0,
+        total: parseFloat(pendientes?.total) || 0
+      }
+    }
   }
 
-  const currentData = dataByPeriod[period]
-
-  const roomTypeRevenue = [
-    { tipo: 'Simple', ingresos: 8500, reservas: 45, ocupacion: '65%' },
-    { tipo: 'Doble', ingresos: 15200, reservas: 52, ocupacion: '85%' },
-    { tipo: 'Suite', ingresos: 12800, reservas: 28, ocupacion: '92%' },
-  ]
+  const stats = calcularEstadisticas()
 
   return (
     <DashboardLayout>
@@ -99,28 +74,28 @@ export default function ReportesPage() {
         <h1>Reportes</h1>
         <p className="page-subtitle">Análisis del desempeño de tu hotel</p>
 
-        {/* FILTRO DE PE­RÍODO */}
+        {/* FILTRO DE PERÍODO */}
         <div style={{ marginBottom: '32px', display: 'flex', gap: '12px' }}>
           <button
-            className={`btn ${period === 'week' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setPeriod('week')}
+            className={`btn ${period === 'dia' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setPeriod('dia')}
+            style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Icon name="calendar" size={14} /> Hoy
+          </button>
+          <button
+            className={`btn ${period === 'semana' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setPeriod('semana')}
             style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <Icon name="activity" size={14} /> Esta Semana
           </button>
           <button
-            className={`btn ${period === 'month' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setPeriod('month')}
+            className={`btn ${period === 'mes' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setPeriod('mes')}
             style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <Icon name="chart" size={14} /> Este Mes
-          </button>
-          <button
-            className={`btn ${period === 'year' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setPeriod('year')}
-            style={{ padding: '8px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <Icon name="trending" size={14} /> Este Año
           </button>
         </div>
 
@@ -143,183 +118,234 @@ export default function ReportesPage() {
                 subtitle="Listas para ocupar"
               />
               <Card
-                title="Ingresos Mes"
-                value={`$${(reportData.dashboard?.ingresos_mes || 0).toFixed(2)}`}
+                title="Ingresos del Período"
+                value={formatCOP(reportData.dashboard?.ingresos_mes || 0)}
                 icon="money"
                 subtitle="Facturas pagadas"
               />
               <Card
                 title="Pendiente de Cobro"
-                value={`$${(reportData.dashboard?.pendiente_cobro || 0).toFixed(2)}`}
+                value={formatCOP(reportData.dashboard?.pendiente_cobro || 0)}
                 icon="activity"
                 subtitle="Por cobrar"
               />
             </div>
 
-            {/* Datos por período (simulados) */}
+            {/* REPORTE 1: OCUPACIÓN POR TIPO DE HABITACIÓN */}
             <div className="dashboard-section" style={{ marginBottom: '40px' }}>
-              <h2 style={{ marginBottom: '24px' }}>Tendencias por Período</h2>
-              <div className="stats-grid">
+              <h2 style={{ marginBottom: '24px' }}>🏩 Ocupación por Tipo de Habitación</h2>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+                Total, disponibles y ocupadas por tipo
+              </p>
+              {reportData.ocupacion_por_tipo && reportData.ocupacion_por_tipo.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+                  {reportData.ocupacion_por_tipo.map((room, idx) => {
+                    const total = parseInt(room.total) || 0
+                    const disponibles = parseInt(room.disponibles) || 0
+                    const ocupadas = total - disponibles
+                    const porcentaje = total > 0 ? Math.round((ocupadas / total) * 100) : 0
+                    
+                    return (
+                      <div key={idx} style={{
+                        padding: '20px',
+                        background: '#f8f9fb',
+                        borderRadius: '8px',
+                        borderLeft: `4px solid ${['#2196F3', '#4CAF50', '#FF9800', '#E91E63'][idx % 4]}`
+                      }}>
+                        <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>
+                          {room.tipo || 'Tipo Habitación'}
+                        </div>
+
+                        <div style={{ marginBottom: '12px' }}>
+                          <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>
+                            Total disponibles en hotel
+                          </div>
+                          <div style={{ fontSize: '18px', fontWeight: '600', color: '#2196F3' }}>
+                            {total} habitaciones
+                          </div>
+                        </div>
+
+                        <div style={{ marginBottom: '12px' }}>
+                          <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>
+                            Actualmente disponibles
+                          </div>
+                          <div style={{ fontSize: '16px', fontWeight: '600', color: '#4CAF50' }}>
+                            {disponibles} / {total}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>
+                            Tasa de Ocupación
+                          </div>
+                          <div style={{
+                            background: '#e3f2fd',
+                            height: '8px',
+                            borderRadius: '4px',
+                            overflow: 'hidden',
+                            marginBottom: '8px'
+                          }}>
+                            <div style={{
+                              background: '#2196F3',
+                              height: '100%',
+                              width: `${porcentaje}%`,
+                              transition: 'width 0.3s ease'
+                            }}></div>
+                          </div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#2196F3' }}>
+                            {porcentaje}%
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p style={{ textAlign: 'center', color: '#999' }}>No hay datos de ocupación disponibles</p>
+              )}
+            </div>
+
+            {/* REPORTE 2: PRODUCTOS MÁS VENDIDOS */}
+            <div className="dashboard-section" style={{ marginBottom: '40px' }}>
+              <h2 style={{ marginBottom: '24px' }}>📦 Productos Más Vendidos</h2>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+                Top 5 productos por ingresos generados
+              </p>
+              {reportData.productos_vendidos && reportData.productos_vendidos.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {reportData.productos_vendidos.slice(0, 5).map((producto, idx) => {
+                    const maxIngresos = Math.max(...reportData.productos_vendidos.map(p => parseFloat(p.ingresos_totales) || 0))
+                    const porcentajeIngreso = maxIngresos > 0 ? Math.round((parseFloat(producto.ingresos_totales) || 0) / maxIngresos * 100) : 0
+                    
+                    return (
+                      <div key={idx} style={{
+                        padding: '16px',
+                        background: '#f8f9fb',
+                        borderRadius: '8px'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <div>
+                            <div style={{ fontSize: '14px', fontWeight: '600' }}>
+                              {idx + 1}. {producto.producto_nombre || 'Producto'}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                              Vendido {producto.cantidad_total || 0} veces
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '14px', fontWeight: '600', color: '#4CAF50' }}>
+                              {formatCOP(parseFloat(producto.ingresos_totales) || 0)}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{
+                          background: '#e8f5e9',
+                          height: '6px',
+                          borderRadius: '3px',
+                          overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            background: '#4CAF50',
+                            height: '100%',
+                            width: `${porcentajeIngreso}%`,
+                            transition: 'width 0.3s ease'
+                          }}></div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p style={{ textAlign: 'center', color: '#999' }}>No hay datos de productos disponibles</p>
+              )}
+            </div>
+
+            {/* REPORTE 3: CLIENTES FRECUENTES */}
+            <div className="dashboard-section" style={{ marginBottom: '40px' }}>
+              <h2 style={{ marginBottom: '24px' }}>👥 Clientes Frecuentes</h2>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+                Top 5 clientes por número de reservaciones
+              </p>
+              {reportData.clientes_frecuentes && reportData.clientes_frecuentes.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                  {reportData.clientes_frecuentes.slice(0, 5).map((cliente, idx) => (
+                    <div key={idx} style={{
+                      padding: '20px',
+                      background: '#f8f9fb',
+                      borderRadius: '8px',
+                      borderTop: `4px solid ${['#2196F3', '#4CAF50', '#FF9800', '#E91E63', '#9C27B0'][idx % 5]}`
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+                        <div>
+                          <div style={{ fontSize: '16px', fontWeight: '700' }}>
+                            {cliente.cliente_nombre || 'Cliente'}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                            #{idx + 1} Cliente más frecuente
+                          </div>
+                        </div>
+                        <div style={{ fontSize: '20px' }}>⭐</div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <div>
+                          <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>
+                            Total de reservas
+                          </div>
+                          <div style={{ fontSize: '18px', fontWeight: '600', color: '#2196F3' }}>
+                            {cliente.cantidad_estadias || 0}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>
+                            Noches totales
+                          </div>
+                          <div style={{ fontSize: '18px', fontWeight: '600', color: '#4CAF50' }}>
+                            {cliente.noches_totales || 0}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ textAlign: 'center', color: '#999' }}>No hay datos de clientes disponibles</p>
+              )}
+            </div>
+
+            {/* RESUMEN DE INGRESOS */}
+            <div className="dashboard-section">
+              <h2 style={{ marginBottom: '24px' }}>💰 Resumen de Ingresos</h2>
+              <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+                Estado de facturas y análisis de ingresos
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
                 <Card
-                  title="Huéspedes"
-                  value={currentData.totalGuests}
-                  icon="users"
-                  subtitle={`Total en el período`}
+                  title="Total Facturas"
+                  value={stats.totalFacturas}
+                  icon="file-text"
+                  subtitle="Todas las facturas emitidas"
                 />
                 <Card
-                  title="Ocupación"
-                  value={`${currentData.occupancyRate}%`}
-                  icon="hotel"
-                  subtitle="Tasa promedio"
-                />
-                <Card
-                  title="Ingresos Promedio"
-                  value={`$${currentData.revenuePerRoom}`}
+                  title="Total Ingresos"
+                  value={formatCOP(stats.totalIngresos)}
                   icon="money"
-                  subtitle="Por habitación"
+                  subtitle="De todas las facturas"
                 />
                 <Card
-                  title="Huéspedes Nuevos"
-                  value={currentData.newGuests}
-                  icon="user"
-                  subtitle={`${((currentData.newGuests / currentData.totalGuests) * 100).toFixed(1)}% del total`}
+                  title="Facturas Pagadas"
+                  value={stats.pagadas.cantidad}
+                  icon="check-circle"
+                  subtitle={formatCOP(stats.pagadas.total)}
+                />
+                <Card
+                  title="Facturas Pendientes"
+                  value={stats.pendientes.cantidad}
+                  icon="alert-circle"
+                  subtitle={formatCOP(stats.pendientes.total)}
                 />
               </div>
             </div>
-
-            {/* REPORTE 1: OCUPACIÓN E INGRESOS */}
-        <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <Icon name="chart" size={24} className="primary" />
-            <h2 style={{ margin: 0 }}>Tendencia de Ocupación e Ingresos</h2>
-          </div>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
-            Visualiza cómo han variado los niveles de ocupación y los ingresos en el período seleccionado
-          </p>
-          <div style={{ marginTop: '20px' }}>
-            {currentData.occupancyData.map((data, idx) => (
-              <div key={idx} style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <div>
-                    <span style={{ fontWeight: '600', fontSize: '14px' }}>{data.mes}</span>
-                    <span style={{ color: '#999', fontSize: '12px', marginLeft: '12px' }}>Ocupación</span>
-                  </div>
-                  <span style={{ fontWeight: '600', color: '#2196F3', fontSize: '14px' }}>{data.ocupacion}%</span>
-                </div>
-                <div style={{
-                  background: '#e3f2fd',
-                  height: '6px',
-                  borderRadius: '3px',
-                  overflow: 'hidden',
-                  marginBottom: '12px'
-                }}>
-                  <div style={{
-                    background: `linear-gradient(90deg, #2196F3 0%, #1565c0 100%)`,
-                    height: '100%',
-                    width: `${data.ocupacion}%`,
-                    transition: 'width 0.3s ease'
-                  }}></div>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#999', fontSize: '12px' }}>Ingresos</span>
-                  <span style={{ fontWeight: '600', color: '#4CAF50', fontSize: '14px' }}>${data.ingresos.toLocaleString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* REPORTE 2: INGRESOS POR TIPO DE HABITACIÓN */}
-        <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <h2>🏩 Desempeño por Tipo de Habitación</h2>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
-            Ingresos, reservas y ocupación de cada tipo de habitación
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '20px' }}>
-            {roomTypeRevenue.map((room, idx) => (
-              <div key={idx} style={{ 
-                padding: '20px', 
-                background: '#f8f9fb', 
-                borderRadius: '8px',
-                borderLeft: `4px solid ${['#2196F3', '#4CAF50', '#FF9800'][idx]}`
-              }}>
-                <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>{room.tipo}</div>
-                
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Ingresos Totales</div>
-                  <div style={{ fontSize: '18px', fontWeight: '600', color: '#2196F3' }}>${room.ingresos.toLocaleString()}</div>
-                </div>
-
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Reservas</div>
-                  <div style={{ fontSize: '16px', fontWeight: '600' }}>{room.reservas} reservas</div>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Ocupación</div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#4CAF50' }}>{room.ocupacion}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* REPORTE 3: ANÁLISIS DE HUÉSPEDES */}
-        <div className="dashboard-section">
-          <h2>👥 Análisis de Huéspedes</h2>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
-            Desglose de huéspedes nuevos vs. recurrentes y tasa de retorno
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginTop: '20px' }}>
-            <div style={{ 
-              padding: '24px', 
-              background: '#e8f5e9', 
-              borderRadius: '8px', 
-              textAlign: 'center',
-              borderTop: '4px solid #4CAF50'
-            }}>
-              <div style={{ fontSize: '32px', fontWeight: '700', color: '#2E7D32', marginBottom: '8px' }}>
-                {currentData.repeatGuests}
-              </div>
-              <div style={{ fontSize: '14px', color: '#555', fontWeight: '600' }}>Huéspedes Recurrentes</div>
-              <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                {((currentData.repeatGuests / currentData.totalGuests) * 100).toFixed(1)}% del total
-              </div>
-            </div>
-
-            <div style={{ 
-              padding: '24px', 
-              background: '#e3f2fd', 
-              borderRadius: '8px', 
-              textAlign: 'center',
-              borderTop: '4px solid #2196F3'
-            }}>
-              <div style={{ fontSize: '32px', fontWeight: '700', color: '#1565c0', marginBottom: '8px' }}>
-                {currentData.newGuests}
-              </div>
-              <div style={{ fontSize: '14px', color: '#555', fontWeight: '600' }}>Huéspedes Nuevos</div>
-              <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                {((currentData.newGuests / currentData.totalGuests) * 100).toFixed(1)}% del total
-              </div>
-            </div>
-
-            <div style={{ 
-              padding: '24px', 
-              background: '#fff3e0', 
-              borderRadius: '8px', 
-              textAlign: 'center',
-              borderTop: '4px solid #FF9800'
-            }}>
-              <div style={{ fontSize: '32px', fontWeight: '700', color: '#E65100', marginBottom: '8px' }}>
-                {((currentData.repeatGuests / currentData.totalGuests) * 100).toFixed(1)}%
-              </div>
-              <div style={{ fontSize: '14px', color: '#555', fontWeight: '600' }}>Tasa de Retorno</div>
-              <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                Clientes que vuelven
-              </div>
-            </div>
-          </div>
-        </div>
           </>
         )}
       </div>

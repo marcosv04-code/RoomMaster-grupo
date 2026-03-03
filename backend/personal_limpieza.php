@@ -9,6 +9,7 @@
 require_once 'cors.php';
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'permissions.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $datos = obtenerDatos();
@@ -39,6 +40,9 @@ if ($metodo === 'GET') {
 
 // POST - Crear personal de limpieza
 else if ($metodo === 'POST') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('PERSONAL_CREATE', $rol);
+    
     $error = validarCampos($datos, ['nombre', 'email', 'telefono']);
     if ($error) {
         responder(false, $error, null, 400);
@@ -72,6 +76,9 @@ else if ($metodo === 'POST') {
 
 // PUT - Actualizar personal de limpieza
 else if ($metodo === 'PUT') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('PERSONAL_EDIT', $rol);
+    
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);
@@ -113,6 +120,9 @@ else if ($metodo === 'PUT') {
 
 // DELETE - Eliminar personal de limpieza
 else if ($metodo === 'DELETE') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('PERSONAL_DELETE', $rol);
+    
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);

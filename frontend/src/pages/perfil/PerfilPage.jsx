@@ -60,6 +60,8 @@ export default function PerfilPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user?.id,
+          requesting_user_id: user?.id,
+          rol: user?.role,
           contraseña_actual: passwordData.actual,
           contraseña_nueva: passwordData.nueva
         })
@@ -114,6 +116,8 @@ export default function PerfilPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user?.id,
+          requesting_user_id: user?.id,
+          rol: user?.role,
           nombre: editNameValue.trim()
         })
       })

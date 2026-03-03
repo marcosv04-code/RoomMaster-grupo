@@ -9,6 +9,7 @@
 require_once 'cors.php';
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'permissions.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $datos = obtenerDatos();
@@ -69,6 +70,9 @@ else if ($metodo === 'POST') {
 
 // PUT - Actualizar producto
 else if ($metodo === 'PUT') {
+    // Verificar permiso - solo admin puede editar
+    verificarPermisoOAbortar('TIENDA_EDIT');
+    
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);
@@ -96,6 +100,9 @@ else if ($metodo === 'PUT') {
 
 // DELETE - Eliminar producto
 else if ($metodo === 'DELETE') {
+    // Verificar permiso - solo admin puede eliminar
+    verificarPermisoOAbortar('TIENDA_DELETE');
+    
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);

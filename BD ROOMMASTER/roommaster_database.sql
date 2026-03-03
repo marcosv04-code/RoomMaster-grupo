@@ -210,8 +210,39 @@ CREATE TABLE actividades (
   fecha_actividad DATETIME DEFAULT CURRENT_TIMESTAMP,
   ip_usuario VARCHAR(45)
 );
+-- 11. TABLA DE SUMINISTROS (para inventario por habitación)
+-- ============================================
+-- Tipos de suministros del hotel: sábanas, toallas, productos de limpieza, etc.
+CREATE TABLE suministros (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  descripcion TEXT,
+  tipo VARCHAR(50) NOT NULL, -- 'sabanas', 'toallas', 'limpieza', 'amenities'
+  cantidad_estandar INT DEFAULT 2, -- cantidad estándar que debe tener cada habitación
+  proveedor VARCHAR(100),
+  codigo_suministro VARCHAR(50) UNIQUE,
+  estado VARCHAR(20) DEFAULT 'activo',
+  fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 
--- 11. TABLA DE PERSONAL DE LIMPIEZA
+-- 12. TABLA DE INVENTARIO POR HABITACIÓN
+-- ============================================
+-- Cantidad de suministros en cada habitación
+CREATE TABLE inventario_habitaciones (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  habitacion_id INT NOT NULL,
+  suministro_id INT NOT NULL,
+  cantidad_actual INT DEFAULT 0,
+  cantidad_estandar INT DEFAULT 2,
+  necesita_reabastecimiento BOOLEAN DEFAULT FALSE,
+  ultima_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (habitacion_id) REFERENCES habitaciones(id) ON DELETE CASCADE,
+  FOREIGN KEY (suministro_id) REFERENCES suministros(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_habitacion_suministro (habitacion_id, suministro_id)
+);
+
+-- 13. TABLA DE PERSONAL DE LIMPIEZA
 -- ============================================
 -- Personal encargado de la limpieza del hotel
 CREATE TABLE personal_limpieza (
@@ -282,6 +313,53 @@ INSERT INTO inventario (producto_id, cantidad_actual, cantidad_minima, ubicacion
 (6, 15, 3, 'Cocina - Chef'),
 (7, 0, 1, 'Servicios Generales'),
 (8, 0, 1, 'Lavandería');
+
+-- Insertar suministros (inventario por habitación)
+INSERT INTO suministros (nombre, descripcion, tipo, cantidad_estandar, codigo_suministro) VALUES
+('Sábanas de Algodón', 'Sábanas limpias por cambio de huésped', 'sabanas', 3, 'SUMIN-001'),
+('Toallas de Baño', 'Toallas grandes para baño', 'toallas', 3, 'SUMIN-002'),
+('Toallas de Mano', 'Toallas pequeñas para mano', 'toallas', 2, 'SUMIN-003'),
+('Productos de Limpieza', 'Desinfectante, jabón, etc.', 'limpieza', 2, 'SUMIN-004'),
+('Almohadas', 'Almohadas de pluma', 'amenities', 2, 'SUMIN-005'),
+('Manta Extra', 'Mantas adicionales', 'amenities', 1, 'SUMIN-006');
+
+-- Insertar inventario por habitación (todas las habitaciones con todos los suministros)
+INSERT INTO inventario_habitaciones (habitacion_id, suministro_id, cantidad_actual, cantidad_estandar, necesita_reabastecimiento) VALUES
+-- Habitación 101
+(1, 1, 3, 3, FALSE),
+(1, 2, 3, 3, FALSE),
+(1, 3, 2, 2, FALSE),
+(1, 4, 2, 2, FALSE),
+(1, 5, 2, 2, FALSE),
+(1, 6, 1, 1, FALSE),
+-- Habitación 102
+(2, 1, 3, 3, FALSE),
+(2, 2, 3, 3, FALSE),
+(2, 3, 2, 2, FALSE),
+(2, 4, 2, 2, FALSE),
+(2, 5, 2, 2, FALSE),
+(2, 6, 1, 1, FALSE),
+-- Habitación 103
+(3, 1, 3, 3, FALSE),
+(3, 2, 3, 3, FALSE),
+(3, 3, 2, 2, FALSE),
+(3, 4, 2, 2, FALSE),
+(3, 5, 2, 2, FALSE),
+(3, 6, 1, 1, FALSE),
+-- Habitación 104
+(4, 1, 3, 3, FALSE),
+(4, 2, 3, 3, FALSE),
+(4, 3, 2, 2, FALSE),
+(4, 4, 2, 2, FALSE),
+(4, 5, 2, 2, FALSE),
+(4, 6, 1, 1, FALSE),
+-- Habitación 105 (ocupada, necesita reabastecimiento)
+(5, 1, 1, 3, TRUE),
+(5, 2, 2, 3, TRUE),
+(5, 3, 1, 2, TRUE),
+(5, 4, 1, 2, TRUE),
+(5, 5, 1, 2, TRUE),
+(5, 6, 0, 1, TRUE);
 
 -- Insertar algunas ventas de ejemplo
 INSERT INTO ventas (factura_id, estadia_id, producto_id, cantidad, precio_unitario, subtotal, huésped) VALUES

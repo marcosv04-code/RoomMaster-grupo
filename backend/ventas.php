@@ -9,6 +9,7 @@
 require_once 'cors.php';
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'permissions.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $datos = obtenerDatos();
@@ -17,8 +18,14 @@ $datos = obtenerDatos();
 if ($metodo === 'GET') {
     $estadia_id = $datos['estadia_id'] ?? null;
     
-    $sql = "SELECT v.*, p.nombre as producto_nombre FROM ventas v 
-            INNER JOIN productos p ON v.producto_id = p.id";
+    $sql = "SELECT v.*, 
+                   p.nombre as producto_nombre,
+                   c.nombre as cliente_nombre,
+                   e.cliente_id
+            FROM ventas v 
+            INNER JOIN productos p ON v.producto_id = p.id
+            INNER JOIN estadias e ON v.estadia_id = e.id
+            INNER JOIN clientes c ON e.cliente_id = c.id";
     
     if ($estadia_id) {
         $estadia_id = intval($estadia_id);
@@ -38,6 +45,9 @@ if ($metodo === 'GET') {
 
 // POST - Registrar venta
 else if ($metodo === 'POST') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('TIENDA_CREATE', $rol);
+    
     $error = validarCampos($datos, ['estadia_id', 'producto_id', 'cantidad']);
     if ($error) {
         responder(false, $error, null, 400);
@@ -47,7 +57,18 @@ else if ($metodo === 'POST') {
     $producto_id = intval($datos['producto_id']);
     $cantidad = intval($datos['cantidad']);
     $factura_id = intval($datos['factura_id'] ?? 0);
-    $huésped = escapar($conexion, $datos['huésped'] ?? '');
+    
+    // Obtener nombre del cliente desde la estadía
+    $estadia_query = $conexion->query("SELECT e.cliente_id, c.nombre FROM estadias e 
+                                       INNER JOIN clientes c ON e.cliente_id = c.id 
+                                       WHERE e.id = $estadia_id");
+    $estadia_fila = $estadia_query->fetch_assoc();
+    
+    if (!$estadia_fila) {
+        responder(false, 'Estadía no encontrada', null, 404);
+    }
+    
+    $cliente_nombre = escapar($conexion, $estadia_fila['nombre']);
     
     // Obtener precio del producto
     $prod = $conexion->query("SELECT precio FROM productos WHERE id = $producto_id");
@@ -63,10 +84,10 @@ else if ($metodo === 'POST') {
         responder(false, 'Stock insuficiente', null, 400);
     }
     
-    // Registrar venta
+    // Registrar venta (el nombre del cliente se obtiene automáticamente)
     $factura_id_sql = $factura_id > 0 ? $factura_id : 'NULL';
     $sql = "INSERT INTO ventas (factura_id, estadia_id, producto_id, cantidad, precio_unitario, subtotal, huésped) 
-            VALUES ($factura_id_sql, $estadia_id, $producto_id, $cantidad, $precio_unitario, $subtotal, '$huésped')";
+            VALUES ($factura_id_sql, $estadia_id, $producto_id, $cantidad, $precio_unitario, $subtotal, '$cliente_nombre')";
     
     $resultado = ejecutarAccion($conexion, $sql);
     
@@ -83,6 +104,9 @@ else if ($metodo === 'POST') {
 
 // DELETE - Eliminar venta
 else if ($metodo === 'DELETE') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('TIENDA_DELETE', $rol);
+    
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);

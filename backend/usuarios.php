@@ -9,6 +9,7 @@
 require_once 'cors.php';
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'permissions.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $datos = obtenerDatos();
@@ -46,9 +47,22 @@ if ($metodo === 'GET') {
 // PUT - Actualizar contraseña o nombre de usuario
 else if ($metodo === 'PUT') {
     $user_id = $datos['user_id'] ?? null;
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    $requesting_user_id = $datos['requesting_user_id'] ?? null;
     
     if (!$user_id) {
         responder(false, 'Usuario no especificado', null, 400);
+    }
+    
+    // Validar que el usuario pueda hacer cambios
+    // Solo puede cambiar su propia info, O ser admin para cambiar otra info
+    if ($user_id !== $requesting_user_id && $rol !== 'admin') {
+        responder(false, 'No puedes modificar datos de otros usuarios', null, 403);
+    }
+    
+    // Si no es su propia info, requiere permisos admin
+    if ($user_id !== $requesting_user_id) {
+        verificarPermisoOAbortar('USUARIOS_MANAGE', $rol);
     }
     
     $user_id = intval($user_id);
@@ -113,7 +127,42 @@ else if ($metodo === 'PUT') {
     
     responder(false, 'No se especificó qué actualizar', null, 400);
 }
-
+// DELETE - Eliminar un usuario
+else if ($metodo === 'DELETE') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('USUARIOS_MANAGE', $rol);
+    
+    $id = $datos['id'] ?? null;
+    
+    if (!$id) {
+        responder(false, 'Usuario no especificado', null, 400);
+    }
+    
+    $id = intval($id);
+    
+    // No permitir eliminar al admin
+    $sql_check = "SELECT rol FROM usuarios WHERE id = $id";
+    $resultado_check = $conexion->query($sql_check);
+    
+    if (!$resultado_check || $resultado_check->num_rows === 0) {
+        responder(false, 'Usuario no encontrado', null, 404);
+    }
+    
+    $usuario = $resultado_check->fetch_assoc();
+    if ($usuario['rol'] === 'admin') {
+        responder(false, 'No se puede eliminar la cuenta de administrador', null, 403);
+    }
+    
+    // Eliminar el usuario
+    $sql = "DELETE FROM usuarios WHERE id = $id";
+    $resultado = ejecutarAccion($conexion, $sql);
+    
+    if (isset($resultado['error'])) {
+        responder(false, 'Error al eliminar usuario', null, 500);
+    }
+    
+    responder(true, 'Usuario eliminado exitosamente', null);
+}
 else {
     responder(false, 'Método no permitido', null, 405);
 }

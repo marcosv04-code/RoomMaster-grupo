@@ -152,7 +152,8 @@ export default function ClientesPage() {
             id: editingClient.id,
             nombre: formData.nombre,
             email: formData.email,
-            telefono: formData.telefono
+            telefono: formData.telefono,
+            rol: user?.role
           })
         })
         const data = await res.json()
@@ -205,7 +206,7 @@ export default function ClientesPage() {
       const res = await fetch(`${API}/clientes.php`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: client.id })
+        body: JSON.stringify({ id: client.id, rol: user?.role })
       })
       const data = await res.json()
       if (data.exito) {

@@ -6,6 +6,7 @@ import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import UserRegisterForm from '../../components/forms/UserRegisterForm'
 import { useAuth } from '../../hooks/useAuth'
+import { formatCOP, formatThousands } from '../../utils/currency'
 import './DashboardPage.css'
 import { roomService } from '../../services/index'
 
@@ -138,7 +139,7 @@ export default function DashboardPage() {
       const res = await fetch(`${API}/personal_limpieza.php`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: staff.id })
+        body: JSON.stringify({ id: staff.id, rol: user?.role })
       })
 
       const data = await res.json()
@@ -150,6 +151,29 @@ export default function DashboardPage() {
       }
     } catch (err) {
       alert('Error al eliminar')
+      console.error(err)
+    }
+  }
+
+  const handleDeleteUser = async (usuario) => {
+    if (!confirm(`¿Estás seguro de que deseas eliminar a ${usuario.nombre}?`)) return
+    
+    try {
+      const res = await fetch(`${API}/usuarios.php`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: usuario.id, rol: user?.role })
+      })
+
+      const data = await res.json()
+      if (data.exito) {
+        fetchUsuarios()
+        alert('✓ Usuario eliminado')
+      } else {
+        alert(data.mensaje)
+      }
+    } catch (err) {
+      alert('Error al eliminar usuario')
       console.error(err)
     }
   }
@@ -205,7 +229,7 @@ export default function DashboardPage() {
     { 
       key: 'precio', 
       label: 'Precio',
-      render: (value) => `$${value}` 
+      render: (value) => formatCOP(value) 
     },
   ]
 
@@ -235,7 +259,7 @@ export default function DashboardPage() {
           tipo: editForm.tipo,
           estado: editForm.estado,
           precio_noche: editForm.precio,
-          user_id: user?.id,
+          rol: user?.role,
         })
       })
 
@@ -273,11 +297,11 @@ export default function DashboardPage() {
     try {
       const deletePayload = { 
         id: room.id,
-        user_id: user?.id,
+        rol: user?.role,
       }
       
       console.log('Delete - User object:', user)
-      console.log('Delete - User ID:', user?.id)
+      console.log('Delete - User role:', user?.role)
       console.log('Delete - Payload:', deletePayload)
 
       const res = await fetch(`${API}/habitaciones.php`, {
@@ -423,7 +447,7 @@ export default function DashboardPage() {
           />
           <Card 
             title="Ingresos del Mes" 
-            value={`$${(stats.ingresos_mes / 1000).toFixed(0)}K`} 
+            value={formatThousands(stats.ingresos_mes)} 
             icon="money"
             subtitle="pagado este mes"
           />
@@ -559,7 +583,7 @@ export default function DashboardPage() {
                             {room.estado}
                           </span>
                         </td>
-                        <td style={{ padding: '12px', fontWeight: '600', color: '#2196F3' }}>${room.precio_noche}</td>
+                        <td style={{ padding: '12px', fontWeight: '600', color: '#2196F3' }}>{formatCOP(room.precio_noche)}</td>
                         <td style={{ padding: '12px', textAlign: 'center' }}>
                           <button 
                             onClick={() => handleEdit(room)}
@@ -743,7 +767,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="add-precio">Precio por Noche ($) *</label>
+              <label htmlFor="add-precio">Precio por Noche (COP) *</label>
               <input
                 id="add-precio"
                 type="number"
@@ -809,12 +833,13 @@ export default function DashboardPage() {
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Email</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Rol</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Estado</th>
+                    <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#666' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {usuarios.length === 0 ? (
                     <tr>
-                      <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
+                      <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
                         No hay usuarios registrados
                       </td>
                     </tr>
@@ -846,6 +871,26 @@ export default function DashboardPage() {
                           }}>
                             {usuario.estado === 'activo' ? '✓ Activo' : '✗ Inactivo'}
                           </span>
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleDeleteUser(usuario)}
+                            style={{
+                              background: '#ff6b6b',
+                              color: 'white',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onMouseOver={(e) => e.target.style.background = '#d32f2f'}
+                            onMouseOut={(e) => e.target.style.background = '#ff6b6b'}
+                          >
+                            Eliminar
+                          </button>
                         </td>
                       </tr>
                     ))

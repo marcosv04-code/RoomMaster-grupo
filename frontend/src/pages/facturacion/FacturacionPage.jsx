@@ -5,6 +5,7 @@ import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
+import { formatCOP, formatCOPWithDecimals } from '../../utils/currency'
 import './ModulePage.css'
 
 const API = 'http://localhost/RoomMaster-grupo/backend'
@@ -135,13 +136,18 @@ export default function FacturacionPage() {
           body: JSON.stringify({
             id: editingInvoice.id,
             estado: formData.estado,
-            metodo_pago: formData.metodo_pago
+            metodo_pago: formData.metodo_pago,
+            rol: user?.role
           })
         })
         const data = await res.json()
         if (data.exito) {
           alert('✓ Factura actualizada')
           cargarFacturas()
+          // Si la factura se marca como pagada, recargar estadías (se actualizarán a finalizada)
+          if (formData.estado === 'Pagada') {
+            cargarEstadias()
+          }
         } else {
           alert('Error: ' + data.mensaje)
         }
@@ -182,7 +188,7 @@ export default function FacturacionPage() {
       const res = await fetch(`${API}/facturas.php`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: invoice.id })
+        body: JSON.stringify({ id: invoice.id, rol: user?.role })
       })
       const data = await res.json()
       if (data.exito) {
@@ -195,7 +201,21 @@ export default function FacturacionPage() {
       alert('Error: ' + err.message)
     }
   }
-
+  // Generar factura automática desde una estadía
+  async function generarFacturaAutomatica(estadiaId) {
+    try {
+      const res = await fetch(`${API}/facturas.php?action=generar_automatica&estadia_id=${estadiaId}`)
+      const data = await res.json()
+      if (data.exito) {
+        alert(`✓ Factura ${data.datos.numero_factura} creada automáticamente\n\nEstadía: ${formatCOP(data.datos.total_estadia)}\nVentas: ${formatCOP(data.datos.total_ventas)}\nTotal: ${formatCOP(data.datos.total)}`)
+        cargarFacturas()
+      } else {
+        alert('Error: ' + data.mensaje)
+      }
+    } catch (err) {
+      alert('Error al generar factura: ' + err.message)
+    }
+  }
   // CALCULAR TOTALES
   const totalIngresos = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
   const totalPagado = invoices.filter(inv => inv.estado === 'Pagada').reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
@@ -205,9 +225,9 @@ export default function FacturacionPage() {
   const columns = [
     { key: 'numero_factura', label: 'Factura' },
     { key: 'cliente_nombre', label: 'Cliente' },
-    { key: 'subtotal', label: 'Subtotal', render: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
-    { key: 'impuesto', label: 'Impuesto', render: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
-    { key: 'total', label: 'Total', render: (v) => `$${parseFloat(v || 0).toFixed(2)}` },
+    { key: 'subtotal', label: 'Subtotal', render: (v) => formatCOPWithDecimals(v) },
+    { key: 'impuesto', label: 'Impuesto', render: (v) => formatCOPWithDecimals(v) },
+    { key: 'total', label: 'Total', render: (v) => formatCOPWithDecimals(v) },
     { key: 'estado', label: 'Estado' },
     { key: 'metodo_pago', label: 'Método' },
     { key: 'fecha_factura', label: 'Fecha', render: (v) => new Date(v).toLocaleDateString() }
@@ -228,19 +248,19 @@ export default function FacturacionPage() {
         <div className="stats-grid" style={{ marginBottom: '32px' }}>
           <Card
             title="Ingresos Totales"
-            value={`$${totalIngresos.toFixed(2)}`}
+            value={formatCOP(totalIngresos)}
             icon="money"
             subtitle={`${invoices.length} facturas`}
           />
           <Card
             title="Cobrado"
-            value={`$${totalPagado.toFixed(2)}`}
+            value={formatCOP(totalPagado)}
             icon="check-circle"
             subtitle="Pagadas"
           />
           <Card
             title="Por Cobrar"
-            value={`$${pendiente.toFixed(2)}`}
+            value={formatCOP(pendiente)}
             icon="activity"
             subtitle="Pendientes"
           />
@@ -255,6 +275,45 @@ export default function FacturacionPage() {
             </button>
           )}
         </div>
+
+        {/* SECCIÓN: ESTADÍAS ACTIVAS (para generar facturas automáticas) */}
+        {stays && stays.filter(s => s.estado === 'activa').length > 0 && (
+          <div style={{ marginBottom: '40px', padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Icon name="users" size={24} className="primary" />
+              <h3 style={{ margin: 0 }}>Estadías Activas - Generar Facturas</h3>
+            </div>
+            <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>Selecciona una estadía para generar su factura automáticamente (suma habitación + compras en tienda)</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '12px' }}>
+              {stays.filter(s => s.estado === 'activa').map(stay => (
+                <div key={stay.id} style={{
+                  padding: '12px',
+                  backgroundColor: 'white',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>{stay.cliente_nombre || `Cliente #${stay.cliente_id}`}</div>
+                    <div style={{ fontSize: '12px', color: '#999' }}>
+                      Hab. {stay.numero_habitacion || stay.habitacion_id} | {stay.fecha_entrada} a {stay.fecha_salida}
+                    </div>
+                  </div>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => generarFacturaAutomatica(stay.id)}
+                    style={{ padding: '6px 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                  >
+                    💵 Facturar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* TABLA */}
         {loading ? (
@@ -291,7 +350,7 @@ export default function FacturacionPage() {
                     <option value="">Seleccionar estadía</option>
                     {stays.map(stay => (
                       <option key={stay.id} value={stay.id}>
-                        Estadía #{stay.id} - Cliente #{stay.cliente_id}
+                        {stay.cliente_nombre || `Cliente #${stay.cliente_id}`} - Hab. {stay.numero_habitacion || stay.habitacion_id}
                       </option>
                     ))}
                   </select>
@@ -317,7 +376,7 @@ export default function FacturacionPage() {
 
                 {/* SUBTOTAL */}
                 <div className="form-group">
-                  <label>Subtotal ($)</label>
+                  <label>Subtotal (COP)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -330,7 +389,7 @@ export default function FacturacionPage() {
 
                 {/* IMPUESTO */}
                 <div className="form-group">
-                  <label>Impuesto ($)</label>
+                  <label>Impuesto (COP)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -343,7 +402,7 @@ export default function FacturacionPage() {
 
                 {/* TOTAL */}
                 <div className="form-group">
-                  <label>Total ($) *</label>
+                  <label>Total (COP) *</label>
                   <input
                     type="number"
                     step="0.01"

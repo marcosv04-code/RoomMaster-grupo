@@ -75,7 +75,7 @@ export default function LandingPage() {
             <p>Cobros y facturas de forma simplificada</p>
           </div>
           <div className="feature-card">
-            <div className="feature-image" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=250&fit=crop)' }}></div>
+            <div className="feature-image" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=250&fit=crop)' }}></div>
             <Icon name="package" size={48} className="primary" />
             <h3>Inventario</h3>
             <p>Control de habitaciones e inventario por sala</p>

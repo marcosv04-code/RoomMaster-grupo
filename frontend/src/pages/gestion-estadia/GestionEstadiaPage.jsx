@@ -4,11 +4,14 @@ import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
+import { usePermissions } from '../../hooks/usePermissions'
+import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
 const API = 'http://localhost/RoomMaster-grupo/backend'
 
 export default function GestionEstadiaPage() {
+  const { user } = useAuth()
   const [stays, setStays] = useState([])
   const [clients, setClients] = useState([])
   const [rooms, setRooms] = useState([])
@@ -17,6 +20,9 @@ export default function GestionEstadiaPage() {
   const [editingStay, setEditingStay] = useState(null)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
+  
+  // Verificar permisos
+  const { can, isAdmin } = usePermissions()
   
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -125,7 +131,7 @@ export default function GestionEstadiaPage() {
         const res = await fetch(`${API}/estadias.php`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editingStay.id, ...formData })
+          body: JSON.stringify({ id: editingStay.id, ...formData, rol: user?.role })
         })
         const data = await res.json()
         if (data.exito) {
@@ -165,7 +171,7 @@ export default function GestionEstadiaPage() {
       const res = await fetch(`${API}/estadias.php`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: stay.id })
+        body: JSON.stringify({ id: stay.id, rol: user?.role })
       })
       const data = await res.json()
       if (data.exito) {
@@ -176,6 +182,31 @@ export default function GestionEstadiaPage() {
       }
     } catch (err) {
       alert('Error al eliminar')
+      console.error(err)
+    }
+  }
+
+  const handleCancel = async (stay) => {
+    if (!confirm('¿Deseas cancelar esta estadía?')) return
+    try {
+      const res = await fetch(`${API}/estadias.php`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: stay.id, 
+          estado: 'cancelada',
+          rol: user?.role
+        })
+      })
+      const data = await res.json()
+      if (data.exito) {
+        cargarEstadias()
+        alert('✓ Estadía cancelada')
+      } else {
+        alert(data.mensaje)
+      }
+    } catch (err) {
+      alert('Error al cancelar')
       console.error(err)
     }
   }
@@ -228,18 +259,25 @@ export default function GestionEstadiaPage() {
         <div className="dashboard-section" style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h2>Registro de Estadías</h2>
-            <button className="btn btn-primary" onClick={handleOpenAddModal}>
-              + Nueva Estadía
-            </button>
+            {/* Solo mostrar botón "Nueva Estadía" si tiene permisos */}
+            {can('ESTADIA_CREATE') && (
+              <button className="btn btn-primary" onClick={handleOpenAddModal}>
+                + Nueva Estadía
+              </button>
+            )}
           </div>
 
           {loading ? <p>Cargando...</p> : (
             <Table
               columns={columns}
-              data={stays}
+              data={stays.filter(s => s.estado === 'activa')}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onCancel={handleCancel}
               actions={true}
+              showEdit={can('ESTADIA_EDIT')}
+              showDelete={can('ESTADIA_DELETE')}
+              showCancel={can('ESTADIA_CANCEL')}
             />
           )}
         </div>

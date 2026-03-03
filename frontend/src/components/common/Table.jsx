@@ -11,20 +11,33 @@ import './Table.css'
  * - data: Array de objetos con los datos a mostrar
  * - onEdit: Función callback cuando se hace click en "Editar"
  * - onDelete: Función callback cuando se hace click en "Eliminar"
+ * - onCancel: Función callback para cancelar (estadías, etc.)
  * - actions: Boolean para mostrar u ocultar botones de acciones
+ * - showEdit: Boolean para mostrar botón editar (default true)
+ * - showDelete: Boolean para mostrar botón eliminar (default true)
+ * - showCancel: Boolean para mostrar botón cancelar (default false)
  * 
  * Ejemplo de uso:
  * <Table
- *   columns={[
- *     { key: 'nombre', label: 'Nombre' },
- *     { key: 'email', label: 'Email', render: (val) => <b>{val}</b> }
- *   ]}
- *   data={clients}
+ *   columns={[...]}
+ *   data={data}
  *   onEdit={handleEdit}
  *   onDelete={handleDelete}
+ *   showEdit={can('EDIT')}
+ *   showDelete={can('DELETE')}
  * />
  */
-export default function Table({ columns, data, onEdit, onDelete, actions = true }) {
+export default function Table({ 
+  columns, 
+  data, 
+  onEdit, 
+  onDelete, 
+  onCancel,
+  actions = true,
+  showEdit = true,
+  showDelete = true,
+  showCancel = false
+}) {
   return (
     <div className="table-container">
       <table className="data-table">
@@ -57,24 +70,39 @@ export default function Table({ columns, data, onEdit, onDelete, actions = true 
                   </td>
                 ))}
                 
-                {/* Botones de acciones (Editar, Eliminar) */}
+                {/* Botones de acciones */}
                 {actions && (
                   <td className="actions-cell">
                     {/* Botón Editar */}
-                    <button 
-                      className="btn-edit" 
-                      onClick={() => onEdit(row)}
-                    >
-                      Editar
-                    </button>
+                    {showEdit && (
+                      <button 
+                        className="btn-edit" 
+                        onClick={() => onEdit(row)}
+                      >
+                        Editar
+                      </button>
+                    )}
+                    
+                    {/* Botón Cancelar */}
+                    {showCancel && (
+                      <button 
+                        className="btn-cancel" 
+                        onClick={() => onCancel(row)}
+                        style={{ background: '#FF9800' }}
+                      >
+                        Cancelar
+                      </button>
+                    )}
                     
                     {/* Botón Eliminar */}
-                    <button 
-                      className="btn-delete" 
-                      onClick={() => onDelete(row)}
-                    >
-                      Eliminar
-                    </button>
+                    {showDelete && (
+                      <button 
+                        className="btn-delete" 
+                        onClick={() => onDelete(row)}
+                      >
+                        Eliminar
+                      </button>
+                    )}
                   </td>
                 )}
               </tr>

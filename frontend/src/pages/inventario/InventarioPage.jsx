@@ -1,52 +1,68 @@
 import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
-import Table from '../../components/common/Table'
-import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
+import { usePermissions } from '../../hooks/usePermissions'
 import './ModulePage.css'
 
 const API = 'http://localhost/RoomMaster-grupo/backend'
 
 export default function InventarioPage() {
   const { user } = useAuth()
+  const { can } = usePermissions()
   
   // DATOS
-  const [inventory, setInventory] = useState([])
-  const [products, setProducts] = useState([])
+  const [inventarioHabitaciones, setInventarioHabitaciones] = useState([])
+  const [habitacionesAgrupadas, setHabitacionesAgrupadas] = useState({})
   
   // ESTADOS UI
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalType, setModalType] = useState('') // 'add', 'agregar', 'restar', 'editar'
-  const [editingItem, setEditingItem] = useState(null)
-  
-  // FORMULARIO
-  const [formData, setFormData] = useState({
-    producto_id: '',
-    cantidad_actual: '',
-    cantidad_minima: '',
-    cantidad_maxima: '',
-    ubicacion: '',
-    accion: 'actualizar' // 'agregar', 'restar', 'actualizar'
-  })
+  const [editingId, setEditingId] = useState(null)
+  const [editingCantidad, setEditingCantidad] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [selectedHabitacion, setSelectedHabitacion] = useState(null)
 
   // CARGAR DATOS AL MONTAR
   useEffect(() => {
     cargarInventario()
-    cargarProductos()
   }, [])
+
+  // AGRUPAR POR HABITACIÓN
+  useEffect(() => {
+    if (inventarioHabitaciones.length > 0) {
+      const agrupado = {}
+      inventarioHabitaciones.forEach(item => {
+        if (!agrupado[item.habitacion_id]) {
+          agrupado[item.habitacion_id] = {
+            habitacion_id: item.habitacion_id,
+            numero_habitacion: item.numero_habitacion,
+            tipo_habitacion: item.tipo_habitacion,
+            estado_habitacion: item.estado_habitacion,
+            suministros: []
+          }
+        }
+        agrupado[item.habitacion_id].suministros.push(item)
+      })
+      setHabitacionesAgrupadas(agrupado)
+      
+      // Seleccionar la primera habitación si no hay seleccionada
+      if (!selectedHabitacion && Object.keys(agrupado).length > 0) {
+        setSelectedHabitacion(Object.keys(agrupado)[0])
+      }
+    }
+  }, [inventarioHabitaciones])
 
   // FUNCIONES DE CARGA
   async function cargarInventario() {
     try {
       setLoading(true)
-      const res = await fetch(`${API}/inventario.php`)
+      setError('')
+      const res = await fetch(`${API}/inventario_habitaciones.php`)
       const data = await res.json()
       if (data.exito) {
-        setInventory(data.datos || [])
+        setInventarioHabitaciones(data.datos || [])
       } else {
         setError(data.mensaje)
       }
@@ -58,361 +74,386 @@ export default function InventarioPage() {
     }
   }
 
-  async function cargarProductos() {
-    try {
-      const res = await fetch(`${API}/productos.php`)
-      const data = await res.json()
-      if (data.exito) {
-        setProducts(data.datos || [])
-      }
-    } catch (err) {
-      console.error('Error al cargar productos:', err)
-    }
+  // ACTUALIZAR CANTIDAD
+  const handleEditarCantidad = (id, cantidadActual) => {
+    setEditingId(id)
+    setEditingCantidad(cantidadActual.toString())
   }
 
-  // FUNCIONES CRUD
-  const resetForm = () => {
-    setFormData({
-      producto_id: '',
-      cantidad_actual: '',
-      cantidad_minima: '',
-      cantidad_maxima: '',
-      ubicacion: '',
-      accion: 'actualizar'
-    })
-    setEditingItem(null)
-  }
-
-  const handleOpenModal = (type, item = null) => {
-    resetForm()
-    setModalType(type)
-    
-    if (type === 'add') {
-      setEditingItem(null)
-      setFormData({ ...formData, accion: 'actualizar' })
-    } else if (type === 'agregar' || type === 'restar') {
-      setEditingItem(item)
-      setFormData({
-        ...formData,
-        producto_id: item.producto_id,
-        cantidad_actual: '',
-        accion: type
-      })
-    } else if (type === 'editar') {
-      setEditingItem(item)
-      setFormData({
-        producto_id: item.producto_id,
-        cantidad_actual: item.cantidad_actual,
-        cantidad_minima: item.cantidad_minima,
-        cantidad_maxima: item.cantidad_maxima,
-        ubicacion: item.ubicacion,
-        accion: 'actualizar'
-      })
-    }
-    
-    setIsModalOpen(true)
-  }
-
-  const handleSaveInventory = async () => {
-    if (modalType === 'add') {
-      if (!formData.producto_id || !formData.cantidad_actual) {
-        alert('Por favor completa: Producto y Cantidad')
-        return
-      }
-    } else {
-      if (!formData.cantidad_actual) {
-        alert('Por favor ingresa una cantidad')
-        return
-      }
+  const handleGuardarCantidad = async (id) => {
+    if (!can('INVENTARIO_EDIT')) {
+      setError('No tienes permiso para editar inventario')
+      return
     }
 
     try {
-      if (modalType === 'add') {
-        // Crear nuevo inventario
-        const res = await fetch(`${API}/inventario.php`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            producto_id: parseInt(formData.producto_id),
-            cantidad_actual: parseInt(formData.cantidad_actual),
-            cantidad_minima: parseInt(formData.cantidad_minima) || 10,
-            cantidad_maxima: parseInt(formData.cantidad_maxima) || 100,
-            ubicacion: formData.ubicacion || 'Almacén general'
-          })
+      setError('')
+      const res = await fetch(`${API}/inventario_habitaciones.php`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: id,
+          cantidad_actual: parseInt(editingCantidad),
+          rol: user.role
         })
-        const data = await res.json()
-        if (data.exito) {
-          alert('✓ Inventario creado')
-          cargarInventario()
-        } else {
-          alert('Error: ' + data.mensaje)
-        }
+      })
+      
+      const data = await res.json()
+      
+      if (data.exito) {
+        setSuccessMessage('Cantidad actualizada correctamente')
+        setTimeout(() => setSuccessMessage(''), 3000)
+        cargarInventario()
+        setEditingId(null)
       } else {
-        // Actualizar (agregar, restar o editar)
-        const res = await fetch(`${API}/inventario.php`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: editingItem.id,
-            cantidad_actual: parseInt(formData.cantidad_actual),
-            cantidad_minima: parseInt(formData.cantidad_minima) || editingItem.cantidad_minima,
-            cantidad_maxima: parseInt(formData.cantidad_maxima) || editingItem.cantidad_maxima,
-            ubicacion: formData.ubicacion || editingItem.ubicacion,
-            accion: formData.accion
-          })
-        })
-        const data = await res.json()
-        if (data.exito) {
-          const acciones = {
-            'agregar': '✓ Stock agregado',
-            'restar': '✓ Stock restado',
-            'actualizar': '✓ Inventario actualizado'
-          }
-          alert(acciones[formData.accion])
-          cargarInventario()
-        } else {
-          alert('Error: ' + data.mensaje)
-        }
+        setError(data.mensaje || 'Error al actualizar cantidad')
       }
-      setIsModalOpen(false)
-      resetForm()
     } catch (err) {
-      alert('Error: ' + err.message)
-      console.error(err)
+      setError('Error al guardar: ' + err.message)
     }
   }
 
-  const handleDelete = async (item) => {
-    if (!confirm('¿Eliminar inventario de ' + item.nombre_producto + '?')) return
+  // REABASTECIMIENTO COMPLETO
+  const handleReabastecimiento = async (habitacion_id) => {
+    if (!can('INVENTARIO_EDIT')) {
+      setError('No tienes permiso para editar inventario')
+      return
+    }
+
+    if (!window.confirm('¿Reabastecerá la habitación ' + habitacionesAgrupadas[habitacion_id]?.numero_habitacion + ' completamente?')) {
+      return
+    }
+
     try {
-      const res = await fetch(`${API}/inventario.php`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: item.id })
+      setError('')
+      const res = await fetch(`${API}/inventario_habitaciones.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          habitacion_id: habitacion_id,
+          rol: user.role
+        })
       })
+      
       const data = await res.json()
+      
       if (data.exito) {
-        alert('✓ Eliminado')
+        setSuccessMessage('Habitación reabastecida correctamente')
+        setTimeout(() => setSuccessMessage(''), 3000)
         cargarInventario()
       } else {
-        alert('Error: ' + data.mensaje)
+        setError(data.mensaje || 'Error al reabastecimiento')
       }
     } catch (err) {
-      alert('Error: ' + err.message)
+      setError('Error: ' + err.message)
     }
   }
 
-  // CALCULAR ESTADÍSTICAS
-  const totalProductos = inventory.length
-  const stockBajo = inventory.filter(i => i.cantidad_actual <= i.cantidad_minima).length
-  const stockAlto = inventory.filter(i => i.cantidad_actual >= i.cantidad_maxima).length
-
-  // COLUMNAS DE TABLA
-  const columns = [
-    { key: 'nombre_producto', label: 'Producto' },
-    { key: 'categoria', label: 'Categoría' },
-    { 
-      key: 'cantidad_actual', 
-      label: 'Cantidad Actual',
-      render: (v, row) => {
-        const color = v <= row.cantidad_minima ? 'red' : v >= row.cantidad_maxima ? 'green' : 'orange'
-        return <span style={{ color }}>{v}</span>
-      }
-    },
-    { key: 'cantidad_minima', label: 'Mínimo' },
-    { key: 'cantidad_maxima', label: 'Máximo' },
-    { key: 'ubicacion', label: 'Ubicación' },
-    { key: 'ultimo_reabastecimiento', label: 'Ult. Reabastecimiento', render: (v) => new Date(v).toLocaleDateString() }
-  ]
-
-  // MODAL DINÁMICO
-  const getModalTitle = () => {
-    const titles = {
-      'add': 'Crear Inventario',
-      'agregar': 'Agregar Stock',
-      'restar': 'Restar Stock',
-      'editar': 'Editar Inventario'
+  const getTipoColor = (tipo) => {
+    const colores = {
+      'sabanas': '#FF6B6B',
+      'toallas': '#4ECDC4',
+      'limpieza': '#FFE66D',
+      'amenities': '#95E1D3'
     }
-    return titles[modalType] || 'Inventario'
+    return colores[tipo] || '#8B9DC3'
   }
 
+  const getEstadoColor = (necesitaReabastecimiento) => {
+    return necesitaReabastecimiento ? '#FF6B6B' : '#51CF66'
+  }
   return (
     <DashboardLayout>
       <div className="module-page">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-          <Icon name="package" size={32} className="primary" />
-          <h1 style={{ margin: 0 }}>Gestión de Inventario</h1>
+          <Icon name="box" size={32} className="primary" />
+          <h1 style={{ margin: 0 }}>Inventario por Habitación</h1>
         </div>
-        <p className="page-subtitle">Control de stock de productos del hotel</p>
+        <p className="page-subtitle">Gestiona suministros de cada habitación (sábanas, toallas, limpieza, amenities)</p>
 
-        {error && <div style={{ color: 'red', marginBottom: '20px', padding: '10px', backgroundColor: '#ffe6e6', borderRadius: '4px' }}>{error}</div>}
-
-        {/* TARJETAS ESTADÍSTICAS */}
-        <div className="stats-grid" style={{ marginBottom: '32px' }}>
-          <Card
-            title="Total de Productos"
-            value={totalProductos}
-            icon="package"
-            subtitle="en inventario"
-          />
-          <Card
-            title="Stock Bajo"
-            value={stockBajo}
-            icon="trending"
-            subtitle="por debajo del mínimo"
-          />
-          <Card
-            title="Stock Alto"
-            value={stockAlto}
-            icon="rocket"
-            subtitle="en o sobre el máximo"
-          />
-        </div>
-
-        {/* BOTÓN NUEVO INVENTARIO */}
-        <div className="page-header" style={{ marginBottom: '20px' }}>
-          <div></div>
-          {(user?.role === 'admin' || user?.role === 'gerente') && (
-            <button className="btn btn-primary" onClick={() => handleOpenModal('add')}>
-              + Crear Inventario
-            </button>
-          )}
-        </div>
-
-        {/* TABLA */}
-        {loading ? (
-          <p>Cargando...</p>
-        ) : (
-          <Table
-            columns={columns}
-            data={inventory.map(item => ({
-              ...item,
-              __actions: (
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  <button 
-                    onClick={() => handleOpenModal('agregar', item)} 
-                    className="btn btn-small"
-                    style={{ backgroundColor: '#4CAF50', color: 'white', padding: '4px 8px' }}
-                    title="Agregar stock"
-                  >
-                    ➕
-                  </button>
-                  <button 
-                    onClick={() => handleOpenModal('restar', item)} 
-                    className="btn btn-small"
-                    style={{ backgroundColor: '#FF9800', color: 'white', padding: '4px 8px' }}
-                    title="Restar stock"
-                  >
-                    ➖
-                  </button>
-                  <button 
-                    onClick={() => handleOpenModal('editar', item)} 
-                    className="btn btn-small"
-                    title="Editar"
-                  >
-                    ✏️
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(item)}
-                    className="btn btn-danger btn-small"
-                    title="Eliminar"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              )
-            }))}
-            actions={true}
-          />
+        {error && (
+          <div style={{ 
+            color: '#d32f2f', 
+            marginBottom: '20px', 
+            padding: '12px', 
+            backgroundColor: '#ffebee', 
+            borderRadius: '4px',
+            border: '1px solid #ef5350'
+          }}>
+            {error}
+          </div>
         )}
 
-        {/* MODAL */}
-        <Modal
-          isOpen={isModalOpen}
-          title={getModalTitle()}
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={handleSaveInventory}
-          confirmText="Guardar"
-        >
-          <form className="form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {/* PRODUCTO */}
-            {modalType === 'add' && (
-              <div className="form-group">
-                <label>Producto *</label>
-                <select
-                  value={formData.producto_id}
-                  onChange={(e) => setFormData({ ...formData, producto_id: e.target.value })}
-                  required
-                  style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                >
-                  <option value="">Seleccionar producto</option>
-                  {products.map(prod => {
-                    // Verificar si ya existe en inventario
-                    const existe = inventory.some(i => i.producto_id === prod.id)
-                    return (
-                      <option key={prod.id} value={prod.id} disabled={existe}>
-                        {prod.nombre} {existe ? '(Ya en inventario)' : ''}
-                      </option>
-                    )
-                  })}
-                </select>
-              </div>
-            )}
+        {successMessage && (
+          <div style={{ 
+            color: '#388e3c', 
+            marginBottom: '20px', 
+            padding: '12px', 
+            backgroundColor: '#e8f5e9', 
+            borderRadius: '4px',
+            border: '1px solid #81c784'
+          }}>
+            {successMessage}
+          </div>
+        )}
 
-            {/* CANTIDAD */}
-            <div className="form-group">
-              <label>
-                {modalType === 'agregar' ? 'Cantidad a Agregar' : modalType === 'restar' ? 'Cantidad a Restar' : 'Cantidad Actual'} *
-              </label>
-              <input
-                type="number"
-                value={formData.cantidad_actual}
-                onChange={(e) => setFormData({ ...formData, cantidad_actual: e.target.value })}
-                placeholder="0"
-                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                required
-              />
+        {/* SELECTOR DE HABITACIONES */}
+        {!loading && Object.keys(habitacionesAgrupadas).length > 0 && (
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>
+              Selecciona una habitación:
+            </label>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: '10px'
+            }}>
+              {Object.keys(habitacionesAgrupadas)
+                .sort((a, b) => {
+                  const numA = parseInt(habitacionesAgrupadas[a].numero_habitacion)
+                  const numB = parseInt(habitacionesAgrupadas[b].numero_habitacion)
+                  return numA - numB
+                })
+                .map(habId => {
+                  const hab = habitacionesAgrupadas[habId]
+                  const tieneReabastecimiento = hab.suministros.some(s => s.necesita_reabastecimiento)
+                  return (
+                    <button
+                      key={habId}
+                      onClick={() => setSelectedHabitacion(habId)}
+                      style={{
+                        padding: '12px',
+                        border: selectedHabitacion === habId ? '2px solid #1976d2' : '1px solid #ddd',
+                        backgroundColor: selectedHabitacion === habId ? '#e3f2fd' : '#f5f5f5',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: selectedHabitacion === habId ? 'bold' : 'normal',
+                        transition: 'all 0.2s',
+                        color: tieneReabastecimiento ? '#d32f2f' : '#000'
+                      }}
+                    >
+                      <div>Hab. {hab.numero_habitacion}</div>
+                      <div style={{ fontSize: '12px', opacity: 0.7 }}>
+                        {hab.tipo_habitacion}
+                        {tieneReabastecimiento && ' ⚠️'}
+                      </div>
+                    </button>
+                  )
+                })}
             </div>
+          </div>
+        )}
 
-            {/* MÍNIMO Y MÁXIMO */}
-            {(modalType === 'add' || modalType === 'editar') && (
-              <>
-                <div className="form-group">
-                  <label>Cantidad Mínima</label>
-                  <input
-                    type="number"
-                    value={formData.cantidad_minima}
-                    onChange={(e) => setFormData({ ...formData, cantidad_minima: e.target.value })}
-                    placeholder="10"
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                  />
-                </div>
+        {/* CONTENIDO DE HABITACIÓN SELECCIONADA */}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+            <p>Cargando inventario...</p>
+          </div>
+        ) : selectedHabitacion && habitacionesAgrupadas[selectedHabitacion] ? (
+          <div>
+            {(() => {
+              const habActual = habitacionesAgrupadas[selectedHabitacion]
+              const tieneReabastecimiento = habActual.suministros.some(s => s.necesita_reabastecimiento)
+              
+              return (
+                <>
+                  {/* HEADER HABITACIÓN */}
+                  <div style={{
+                    backgroundColor: '#fff',
+                    padding: '16px',
+                    borderRadius: '8px',
+                    marginBottom: '20px',
+                    border: '1px solid #e0e0e0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <h2 style={{ margin: '0 0 4px 0' }}>Habitación {habActual.numero_habitacion}</h2>
+                      <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+                        Tipo: <strong>{habActual.tipo_habitacion}</strong> • 
+                        Estado: <strong>{habActual.estado_habitacion}</strong>
+                        {tieneReabastecimiento && <span style={{ color: '#d32f2f', marginLeft: '8px' }}>⚠️ Necesita reabastecimiento</span>}
+                      </p>
+                    </div>
+                    {can('INVENTARIO_EDIT') && (
+                      <button
+                        onClick={() => handleReabastecimiento(selectedHabitacion)}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#4caf50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        ✓ Reabastecimiento Completo
+                      </button>
+                    )}
+                  </div>
 
-                <div className="form-group">
-                  <label>Cantidad Máxima</label>
-                  <input
-                    type="number"
-                    value={formData.cantidad_maxima}
-                    onChange={(e) => setFormData({ ...formData, cantidad_maxima: e.target.value })}
-                    placeholder="100"
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Ubicación</label>
-                  <input
-                    type="text"
-                    value={formData.ubicacion}
-                    onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })}
-                    placeholder="Almacén general"
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-                  />
-                </div>
-              </>
-            )}
-          </form>
-        </Modal>
+                  {/* TABLA DE SUMINISTROS */}
+                  <div style={{
+                    backgroundColor: '#fff',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    border: '1px solid #e0e0e0'
+                  }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                          <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: 'bold' }}>Suministro</th>
+                          <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: 'bold' }}>Tipo</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Actual</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Estándar</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Estado</th>
+                          {can('INVENTARIO_EDIT') && (
+                            <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Acciones</th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {habActual.suministros.map((suministro, idx) => (
+                          <tr 
+                            key={suministro.id}
+                            style={{
+                              borderBottom: '1px solid #eee',
+                              backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa',
+                              opacity: suministro.necesita_reabastecimiento ? 1 : 1
+                            }}
+                          >
+                            <td style={{ padding: '12px', fontSize: '14px' }}>
+                              <strong>{suministro.suministro_nombre}</strong>
+                              {suministro.descripcion && (
+                                <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                                  {suministro.descripcion}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px', fontSize: '14px' }}>
+                              <span 
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '4px 8px',
+                                  backgroundColor: getTipoColor(suministro.tipo),
+                                  color: '#fff',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {suministro.tipo.charAt(0).toUpperCase() + suministro.tipo.slice(1)}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                              {editingId === suministro.id ? (
+                                <input
+                                  type="number"
+                                  value={editingCantidad}
+                                  onChange={(e) => setEditingCantidad(e.target.value)}
+                                  min="0"
+                                  style={{
+                                    width: '50px',
+                                    padding: '4px',
+                                    border: '1px solid #1976d2',
+                                    borderRadius: '4px',
+                                    textAlign: 'center'
+                                  }}
+                                />
+                              ) : (
+                                <strong>{suministro.cantidad_actual}</strong>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                              {suministro.cantidad_estandar}
+                            </td>
+                            <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                              <span 
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '4px 8px',
+                                  backgroundColor: getEstadoColor(suministro.necesita_reabastecimiento),
+                                  color: '#fff',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {suministro.necesita_reabastecimiento ? 'Necesita' : 'OK'}
+                              </span>
+                            </td>
+                            {can('INVENTARIO_EDIT') && (
+                              <td style={{ padding: '12px', textAlign: 'center' }}>
+                                {editingId === suministro.id ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleGuardarCantidad(suministro.id)}
+                                      style={{
+                                        padding: '4px 8px',
+                                        marginRight: '4px',
+                                        backgroundColor: '#4caf50',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '12px'
+                                      }}
+                                    >
+                                      ✓ Guardar
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingId(null)}
+                                      style={{
+                                        padding: '4px 8px',
+                                        backgroundColor: '#999',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '12px'
+                                      }}
+                                    >
+                                      ✕ Cancelar
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={() => handleEditarCantidad(suministro.id, suministro.cantidad_actual)}
+                                    style={{
+                                      padding: '4px 8px',
+                                      backgroundColor: '#1976d2',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer',
+                                      fontSize: '12px'
+                                    }}
+                                  >
+                                    ✏️ Editar
+                                  </button>
+                                )}
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+            <p>No hay datos disponibles</p>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )

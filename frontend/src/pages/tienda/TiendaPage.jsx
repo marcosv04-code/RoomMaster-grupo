@@ -5,6 +5,7 @@ import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
+import { formatCOP } from '../../utils/currency'
 import './ModulePage.css'
 
 const API = 'http://localhost/RoomMaster-grupo/backend'
@@ -28,6 +29,7 @@ export default function TiendaPage() {
 
   // Modal ventas
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false)
+  const [selectedClientName, setSelectedClientName] = useState('')
   const [saleForm, setSaleForm] = useState({
     estadia_id: '',
     producto_id: '',
@@ -120,6 +122,7 @@ export default function TiendaPage() {
         cargarVentas()
         cargarProductos()
         setSaleForm({ estadia_id: '', producto_id: '', cantidad: '' })
+        setSelectedClientName('')
         setIsSaleModalOpen(false)
       } else {
         alert(data.mensaje)
@@ -129,13 +132,28 @@ export default function TiendaPage() {
     }
   }
 
+  function handleStayChange(e) {
+    const selectedId = e.target.value
+    setSaleForm({ ...saleForm, estadia_id: selectedId })
+    
+    // Buscar el nombre del cliente de la estadía seleccionada
+    if (selectedId) {
+      const selectedStay = stays.find(s => s.id == selectedId)
+      if (selectedStay) {
+        setSelectedClientName(`${selectedStay.cliente_nombre || 'Cliente'} - Hab. ${selectedStay.numero_habitacion || selectedStay.habitacion_id}`)
+      }
+    } else {
+      setSelectedClientName('')
+    }
+  }
+
   async function eliminarProducto(id) {
     if (!confirm('¿Estás seguro?')) return
     try {
       const res = await fetch(`${API}/productos.php`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id, rol: user?.role })
       })
       const data = await res.json()
       if (data.exito) cargarProductos()
@@ -150,7 +168,7 @@ export default function TiendaPage() {
       const res = await fetch(`${API}/ventas.php`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id, rol: user?.role })
       })
       const data = await res.json()
       if (data.exito) {
@@ -168,15 +186,18 @@ export default function TiendaPage() {
   const productColumns = [
     { key: 'nombre', label: 'Nombre' },
     { key: 'categoria', label: 'Categoría' },
-    { key: 'precio', label: 'Precio', render: (v) => `$${v}` },
+    { key: 'precio', label: 'Precio', render: (v) => formatCOP(v) },
     { key: 'stock', label: 'Stock' },
   ]
 
   const saleColumns = [
     { key: 'id', label: 'ID' },
-    { key: 'producto_id', label: 'Producto ID' },
+    { key: 'cliente_nombre', label: 'Cliente' },
+    { key: 'producto_nombre', label: 'Producto' },
     { key: 'cantidad', label: 'Cantidad' },
-    { key: 'fecha_venta', label: 'Fecha' },
+    { key: 'precio_unitario', label: 'Precio Unitario', render: (v) => formatCOP(v) },
+    { key: 'subtotal', label: 'Subtotal', render: (v) => formatCOP(v) },
+    { key: 'fecha_venta', label: 'Fecha', render: (v) => new Date(v).toLocaleDateString('es-CO') },
   ]
 
   const totalVentas = sales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0)
@@ -196,7 +217,7 @@ export default function TiendaPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
           <Card
             title="Ingresos"
-            value={`$${totalVentas.toFixed(2)}`}
+            value={formatCOP(totalVentas)}
             icon="money"
             subtitle="Total de ventas"
           />
@@ -309,46 +330,66 @@ export default function TiendaPage() {
         <Modal
           isOpen={isSaleModalOpen}
           title="Registrar Venta"
-          onClose={() => setIsSaleModalOpen(false)}
+          onClose={() => {
+            setIsSaleModalOpen(false)
+            setSelectedClientName('')
+          }}
           onConfirm={crearVenta}
           confirmText="Registrar"
         >
           <form className="form-grid">
             <div className="form-group">
-              <label>Estadía</label>
+              <label>Estadía del Cliente *</label>
               <select
                 value={saleForm.estadia_id}
-                onChange={(e) => setSaleForm({ ...saleForm, estadia_id: e.target.value })}
+                onChange={handleStayChange}
+                required
               >
                 <option value="">Selecciona una estadía</option>
-                {stays.map(s => (
+                {stays.filter(s => s.estado === 'activa').map(s => (
                   <option key={s.id} value={s.id}>
-                    Cliente #{s.cliente_id} - Hab. {s.habitacion_id}
+                    {s.cliente_nombre} - Hab. {s.numero_habitacion || s.habitacion_id}
                   </option>
                 ))}
               </select>
+              {selectedClientName && (
+                <div style={{ 
+                  marginTop: '8px', 
+                  padding: '8px', 
+                  backgroundColor: '#e3f2fd', 
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  color: '#1565c0',
+                  fontWeight: '600'
+                }}>
+                  ✓ {selectedClientName}
+                </div>
+              )}
             </div>
             <div className="form-group">
-              <label>Producto</label>
+              <label>Producto *</label>
               <select
                 value={saleForm.producto_id}
                 onChange={(e) => setSaleForm({ ...saleForm, producto_id: e.target.value })}
+                required
               >
                 <option value="">Selecciona un producto</option>
                 {products.map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.nombre} (Stock: {p.stock})
+                    {p.nombre} - {formatCOP(p.precio)} (Stock: {p.stock})
                   </option>
                 ))}
               </select>
             </div>
             <div className="form-group">
-              <label>Cantidad</label>
+              <label>Cantidad *</label>
               <input
                 type="number"
                 placeholder="0"
                 value={saleForm.cantidad}
                 onChange={(e) => setSaleForm({ ...saleForm, cantidad: e.target.value })}
+                min="1"
+                required
               />
             </div>
           </form>

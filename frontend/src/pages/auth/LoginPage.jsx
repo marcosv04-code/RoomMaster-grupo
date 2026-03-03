@@ -270,10 +270,6 @@ export default function LoginPage() {
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </button>
             </form>
-
-            <p className="auth-link">
-              ¿No tienes cuenta? <a onClick={() => navigate('/register')}>Regístrate aquí</a>
-            </p>
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@
 require_once 'cors.php';
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'permissions.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $datos = obtenerDatos();
@@ -79,6 +80,9 @@ else if ($metodo === 'POST') {
 
 // PUT - Actualizar inventario
 else if ($metodo === 'PUT') {
+    // Verificar permiso - solo admin puede editar
+    verificarPermisoOAbortar('INVENTARIO_EDIT');
+    
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);
@@ -134,6 +138,9 @@ else if ($metodo === 'PUT') {
 
 // DELETE - Eliminar registro de inventario
 else if ($metodo === 'DELETE') {
+    // Verificar permiso - solo admin puede eliminar
+    verificarPermisoOAbortar('INVENTARIO_DELETE');
+    
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);

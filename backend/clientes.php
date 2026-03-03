@@ -9,6 +9,8 @@
 require_once 'cors.php';
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'permissions.php';
+require_once 'permissions.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $datos = obtenerDatos();
@@ -63,6 +65,8 @@ else if ($metodo === 'POST') {
 
 // PUT - Actualizar cliente
 else if ($metodo === 'PUT') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('CLIENTES_EDIT', $rol);
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);
@@ -86,6 +90,8 @@ else if ($metodo === 'PUT') {
 
 // DELETE - Eliminar cliente
 else if ($metodo === 'DELETE') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('CLIENTES_DELETE', $rol);
     $error = validarCampos($datos, ['id']);
     if ($error) {
         responder(false, $error, null, 400);

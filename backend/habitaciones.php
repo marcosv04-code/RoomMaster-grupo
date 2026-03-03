@@ -3,12 +3,12 @@
  * ============================================
  * ENDPOINT DE HABITACIONES
  * GET, POST, PUT, DELETE /backend/habitaciones.php
- * ============================================
- */
+ * ============================================\n */
 
 require_once 'cors.php';
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'permissions.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $datos = obtenerDatos();
@@ -39,28 +39,8 @@ if ($metodo === 'GET') {
 
 // POST - Crear habitación
 else if ($metodo === 'POST') {
-    // Solo admin puede crear habitaciones
-    $user_id = $datos['user_id'] ?? null;
-    
-    if (!$user_id) {
-        responder(false, 'Usuario no identificado', null, 400);
-    }
-    
-    // Buscar el rol del usuario en la BD
-    $user_id = intval($user_id);
-    $sql_user = "SELECT rol FROM usuarios WHERE id = $user_id AND estado = 'activo'";
-    $resultado_user = $conexion->query($sql_user);
-    
-    if (!$resultado_user || $resultado_user->num_rows === 0) {
-        responder(false, 'Usuario no encontrado o inactivo', null, 403);
-    }
-    
-    $usuario = $resultado_user->fetch_assoc();
-    $rol = strtolower(trim($usuario['rol']));
-    
-    if ($rol !== 'admin') {
-        responder(false, 'Solo los administradores pueden crear habitaciones', null, 403);
-    }
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('HABITACIONES_CREATE', $rol);
     
     $error = validarCampos($datos, ['numero_habitacion', 'tipo', 'capacidad', 'precio_noche']);
     if ($error) {
@@ -99,30 +79,8 @@ else if ($metodo === 'POST') {
 
 // PUT - Actualizar habitación
 else if ($metodo === 'PUT') {
-    // Admin y recepcionista pueden editar
-    $user_id = $datos['user_id'] ?? null;
-    
-    if (!$user_id) {
-        responder(false, 'Usuario no identificado', null, 400);
-    }
-    
-    // Buscar el rol del usuario en la BD
-    $user_id = intval($user_id);
-    $sql_user = "SELECT rol FROM usuarios WHERE id = $user_id AND estado = 'activo'";
-    $resultado_user = $conexion->query($sql_user);
-    
-    if (!$resultado_user || $resultado_user->num_rows === 0) {
-        responder(false, 'Usuario no encontrado o inactivo', null, 403);
-    }
-    
-    $usuario = $resultado_user->fetch_assoc();
-    $rol = strtolower(trim($usuario['rol']));
-    
-    // Admin o receptionist pueden editar
-    $roles_permitidos = ['admin', 'receptionist', 'recepcionista'];
-    if (!in_array($rol, $roles_permitidos)) {
-        responder(false, 'No tienes permisos para editar habitaciones', null, 403);
-    }
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('HABITACIONES_EDIT', $rol);
     
     $error = validarCampos($datos, ['id']);
     if ($error) {
@@ -168,41 +126,8 @@ else if ($metodo === 'PUT') {
 
 // DELETE - Eliminar habitación
 else if ($metodo === 'DELETE') {
-    // Solo admin puede eliminar habitaciones
-    $user_id = $datos['user_id'] ?? null;
-    
-    // Log para debugging
-    error_log("DELETE - Datos recibidos: " . json_encode($datos));
-    error_log("DELETE - user_id recibido: " . json_encode($user_id));
-    
-    if (!$user_id) {
-        error_log("DELETE - Error: Usuario no identificado (user_id es null)");
-        responder(false, 'Usuario no identificado. Datos: ' . json_encode($datos), null, 400);
-    }
-    
-    // Buscar el rol del usuario en la BD
-    $user_id = intval($user_id);
-    error_log("DELETE - user_id convertido a int: $user_id");
-    
-    $sql_user = "SELECT rol FROM usuarios WHERE id = $user_id AND estado = 'activo'";
-    error_log("DELETE - SQL: $sql_user");
-    
-    $resultado_user = $conexion->query($sql_user);
-    
-    if (!$resultado_user || $resultado_user->num_rows === 0) {
-        error_log("DELETE - Error: Usuario no encontrado. ID: $user_id");
-        responder(false, 'Usuario no encontrado o inactivo', null, 403);
-    }
-    
-    $usuario = $resultado_user->fetch_assoc();
-    $rol = strtolower(trim($usuario['rol']));
-    
-    error_log("DELETE - Rol del usuario: $rol");
-    
-    if ($rol !== 'admin') {
-        error_log("DELETE - Error: Usuario no es admin. Rol: $rol");
-        responder(false, 'Solo los administradores pueden eliminar habitaciones', null, 403);
-    }
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('HABITACIONES_DELETE', $rol);
     
     $error = validarCampos($datos, ['id']);
     if ($error) {

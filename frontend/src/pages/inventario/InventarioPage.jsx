@@ -277,7 +277,7 @@ export default function InventarioPage() {
                       <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
                         Tipo: <strong>{habActual.tipo_habitacion}</strong> • 
                         Estado: <strong>{habActual.estado_habitacion}</strong>
-                        {tieneReabastecimiento && <span style={{ color: '#d32f2f', marginLeft: '8px' }}>⚠️ Necesita reabastecimiento</span>}
+                        {tieneReabastecimiento && <span style={{ color: '#d32f2f', marginLeft: '8px' }}>Necesita reabastecimiento</span>}
                       </p>
                     </div>
                     {can('INVENTARIO_EDIT') && (
@@ -394,48 +394,23 @@ export default function InventarioPage() {
                                   <>
                                     <button
                                       onClick={() => handleGuardarCantidad(suministro.id)}
-                                      style={{
-                                        padding: '4px 8px',
-                                        marginRight: '4px',
-                                        backgroundColor: '#4caf50',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        fontSize: '12px'
-                                      }}
+                                      className="btn-save btn-save-sm"
                                     >
-                                      ✓ Guardar
+                                      Guardar
                                     </button>
                                     <button
                                       onClick={() => setEditingId(null)}
-                                      style={{
-                                        padding: '4px 8px',
-                                        backgroundColor: '#999',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        fontSize: '12px'
-                                      }}
+                                      className="btn-cancel btn-cancel-sm"
                                     >
-                                      ✕ Cancelar
+                                      Cancelar
                                     </button>
                                   </>
                                 ) : (
                                   <button
                                     onClick={() => handleEditarCantidad(suministro.id, suministro.cantidad_actual)}
-                                    style={{
-                                      padding: '4px 8px',
-                                      backgroundColor: '#1976d2',
-                                      color: 'white',
-                                      border: 'none',
-                                      borderRadius: '4px',
-                                      cursor: 'pointer',
-                                      fontSize: '12px'
-                                    }}
+                                    className="btn-edit btn-edit-sm"
                                   >
-                                    ✏️ Editar
+                                    Editar
                                   </button>
                                 )}
                               </td>

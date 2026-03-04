@@ -97,7 +97,15 @@ else if ($metodo === 'POST') {
 // PUT - Actualizar estadía (finalizar o cambiar estado)
 else if ($metodo === 'PUT') {
     $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
-    verificarPermisoOAbortar('ESTADIA_EDIT', $rol);
+    
+    // Verificar permiso según la acción
+    if (isset($datos['estado']) && $datos['estado'] === 'cancelada') {
+        // Para cancelar, necesita permiso de ESTADIA_CANCEL
+        verificarPermisoOAbortar('ESTADIA_CANCEL', $rol);
+    } else {
+        // Para otras ediciones, necesita permiso de ESTADIA_EDIT
+        verificarPermisoOAbortar('ESTADIA_EDIT', $rol);
+    }
     
     $error = validarCampos($datos, ['id']);
     if ($error) {

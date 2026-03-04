@@ -249,9 +249,11 @@ export default function GestionEstadiaPage() {
           />
           <Card
             title="Total Huéspedes"
-            value={stays.reduce((sum, s) => sum + (parseInt(s.numero_huespedes) || 0), 0)}
+            value={stays
+              .filter(s => s.estado === 'activa')
+              .reduce((sum, s) => sum + (parseInt(s.numero_huespedes) || 0), 0)}
             icon="users"
-            subtitle="En todas las estadías"
+            subtitle="Activos"
           />
         </div>
 

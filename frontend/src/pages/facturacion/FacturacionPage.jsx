@@ -142,7 +142,7 @@ export default function FacturacionPage() {
         })
         const data = await res.json()
         if (data.exito) {
-          alert('✓ Factura actualizada')
+          alert('Factura actualizada')
           cargarFacturas()
           // Si la factura se marca como pagada, recargar estadías (se actualizarán a finalizada)
           if (formData.estado === 'Pagada') {
@@ -168,7 +168,7 @@ export default function FacturacionPage() {
         })
         const data = await res.json()
         if (data.exito) {
-          alert('✓ Factura creada: ' + data.datos.numero_factura)
+          alert('Factura creada: ' + data.datos.numero_factura)
           cargarFacturas()
         } else {
           alert('Error: ' + data.mensaje)
@@ -192,7 +192,7 @@ export default function FacturacionPage() {
       })
       const data = await res.json()
       if (data.exito) {
-        alert('✓ Factura eliminada')
+        alert('Factura eliminada')
         cargarFacturas()
       } else {
         alert('Error: ' + data.mensaje)
@@ -201,13 +201,107 @@ export default function FacturacionPage() {
       alert('Error: ' + err.message)
     }
   }
+
+  const handlePrint = (invoice) => {
+    // Crear contenido HTML para impresión
+    const printContent = `
+      <html>
+        <head>
+          <title>Factura ${invoice.numero_factura}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .invoice-container { max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 30px; }
+            .invoice-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+            .invoice-header h1 { margin: 0; font-size: 28px; }
+            .invoice-header p { margin: 5px 0; color: #666; }
+            .invoice-details { margin-bottom: 30px; }
+            .detail-row { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+            .detail-label { font-weight: bold; color: #333; }
+            .detail-value { color: #666; }
+            .invoice-items { margin-bottom: 30px; }
+            .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .items-table th { background-color: #f5f5f5; padding: 10px; text-align: left; border-bottom: 2px solid #333; font-weight: bold; }
+            .items-table td { padding: 10px; border-bottom: 1px solid #eee; }
+            .totals { margin-top: 30px; border-top: 2px solid #333; padding-top: 20px; }
+            .total-row { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px; }
+            .total-row.grand { font-size: 20px; font-weight: bold; color: #2c3e50; border-top: 1px solid #333; padding-top: 10px; }
+            .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
+            @media print {
+              body { margin: 0; padding: 0; }
+              .invoice-container { border: none; box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-container">
+            <div class="invoice-header">
+              <h1>ROOMMASTER</h1>
+              <p>Factura de Alojamiento</p>
+              <p><strong>${invoice.numero_factura}</strong></p>
+            </div>
+
+            <div class="invoice-details">
+              <div class="detail-row">
+                <span class="detail-label">Cliente:</span>
+                <span class="detail-value">${invoice.cliente_nombre || 'N/A'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Fecha:</span>
+                <span class="detail-value">${new Date(invoice.fecha_factura).toLocaleDateString('es-CO')}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Estado:</span>
+                <span class="detail-value">${invoice.estado}</span>
+              </div>
+              ${invoice.metodo_pago ? `<div class="detail-row">
+                <span class="detail-label">Método de Pago:</span>
+                <span class="detail-value">${invoice.metodo_pago}</span>
+              </div>` : ''}
+            </div>
+
+            <div class="totals">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <strong>${formatCOPWithDecimals(invoice.subtotal)}</strong>
+              </div>
+              <div class="total-row">
+                <span>Impuesto (19%):</span>
+                <strong>${formatCOPWithDecimals(invoice.impuesto)}</strong>
+              </div>
+              <div class="total-row grand">
+                <span>TOTAL:</span>
+                <strong>${formatCOPWithDecimals(invoice.total)}</strong>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>Gracias por su hospedaje</p>
+              <p>RoomMaster - Sistema de Gestión Hotelera</p>
+              <p style="margin-top: 20px; font-size: 10px;">${new Date().toLocaleString('es-CO')}</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    // Abrir en nueva ventana
+    const printWindow = window.open('', '', 'height=600,width=800')
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    
+    // Esperar a que se cargue el contenido y abrir impresión
+    setTimeout(() => {
+      printWindow.print()
+    }, 250)
+  }
+
   // Generar factura automática desde una estadía
   async function generarFacturaAutomatica(estadiaId) {
     try {
       const res = await fetch(`${API}/facturas.php?action=generar_automatica&estadia_id=${estadiaId}`)
       const data = await res.json()
       if (data.exito) {
-        alert(`✓ Factura ${data.datos.numero_factura} creada automáticamente\n\nEstadía: ${formatCOP(data.datos.total_estadia)}\nVentas: ${formatCOP(data.datos.total_ventas)}\nTotal: ${formatCOP(data.datos.total)}`)
+        alert(`Factura ${data.datos.numero_factura} creada automáticamente\n\nEstadía: ${formatCOP(data.datos.total_estadia)}\nVentas: ${formatCOP(data.datos.total_ventas)}\nTotal: ${formatCOP(data.datos.total)}`)
         cargarFacturas()
       } else {
         alert('Error: ' + data.mensaje)
@@ -307,7 +401,7 @@ export default function FacturacionPage() {
                     onClick={() => generarFacturaAutomatica(stay.id)}
                     style={{ padding: '6px 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
                   >
-                    💵 Facturar
+                    Facturar
                   </button>
                 </div>
               ))}
@@ -324,7 +418,11 @@ export default function FacturacionPage() {
             data={invoices}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onPrint={handlePrint}
             actions={true}
+            showPrint={true}
+            showEdit={true}
+            showDelete={user?.role === 'admin'}
           />
         )}
 

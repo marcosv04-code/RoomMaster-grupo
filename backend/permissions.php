@@ -32,7 +32,7 @@ $permisos = [
     'FACTURACION_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],
     'FACTURACION_CREATE' => [ROLE_RECEPTIONIST, ROLE_RECEPCION],      // Recepcionista genera facturas
     'FACTURACION_MARK_PAID' => [ROLE_RECEPTIONIST, ROLE_RECEPCION],   // Recepcionista marca como pagada
-    'FACTURACION_EDIT' => [ROLE_ADMIN],               // Solo admin puede editar
+    'FACTURACION_EDIT' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],        // Admin y recepcionista pueden editar
     'FACTURACION_DELETE' => [ROLE_ADMIN],             // Solo admin puede eliminar
     
     // VENTAS / TIENDA

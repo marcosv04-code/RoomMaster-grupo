@@ -107,7 +107,9 @@ export default function DashboardPage() {
     setSaving(true)
     try {
       const method = editingStaff ? 'PUT' : 'POST'
-      const body = editingStaff ? { ...staffForm, id: editingStaff.id } : staffForm
+      const body = editingStaff 
+        ? { ...staffForm, id: editingStaff.id, rol: user?.role } 
+        : { ...staffForm, rol: user?.role }
 
       const res = await fetch(`${API}/personal_limpieza.php`, {
         method,
@@ -346,6 +348,7 @@ export default function DashboardPage() {
           amenidades: newRoomForm.amenidades,
           estado: newRoomForm.estado,
           user_id: user?.id,
+          rol: user?.role
         })
       })
 

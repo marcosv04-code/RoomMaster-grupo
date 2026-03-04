@@ -18,7 +18,7 @@ $datos = obtenerDatos();
 if ($metodo === 'GET') {
     $categoria = $datos['categoria'] ?? null;
     
-    $sql = "SELECT p.*, i.cantidad_actual as stock FROM productos p 
+    $sql = "SELECT p.*, COALESCE(i.cantidad_actual, p.stock, 0) as stock FROM productos p 
             LEFT JOIN inventario i ON p.id = i.producto_id 
             WHERE p.estado = 'activo'";
     

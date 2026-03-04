@@ -111,7 +111,7 @@ export default function Sidebar() {
               color: isAdmin ? '#FF6B6B' : '#4ECDC4',
               fontWeight: '600'
             }}>
-              {isAdmin ? '👨‍💼 Administrador' : '📞 Recepcionista'}
+              {isAdmin ? 'Administrador' : 'Recepcionista'}
             </p>
           </div>
         </div>

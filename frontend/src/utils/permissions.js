@@ -29,7 +29,7 @@ export const PERMISSIONS = {
   FACTURACION_VIEW: ['admin', 'receptionist', 'recepcion'],
   FACTURACION_CREATE: ['receptionist', 'recepcion'], // Recepcionista genera facturas
   FACTURACION_MARK_PAID: ['receptionist', 'recepcion'], // Recepcionista marca como pagada
-  FACTURACION_EDIT: ['admin'], // Solo admin puede editar
+  FACTURACION_EDIT: ['admin', 'receptionist', 'recepcion'], // Admin y recepcionista pueden editar
   FACTURACION_DELETE: ['admin'], // Solo admin puede eliminar
   
   // TIENDA / VENTAS

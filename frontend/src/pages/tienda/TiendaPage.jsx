@@ -187,7 +187,23 @@ export default function TiendaPage() {
     { key: 'nombre', label: 'Nombre' },
     { key: 'categoria', label: 'Categoría' },
     { key: 'precio', label: 'Precio', render: (v) => formatCOP(v) },
-    { key: 'stock', label: 'Stock' },
+    { 
+      key: 'stock', 
+      label: 'Stock',
+      render: (v) => (
+        <span style={{
+          display: 'inline-block',
+          padding: '4px 8px',
+          backgroundColor: v > 5 ? '#e8f5e9' : v > 0 ? '#fff3e0' : '#ffebee',
+          color: v > 5 ? '#2e7d32' : v > 0 ? '#e65100' : '#c62828',
+          borderRadius: '4px',
+          fontWeight: '600',
+          fontSize: '12px'
+        }}>
+          {v || 0}
+        </span>
+      )
+    },
   ]
 
   const saleColumns = [

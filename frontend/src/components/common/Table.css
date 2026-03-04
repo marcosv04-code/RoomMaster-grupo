@@ -61,7 +61,9 @@
   }
   
   .btn-edit,
-  .btn-delete {
+  .btn-delete,
+  .btn-print,
+  .btn-cancel {
     padding: 4px 8px;
     font-size: 11px;
   }

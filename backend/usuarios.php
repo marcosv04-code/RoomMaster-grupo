@@ -92,10 +92,14 @@ else if ($metodo === 'PUT') {
     }
     
     // Cambio de contraseña (requiere contraseña actual)
+    // Solo admin puede cambiar contraseñas
     $contraseña_actual = $datos['contraseña_actual'] ?? '';
     $contraseña_nueva = $datos['contraseña_nueva'] ?? '';
     
     if ($contraseña_actual && $contraseña_nueva) {
+        // Validar que solo admin pueda cambiar contraseña
+        verificarPermisoOAbortar('USUARIOS_MANAGE', $rol);
+        
         if (!$contraseña_actual || !$contraseña_nueva) {
             responder(false, 'Faltan datos requeridos', null, 400);
         }

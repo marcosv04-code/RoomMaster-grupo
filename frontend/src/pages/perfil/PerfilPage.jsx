@@ -3,13 +3,14 @@ import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Icon from '../../components/common/Icon'
 import { useTheme } from '../../hooks/useTheme'
 import { useAuth } from '../../hooks/useAuth'
+import { usePermissions } from '../../hooks/usePermissions'
 import './ModulePage.css'
 
 const API = 'http://localhost/RoomMaster-grupo/backend'
 
 export default function PerfilPage() {
-  const { isDarkMode, toggleTheme } = useTheme()
   const { user } = useAuth()
+  const { isAdmin } = usePermissions()
   
   const [userProfile, setUserProfile] = useState({
     nombre: user?.name || 'Usuario',
@@ -69,7 +70,7 @@ export default function PerfilPage() {
       const data = await res.json()
       if (data.exito) {
         setPasswordData({ actual: '', nueva: '', confirmar: '' })
-        setSavedMessage('✓ Contraseña actualizada correctamente')
+        setSavedMessage('Contraseña actualizada correctamente')
         setTimeout(() => setSavedMessage(''), 3000)
       } else {
         alert('Error: ' + data.mensaje)
@@ -81,15 +82,12 @@ export default function PerfilPage() {
   }
 
   const handleToggleSetting = (setting) => {
-    if (setting === 'temaOscuro') {
-      toggleTheme()
-      setSavedMessage('✓ Tema actualizado')
-    } else {
+    if (setting === 'notificacionesEmail' || setting === 'notificacionesPush' || setting === 'backupAutomatico') {
       setSettings(prev => ({
         ...prev,
         [setting]: !prev[setting]
       }))
-      setSavedMessage('✓ Configuración actualizada')
+      setSavedMessage('Configuración actualizada')
     }
     setTimeout(() => setSavedMessage(''), 2000)
   }
@@ -102,6 +100,36 @@ export default function PerfilPage() {
   const handleCancelEditName = () => {
     setEditingName(false)
     setEditNameValue(userProfile.nombre)
+  }
+
+  const handleProfilePhotoChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setUploadingPhoto(true)
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const base64Photo = event.target.result
+        localStorage.setItem(`profilePhoto_${user?.id}`, base64Photo)
+        setUserProfile(prev => ({
+          ...prev,
+          foto: base64Photo
+        }))
+        setSavedMessage('Foto de perfil actualizada')
+        setTimeout(() => setSavedMessage(''), 2000)
+        setUploadingPhoto(false)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemovePhoto = () => {
+    localStorage.removeItem(`profilePhoto_${user?.id}`)
+    setUserProfile(prev => ({
+      ...prev,
+      foto: null
+    }))
+    setSavedMessage('Foto de perfil removida')
+    setTimeout(() => setSavedMessage(''), 2000)
   }
 
   const handleSaveName = async () => {
@@ -128,7 +156,7 @@ export default function PerfilPage() {
           nombre: editNameValue.trim()
         }))
         setEditingName(false)
-        setSavedMessage('✓ Nombre actualizado correctamente')
+        setSavedMessage('Nombre actualizado correctamente')
         setTimeout(() => setSavedMessage(''), 3000)
       } else {
         alert('Error: ' + data.mensaje)
@@ -164,7 +192,10 @@ export default function PerfilPage() {
 
         {/* SECCIÓN 1: INFORMACIÓN PERSONAL */}
         <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <h2 style={{ marginBottom: '24px' }}>👤 Información Personal</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+            <Icon name="user" size={32} className="primary" />
+            <h2 style={{ marginBottom: 0 }}>Información Personal</h2>
+          </div>
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
@@ -178,7 +209,6 @@ export default function PerfilPage() {
                 justifyContent: 'center',
                 fontSize: '40px'
               }}>
-                👤
               </div>
               <div style={{ flex: 1 }}>
                 {editingName ? (
@@ -259,83 +289,85 @@ export default function PerfilPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
               <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #2196F3' }}>
-                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>📧 CORREO ELECTRÓNICO</div>
+                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>CORREO ELÓTRÓNICO</div>
                 <div style={{ fontSize: '15px', fontWeight: '600' }}>{userProfile.email}</div>
               </div>
 
               <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #FF9800' }}>
-                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>👥 ROL</div>
+                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>ROL</div>
                 <div style={{ fontSize: '15px', fontWeight: '600', textTransform: 'capitalize' }}>{userProfile.rol}</div>
               </div>
 
               <div style={{ padding: '16px', background: '#f8f9fb', borderRadius: '8px', borderLeft: '4px solid #4CAF50' }}>
-                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>ℹ️ ESTADO</div>
+                <div style={{ fontSize: '12px', color: '#999', fontWeight: '600', marginBottom: '4px' }}>ESTADO</div>
                 <div style={{ fontSize: '15px', fontWeight: '600' }}>Activo</div>
               </div>
             </div>
 
-            <p style={{ color: '#999', fontSize: '12px', marginTop: '16px' }}>💡 La información personal la administra el personal de administración. Contacta a tu gestor para cambios.</p>
+            <p style={{ color: '#999', fontSize: '12px', marginTop: '16px' }}>La información personal la administra el personal de administración. Contacta a tu gestor para cambios.</p>
           </div>
         </div>
 
-        {/* SECCIÓN 2: SEGURIDAD */}
-        <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <h2>🔒 Seguridad de la Cuenta</h2>
+        {/* SECCIÓN 2: SEGURIDAD - Solo para administrador */}
+        {isAdmin && (
+          <div className="dashboard-section" style={{ marginBottom: '32px' }}>
+            <h2>Seguridad de la Cuenta</h2>
 
-          <div style={{ marginTop: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Cambiar Contraseña</h3>
-            <form onSubmit={handleChangePassword} style={{ background: '#f8f9fb', padding: '20px', borderRadius: '12px', borderLeft: '4px solid #F44336' }}>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Contraseña Actual</label>
-                  <input
-                    type="password"
-                    placeholder="Ingresa tu contraseña actual"
-                    value={passwordData.actual}
-                    onChange={(e) => setPasswordData({ ...passwordData, actual: e.target.value })}
-                  />
+            <div style={{ marginTop: '24px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px' }}>Cambiar Contraseña</h3>
+              <form onSubmit={handleChangePassword} style={{ background: '#f8f9fb', padding: '20px', borderRadius: '12px', borderLeft: '4px solid #F44336' }}>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Contraseña Actual</label>
+                    <input
+                      type="password"
+                      placeholder="Ingresa tu contraseña actual"
+                      value={passwordData.actual}
+                      onChange={(e) => setPasswordData({ ...passwordData, actual: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Nueva Contraseña</label>
+                    <input
+                      type="password"
+                      placeholder="Crea una nueva contraseña"
+                      value={passwordData.nueva}
+                      onChange={(e) => setPasswordData({ ...passwordData, nueva: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Confirmar Contraseña</label>
+                    <input
+                      type="password"
+                      placeholder="Confirma la nueva contraseña"
+                      value={passwordData.confirmar}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirmar: e.target.value })}
+                    />
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Nueva Contraseña</label>
-                  <input
-                    type="password"
-                    placeholder="Crea una nueva contraseña"
-                    value={passwordData.nueva}
-                    onChange={(e) => setPasswordData({ ...passwordData, nueva: e.target.value })}
-                  />
+                <div style={{ marginTop: '12px', fontSize: '12px', color: '#999', marginBottom: '16px' }}>
+                  La contraseña debe tener al menos 6 caracteres
                 </div>
 
-                <div className="form-group">
-                  <label>Confirmar Contraseña</label>
-                  <input
-                    type="password"
-                    placeholder="Confirma la nueva contraseña"
-                    value={passwordData.confirmar}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmar: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginTop: '12px', fontSize: '12px', color: '#999', marginBottom: '16px' }}>
-                ℹ️ La contraseña debe tener al menos 6 caracteres
-              </div>
-
-              <button type="submit" className="btn btn-primary">
-                Actualizar Contraseña
-              </button>
-            </form>
+                <button type="submit" className="btn btn-primary">
+                  Actualizar Contraseña
+                </button>
+              </form>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* SECCIÓN 3: CONFIGURACIÓN */}
         <div className="dashboard-section" style={{ marginBottom: '32px' }}>
-          <h2>⚙️ Configuración</h2>
+          <h2>Configuración</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginTop: '24px' }}>
             <div style={{ padding: '16px', background: '#e3f2fd', borderRadius: '8px', borderLeft: '4px solid #2196F3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>📧 Notificaciones por Email</div>
+                <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>Notificaciones por Email</div>
                 <div style={{ fontSize: '12px', color: '#666' }}>Recibe alertas por correo</div>
               </div>
               <input
@@ -368,19 +400,6 @@ export default function PerfilPage() {
                 type="checkbox"
                 checked={settings.backupAutomatico}
                 onChange={() => handleToggleSetting('backupAutomatico')}
-                style={{ cursor: 'pointer', width: '20px', height: '20px' }}
-              />
-            </div>
-
-            <div style={{ padding: '16px', background: '#fff3e0', borderRadius: '8px', borderLeft: '4px solid #FF9800', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>🌙 Tema Oscuro</div>
-                <div style={{ fontSize: '12px', color: '#666' }}>Modo oscuro para la vista</div>
-              </div>
-              <input
-                type="checkbox"
-                checked={isDarkMode}
-                onChange={() => handleToggleSetting('temaOscuro')}
                 style={{ cursor: 'pointer', width: '20px', height: '20px' }}
               />
             </div>

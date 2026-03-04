@@ -29,24 +29,6 @@
 }
 
 /* Variables de color - Tema Oscuro */
-[data-theme="dark"] {
-  --color-primary-light: #1e3a5f;
-  --color-primary: #2196F3;
-  --color-primary-dark: #1565c0;
-  --color-secondary: #2a2a2a;
-  --color-text-primary: #e0e0e0;
-  --color-text-secondary: #b0b0b0;
-  --color-border: #404040;
-  --color-success: #4caf50;
-  --color-warning: #ff9800;
-  --color-error: #f44336;
-  --color-white: #1a1a1a;
-  --color-gray-light: #2a2a2a;
-  --color-background: #0f0f0f;
-  --color-background-secondary: #1a1a1a;
-  --color-card-background: #252525;
-}
-
 /* Reset y base */
 * {
   margin: 0;
@@ -140,6 +122,23 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-cancel {
+  background-color: #FF9800;
+  color: var(--color-white);
+  padding: 8px 14px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 600;
+}
+
+.btn-cancel:hover {
+  background-color: #F57C00;
+  transform: translateY(-1px);
+}
+
 .btn-delete {
   background-color: var(--color-error);
   color: var(--color-white);
@@ -156,6 +155,49 @@ body {
 .btn-delete:hover {
   background-color: #d32f2f;
   transform: translateY(-1px);
+}
+
+.btn-print {
+  background-color: #4CAF50;
+  color: var(--color-white);
+  padding: 8px 14px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 600;
+}
+
+.btn-print:hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+}
+
+.btn-save {
+  background-color: #4CAF50;
+  color: var(--color-white);
+  padding: 8px 14px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 600;
+}
+
+.btn-save:hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+}
+
+/* Botones compactos para tablas */
+.btn-edit-sm,
+.btn-delete-sm,
+.btn-cancel-sm,
+.btn-save-sm {
+  padding: 4px 8px;
+  font-size: 11px;
 }
 
 /* Input/Form */

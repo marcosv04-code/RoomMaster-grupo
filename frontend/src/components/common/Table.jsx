@@ -12,10 +12,12 @@ import './Table.css'
  * - onEdit: Función callback cuando se hace click en "Editar"
  * - onDelete: Función callback cuando se hace click en "Eliminar"
  * - onCancel: Función callback para cancelar (estadías, etc.)
+ * - onPrint: Función callback cuando se hace click en "Imprimir"
  * - actions: Boolean para mostrar u ocultar botones de acciones
  * - showEdit: Boolean para mostrar botón editar (default true)
  * - showDelete: Boolean para mostrar botón eliminar (default true)
  * - showCancel: Boolean para mostrar botón cancelar (default false)
+ * - showPrint: Boolean para mostrar botón imprimir (default false)
  * 
  * Ejemplo de uso:
  * <Table
@@ -23,8 +25,10 @@ import './Table.css'
  *   data={data}
  *   onEdit={handleEdit}
  *   onDelete={handleDelete}
+ *   onPrint={handlePrint}
  *   showEdit={can('EDIT')}
  *   showDelete={can('DELETE')}
+ *   showPrint={true}
  * />
  */
 export default function Table({ 
@@ -33,10 +37,12 @@ export default function Table({
   onEdit, 
   onDelete, 
   onCancel,
+  onPrint,
   actions = true,
   showEdit = true,
   showDelete = true,
-  showCancel = false
+  showCancel = false,
+  showPrint = false
 }) {
   return (
     <div className="table-container">
@@ -88,9 +94,18 @@ export default function Table({
                       <button 
                         className="btn-cancel" 
                         onClick={() => onCancel(row)}
-                        style={{ background: '#FF9800' }}
                       >
                         Cancelar
+                      </button>
+                    )}
+
+                    {/* Botón Imprimir */}
+                    {showPrint && (
+                      <button 
+                        className="btn-print"
+                        onClick={() => onPrint(row)}
+                      >
+                        Imprimir
                       </button>
                     )}
                     

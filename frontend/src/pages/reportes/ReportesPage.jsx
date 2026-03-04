@@ -5,7 +5,7 @@ import Icon from '../../components/common/Icon'
 import { formatCOP, formatCOPWithDecimals } from '../../utils/currency'
 import './ModulePage.css'
 
-const API = 'http://localhost/RoomMaster-grupo/backend'
+const API = `${window.location.origin}/backend`
 
 export default function ReportesPage() {
   const [period, setPeriod] = useState('mes')

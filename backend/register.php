@@ -16,13 +16,15 @@ if ($metodo === 'POST') {
     $datos = obtenerDatos();
     
     // Validar campos
-    $error = validarCampos($datos, ['nombre', 'email', 'contraseña', 'rol']);
+    $error = validarCampos($datos, ['nombre', 'email', 'telefono', 'hotel', 'contraseña', 'rol']);
     if ($error) {
         responder(false, $error, null, 400);
     }
     
     $nombre = escapar($conexion, $datos['nombre']);
     $email = escapar($conexion, $datos['email']);
+    $telefono = escapar($conexion, $datos['telefono']);
+    $hotel = escapar($conexion, $datos['hotel']);
     $contraseña = escapar($conexion, $datos['contraseña']);
     $rol = escapar($conexion, $datos['rol']);
     
@@ -35,8 +37,8 @@ if ($metodo === 'POST') {
     }
     
     // Crear nuevo usuario
-    $sql = "INSERT INTO usuarios (nombre, email, contraseña, rol, estado) 
-            VALUES ('$nombre', '$email', '$contraseña', '$rol', 'activo')";
+    $sql = "INSERT INTO usuarios (nombre, email, telefono, hotel, contraseña, rol, estado) 
+            VALUES ('$nombre', '$email', '$telefono', '$hotel', '$contraseña', '$rol', 'activo');"
     
     $resultado = ejecutarAccion($conexion, $sql);
     
@@ -45,7 +47,7 @@ if ($metodo === 'POST') {
     }
     
     // Obtener datos del usuario creado
-    $sql = "SELECT id, nombre, email, rol FROM usuarios WHERE email = '$email'";
+    $sql = "SELECT id, nombre, email, telefono, hotel, rol FROM usuarios WHERE email = '$email'";
     $resultado = $conexion->query($sql);
     
     if ($resultado->num_rows > 0) {
@@ -57,6 +59,8 @@ if ($metodo === 'POST') {
             'id' => $usuario['id'],
             'nombre' => $usuario['nombre'],
             'email' => $usuario['email'],
+            'telefono' => $usuario['telefono'],
+            'hotel' => $usuario['hotel'],
             'rol' => $usuario['rol']
         ]);
     } else {

@@ -117,7 +117,7 @@ export default function LoginPage() {
 
     try {
       // Llamar al backend
-      const response = await fetch('http://localhost/RoomMaster-grupo/backend/login.php', {
+      const response = await fetch(`${window.location.origin}/backend/login.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -137,6 +137,8 @@ export default function LoginPage() {
           id: data.datos.usuario.id,
           name: data.datos.usuario.nombre,
           email: data.datos.usuario.email,
+          telefono: data.datos.usuario.telefono,
+          hotel: data.datos.usuario.hotel,
           role: data.datos.usuario.rol
         }
         

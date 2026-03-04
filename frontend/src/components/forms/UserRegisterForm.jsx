@@ -6,6 +6,8 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
+    telefono: '',
+    hotel: '',
     password: '',
     confirmPassword: '',
   })
@@ -66,7 +68,7 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
     e.preventDefault()
     setError('')
 
-    if (!formData.nombre || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.nombre || !formData.email || !formData.telefono || !formData.hotel || !formData.password || !formData.confirmPassword) {
       setError('Por favor completa todos los campos')
       return
     }
@@ -85,6 +87,8 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
     await onSubmit({
       nombre: formData.nombre,
       email: formData.email,
+      telefono: formData.telefono,
+      hotel: formData.hotel,
       contraseña: formData.password,
       rol: role
     }, setError, resetForm)
@@ -94,6 +98,8 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
     setFormData({
       nombre: '',
       email: '',
+      telefono: '',
+      hotel: '',
       password: '',
       confirmPassword: '',
     })
@@ -132,6 +138,32 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
           value={formData.email}
           onChange={handleChange}
           placeholder="tu@email.com"
+          disabled={isLoading}
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="telefono">Teléfono</label>
+        <input
+          type="tel"
+          id="telefono"
+          name="telefono"
+          value={formData.telefono}
+          onChange={handleChange}
+          placeholder="Ej: 3001234567"
+          disabled={isLoading}
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="hotel">Hotel Asignado</label>
+        <input
+          type="text"
+          id="hotel"
+          name="hotel"
+          value={formData.hotel}
+          onChange={handleChange}
+          placeholder="Ej: Hotel RoomMaster - Centro"
           disabled={isLoading}
         />
       </div>

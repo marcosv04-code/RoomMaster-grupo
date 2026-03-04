@@ -8,7 +8,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { formatCOP } from '../../utils/currency'
 import './ModulePage.css'
 
-const API = 'http://localhost/RoomMaster-grupo/backend'
+const API = `${window.location.origin}/backend`
 
 export default function TiendaPage() {
   const { user } = useAuth()

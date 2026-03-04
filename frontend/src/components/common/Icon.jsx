@@ -21,6 +21,10 @@ import checkCircle from '../../assets/icons/check-circle.svg'
 import running from '../../assets/icons/running.svg'
 import home from '../../assets/icons/home.svg'
 import edit from '../../assets/icons/edit.svg'
+import calendar from '../../assets/icons/calendar.svg'
+import fileText from '../../assets/icons/file-text.svg'
+import alertCircle from '../../assets/icons/alert-circle.svg'
+import box from '../../assets/icons/box.svg'
 import './Icon.css'
 
 const iconMap = {
@@ -47,6 +51,10 @@ const iconMap = {
   running,
   home,
   edit,
+  calendar,
+  'file-text': fileText,
+  'alert-circle': alertCircle,
+  box,
 }
 
 export default function Icon({ name, size = 24, className = '' }) {

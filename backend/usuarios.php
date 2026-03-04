@@ -21,7 +21,7 @@ if ($metodo === 'GET') {
     if ($id) {
         // Obtener un usuario específico
         $id = intval($id);
-        $sql = "SELECT id, nombre, email, rol, hotel, estado, fecha_creacion FROM usuarios WHERE id = $id";
+        $sql = "SELECT id, nombre, email, telefono, rol, hotel, estado, fecha_creacion FROM usuarios WHERE id = $id";
         
         $resultado = ejecutarConsulta($conexion, $sql);
         
@@ -32,7 +32,7 @@ if ($metodo === 'GET') {
         responder(true, 'Usuario obtenido', $resultado[0]);
     } else {
         // Obtener todos los usuarios
-        $sql = "SELECT id, nombre, email, rol, estado, fecha_creacion FROM usuarios WHERE rol != 'admin' ORDER BY nombre ASC";
+        $sql = "SELECT id, nombre, email, telefono, hotel, rol, estado, fecha_creacion FROM usuarios WHERE rol != 'admin' ORDER BY nombre ASC";
         
         $resultado = ejecutarConsulta($conexion, $sql);
         

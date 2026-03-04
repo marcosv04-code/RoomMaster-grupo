@@ -109,10 +109,21 @@ export default function Sidebar() {
             <p className="user-name">{user?.name || 'Usuario'}</p>
             <p className="user-role" style={{ 
               color: isAdmin ? '#FF6B6B' : '#4ECDC4',
-              fontWeight: '600'
+              fontWeight: '600',
+              margin: '2px 0'
             }}>
               {isAdmin ? 'Administrador' : 'Recepcionista'}
             </p>
+            {user?.hotel && (
+              <p className="user-hotel" style={{ 
+                fontSize: '0.75rem',
+                color: '#888',
+                margin: '2px 0',
+                fontWeight: '500'
+              }}>
+                {user.hotel}
+              </p>
+            )}
           </div>
         </div>
         <button className="logout-btn" onClick={handleLogout}>

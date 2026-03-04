@@ -6,7 +6,7 @@ import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
-const API = 'http://localhost/RoomMaster-grupo/backend'
+const API = `${window.location.origin}/backend`
 
 /**
  * ClientesPage: Gestión completa de clientes

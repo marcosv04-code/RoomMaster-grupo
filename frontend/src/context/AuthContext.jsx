@@ -56,10 +56,12 @@ export function AuthProvider({ children }) {
    *   - id: número único del usuario
    *   - name: nombre del usuario
    *   - email: correo electrónico
+   *   - telefono: teléfono del usuario
+   *   - hotel: hotel asignado al usuario
    *   - role: 'admin' o 'receptionist' (tipo de usuario)
    */
   const login = (userData) => {
-    // userData debe contener: name, email, role (admin o receptionist)
+    // userData debe contener: name, email, telefono, hotel, role (admin o receptionist)
     setUser(userData)
     setIsAuthenticated(true)
     // Guardar en localStorage para que persista entre recargas

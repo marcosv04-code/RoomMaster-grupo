@@ -25,7 +25,7 @@ if ($metodo === 'POST') {
     $contraseña = escapar($conexion, $datos['contraseña']);
     
     // Buscar usuario
-    $sql = "SELECT id, nombre, email, rol, hotel FROM usuarios WHERE email = '$email' AND contraseña = '$contraseña' AND estado = 'activo'";
+    $sql = "SELECT id, nombre, email, telefono, rol, hotel FROM usuarios WHERE email = '$email' AND contraseña = '$contraseña' AND estado = 'activo'";
     $resultado = $conexion->query($sql);
     
     if ($resultado->num_rows > 0) {

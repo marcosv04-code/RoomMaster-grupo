@@ -10,7 +10,7 @@ import { formatCOP, formatThousands } from '../../utils/currency'
 import './DashboardPage.css'
 import { roomService } from '../../services/index'
 
-const API = 'http://localhost/RoomMaster-grupo/backend'
+const API = `${window.location.origin}/backend`
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -834,6 +834,7 @@ export default function DashboardPage() {
                   <tr style={{ background: '#f8f9fb', borderBottom: '2px solid #e0e0e0' }}>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Nombre</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Email</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Hotel</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Rol</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Estado</th>
                     <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#666' }}>Acciones</th>
@@ -842,7 +843,7 @@ export default function DashboardPage() {
                 <tbody>
                   {usuarios.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
+                      <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
                         No hay usuarios registrados
                       </td>
                     </tr>
@@ -851,6 +852,7 @@ export default function DashboardPage() {
                       <tr key={usuario.id} style={{ borderBottom: '1px solid #e0e0e0', hover: { background: '#f9f9f9' } }}>
                         <td style={{ padding: '12px' }}>{usuario.nombre}</td>
                         <td style={{ padding: '12px' }}>{usuario.email}</td>
+                        <td style={{ padding: '12px', fontSize: '14px', color: '#555' }}>{usuario.hotel || '-'}</td>
                         <td style={{ padding: '12px' }}>
                           <span style={{ 
                             background: usuario.rol === 'recepcion' ? '#e3f2fd' : '#f3e5f5',
@@ -860,7 +862,7 @@ export default function DashboardPage() {
                             fontSize: '12px',
                             fontWeight: '600'
                           }}>
-                            {usuario.rol === 'recepcion' ? '👤 Recepcionista' : usuario.rol}
+                            {usuario.rol === 'recepcion' ? 'Recepcionista' : usuario.rol}
                           </span>
                         </td>
                         <td style={{ padding: '12px' }}>
@@ -872,7 +874,7 @@ export default function DashboardPage() {
                             fontSize: '12px',
                             fontWeight: '600'
                           }}>
-                            {usuario.estado === 'activo' ? '✓ Activo' : '✗ Inactivo'}
+                            {usuario.estado === 'activo' ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
                         <td style={{ padding: '12px', textAlign: 'center' }}>

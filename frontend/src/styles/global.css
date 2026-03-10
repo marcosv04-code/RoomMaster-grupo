@@ -1,34 +1,161 @@
+/* Variables de marca - Colores base consistentes */
+:root {
+  /* Colores de marca primarios - iguales en ambos modos */
+  --brand-primary: #2196F3;
+  --brand-primary-light: #64B5F6;
+  --brand-primary-dark: #1565C0;
+  --brand-secondary: #FF9800;
+  --brand-success: #4CAF50;
+  --brand-warning: #FFC107;
+  --brand-error: #F44336;
+  --brand-info: #00BCD4;
+}
+
 /* Variables de color - Tema Claro */
 :root,
 [data-theme="light"] {
-  --color-primary-light: #e3f2fd;
+  /* Paleta primaria */
+  --color-primary-light: #E3F2FD;
   --color-primary: #2196F3;
-  --color-primary-dark: #1565c0;
-  --color-secondary: #f5f5f5;
-  --color-text-primary: #212121;
-  --color-text-secondary: #757575;
-  --color-border: #e0e0e0;
-  --color-success: #4caf50;
-  --color-warning: #ff9800;
-  --color-error: #f44336;
-  --color-white: #ffffff;
-  --color-gray-light: #f9f9f9;
-  --color-background: #ffffff;
-  --color-background-secondary: #f8f9fb;
-  --color-card-background: #ffffff;
+  --color-primary-dark: #1565C0;
   
+  /* Fondos */
+  --color-background: #FFFFFF;
+  --color-background-secondary: #F5F7FA;
+  --color-background-tertiary: #EEEEEE;
+  --color-card-background: #FFFFFF;
+  --color-surface: #F8F9FB;
+  
+  /* Texto */
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
+  --color-text-inverse: #FFFFFF;
+  
+  /* Bordes y divisores */
+  --color-border: #E0E0E0;
+  --color-border-light: #F0F0F0;
+  --color-divider: #ECECEC;
+  
+  /* Estados de color */
+  --color-success: #4CAF50;
+  --color-success-light: #E8F5E9;
+  --color-success-dark: #388E3C;
+  
+  --color-warning: #FF9800;
+  --color-warning-light: #FFF3E0;
+  --color-warning-dark: #F57C00;
+  
+  --color-error: #F44336;
+  --color-error-light: #FFEBEE;
+  --color-error-dark: #D32F2F;
+  
+  --color-info: #00BCD4;
+  --color-info-light: #E0F2F1;
+  --color-info-dark: #0097A7;
+  
+  /* Elementos especiales */
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-gray-light: #F5F5F5;
+  --color-gray-medium: #BDBDBD;
+  --color-gray-dark: #424242;
+  
+  /* Overlay */
+  --color-overlay-dark: rgba(0, 0, 0, 0.5);
+  
+  /* Tipografía */
   --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-family-secondary: 'Poppins', sans-serif;
   
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* Sombras */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.2);
   
+  /* Transiciones */
   --border-radius: 12px;
-  --transition: all 0.3s ease;
+  --border-radius-sm: 6px;
+  --border-radius-lg: 16px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Variables de color - Tema Oscuro */
+[data-theme="dark"] {
+  /* Paleta primaria - colores ajustados para modo oscuro */
+  --color-primary-light: #42A5F5;
+  --color-primary: #64B5F6;
+  --color-primary-dark: #2196F3;
+  
+  /* Fondos - grises cálidos y oscuros para reducir fatiga visual */
+  --color-background: #17202E;
+  --color-background-secondary: #1F2A3B;
+  --color-background-tertiary: #272F3D;
+  --color-card-background: #1E2635;
+  --color-surface: #262E3F;
+  
+  /* Texto - colores más claros pero cálidos */
+  --color-text-primary: #E8EDF2;
+  --color-text-secondary: #A0A9B8;
+  --color-text-tertiary: #757D8C;
+  --color-text-inverse: #0F1419;
+  
+  /* Bordes y divisores - sutiles pero visibles */
+  --color-border: #3A424F;
+  --color-border-light: #2F3840;
+  --color-divider: #252D3D;
+  
+  /* Estados de color - ajustados para modo oscuro */
+  --color-success: #66BB6A;
+  --color-success-light: #1B5E20;
+  --color-success-dark: #43A047;
+  
+  --color-warning: #FFB74D;
+  --color-warning-light: #5E3B1B;
+  --color-warning-dark: #FFA726;
+  
+  --color-error: #EF5350;
+  --color-error-light: #5E1B1B;
+  --color-error-dark: #E53935;
+  
+  --color-info: #29B6F6;
+  --color-info-light: #1A4D6D;
+  --color-info-dark: #0288D1;
+  
+  /* Elementos especiales */
+  --color-white: #E8EDF2;
+  --color-black: #0F1419;
+  --color-gray-light: #2F3840;
+  --color-gray-medium: #5A6370;
+  --color-gray-dark: #151D2A;
+  
+  /* Overlay */
+  --color-overlay-dark: rgba(0, 0, 0, 0.7);
+  
+  /* Tipografía - igual en ambos modos */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-secondary: 'Poppins', sans-serif;
+  
+  /* Sombras - más suaves en modo oscuro */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.7);
+  
+  /* Radio y transiciones - igual en ambos modos */
+  --border-radius: 12px;
+  --border-radius-sm: 6px;
+  --border-radius-lg: 16px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Reset y base */
 * {
   margin: 0;
@@ -87,13 +214,14 @@ body {
 }
 
 .btn-secondary {
-  background-color: var(--color-secondary);
+  background-color: var(--color-surface);
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
 }
 
 .btn-secondary:hover {
-  background-color: var(--color-gray-light);
+  background-color: var(--color-background-secondary);
+  border-color: var(--color-primary);
 }
 
 .btn-block {
@@ -107,7 +235,7 @@ body {
 
 .btn-edit {
   background-color: var(--color-primary);
-  color: var(--color-white);
+  color: var(--color-text-inverse);
   padding: 8px 14px;
   font-size: 12px;
   border: none;
@@ -123,8 +251,8 @@ body {
 }
 
 .btn-cancel {
-  background-color: #FF9800;
-  color: var(--color-white);
+  background-color: var(--brand-secondary);
+  color: var(--color-text-inverse);
   padding: 8px 14px;
   font-size: 12px;
   border: none;
@@ -141,7 +269,7 @@ body {
 
 .btn-delete {
   background-color: var(--color-error);
-  color: var(--color-white);
+  color: var(--color-text-inverse);
   padding: 8px 14px;
   font-size: 12px;
   border: none;
@@ -153,13 +281,13 @@ body {
 }
 
 .btn-delete:hover {
-  background-color: #d32f2f;
+  background-color: var(--color-error-dark);
   transform: translateY(-1px);
 }
 
 .btn-print {
-  background-color: #4CAF50;
-  color: var(--color-white);
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
   padding: 8px 14px;
   font-size: 12px;
   border: none;
@@ -170,13 +298,13 @@ body {
 }
 
 .btn-print:hover {
-  background-color: #45a049;
+  background-color: var(--color-success-dark);
   transform: translateY(-1px);
 }
 
 .btn-save {
-  background-color: #4CAF50;
-  color: var(--color-white);
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
   padding: 8px 14px;
   font-size: 12px;
   border: none;
@@ -187,7 +315,7 @@ body {
 }
 
 .btn-save:hover {
-  background-color: #45a049;
+  background-color: var(--color-success-dark);
   transform: translateY(-1px);
 }
 
@@ -256,7 +384,7 @@ a:hover {
 
 /* Mensaje de error */
 .error-message {
-  background-color: rgba(244, 67, 54, 0.1);
+  background-color: var(--color-error-light);
   border-left: 4px solid var(--color-error);
   padding: 12px;
   border-radius: 4px;

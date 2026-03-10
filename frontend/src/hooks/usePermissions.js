@@ -22,7 +22,7 @@ export function usePermissions() {
     
     // Utilidades de rol
     isAdmin: userRole === 'admin',
-    isReceptionist: userRole === 'receptionist' || userRole === 'recepcion',
+    isReceptionist: userRole === 'receptionist' || userRole === 'recepcion' || userRole === 'recepcionista',
     role: userRole,
     
     // Verificaciones rápidas por módulo

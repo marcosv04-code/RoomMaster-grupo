@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
+import Swal from 'sweetalert2'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
+import { filterDocumentId, filterPhone, filterName } from '../../utils/validation'
 import './ModulePage.css'
 
-const API = `${window.location.origin}/backend`
+const API = '/api'
 
 /**
  * ClientesPage: Gestión completa de clientes
@@ -41,6 +43,7 @@ export default function ClientesPage() {
     email: '',
     telefono: '',
     ciudad: '',
+    direccion: '',
   })
 
   // ============ CARGAR DATOS ============
@@ -78,6 +81,7 @@ export default function ClientesPage() {
     { key: 'email', label: 'Email' },
     { key: 'telefono', label: 'Teléfono' },
     { key: 'ciudad', label: 'Ciudad' },
+    { key: 'direccion', label: 'Dirección' },
   ]
 
   // ============ FUNCIONES AUXILIARES ============
@@ -93,6 +97,7 @@ export default function ClientesPage() {
       email: '',
       telefono: '',
       ciudad: '',
+      direccion: '',
     })
     setIsEditMode(false)
     setEditingClient(null)
@@ -122,6 +127,7 @@ export default function ClientesPage() {
       email: client.email || '',
       telefono: client.telefono || '',
       ciudad: client.ciudad || '',
+      direccion: client.direccion || '',
     })
     setIsEditMode(true)
     setIsModalOpen(true)
@@ -130,14 +136,24 @@ export default function ClientesPage() {
   // Guardar o actualizar cliente
   const handleSaveClient = async () => {
     if (!formData.nombre || !formData.documento_identidad || !formData.email) {
-      alert('Por favor completa los campos requeridos: Nombre, Documento y Email')
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Por favor completa: Nombre, Documento y Email',
+        confirmButtonColor: '#667eea'
+      })
       return
     }
 
     // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(formData.email)) {
-      alert('Por favor ingresa un email válido')
+      Swal.fire({
+        icon: 'error',
+        title: 'Email inválido',
+        text: 'Por favor ingresa un email válido',
+        confirmButtonColor: '#667eea'
+      })
       return
     }
 
@@ -153,15 +169,27 @@ export default function ClientesPage() {
             nombre: formData.nombre,
             email: formData.email,
             telefono: formData.telefono,
+            ciudad: formData.ciudad,
+            direccion: formData.direccion,
             rol: user?.role
           })
         })
         const data = await res.json()
         if (data.exito) {
-          alert('✓ Cliente actualizado exitosamente')
+          Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: 'Cliente actualizado exitosamente',
+            confirmButtonColor: '#667eea'
+          })
           fetchClientes()
         } else {
-          alert('Error: ' + data.mensaje)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.mensaje || 'Error al actualizar',
+            confirmButtonColor: '#667eea'
+          })
         }
       } else {
         // Agregar nuevo cliente
@@ -173,22 +201,38 @@ export default function ClientesPage() {
             documento_identidad: formData.documento_identidad,
             email: formData.email,
             telefono: formData.telefono,
-            ciudad: formData.ciudad
+            ciudad: formData.ciudad,
+            direccion: formData.direccion
           })
         })
         const data = await res.json()
         if (data.exito) {
-          alert('✓ Cliente agregado exitosamente')
+          Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: 'Cliente agregado exitosamente',
+            confirmButtonColor: '#667eea'
+          })
           fetchClientes()
         } else {
-          alert('Error: ' + data.mensaje)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.mensaje || 'Error al agregar',
+            confirmButtonColor: '#667eea'
+          })
         }
       }
       setIsModalOpen(false)
       resetForm()
     } catch (error) {
       console.error('Error al guardar cliente:', error)
-      alert('Error al guardar el cliente')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al guardar el cliente',
+        confirmButtonColor: '#667eea'
+      })
     } finally {
       setSaving(false)
     }
@@ -196,11 +240,22 @@ export default function ClientesPage() {
 
   // Eliminar cliente
   const handleDelete = async (client) => {
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de que deseas eliminar al cliente ${client.nombre}?`
-    )
+    Swal.fire({
+      title: '¿Eliminar cliente?',
+      text: `Se eliminará al cliente ${client.nombre}. Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (!result.isConfirmed) return
+      handleDeleteConfirmed(client)
+    })
+  }
 
-    if (!confirmDelete) return
+  const handleDeleteConfirmed = async (client) => {
 
     try {
       const res = await fetch(`${API}/clientes.php`, {
@@ -210,23 +265,49 @@ export default function ClientesPage() {
       })
       const data = await res.json()
       if (data.exito) {
-        alert('✓ Cliente eliminado exitosamente')
+        Swal.fire({
+          icon: 'success',
+          title: 'Eliminado',
+          text: 'Cliente eliminado exitosamente',
+          confirmButtonColor: '#667eea'
+        })
         fetchClientes()
       } else {
-        alert('Error: ' + data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje || 'Error al eliminar',
+          confirmButtonColor: '#667eea'
+        })
       }
     } catch (error) {
       console.error('Error al eliminar cliente:', error)
-      alert('Error al eliminar el cliente')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al eliminar el cliente',
+        confirmButtonColor: '#667eea'
+      })
     }
   }
 
-  // Manejar cambios en el formulario
+  // Manejar cambios en el formulario con validación
   const handleFormChange = (e) => {
     const { name, value } = e.target
+    
+    // Aplicar filtros según el campo
+    let filteredValue = value
+    if (name === 'nombre') {
+      filteredValue = filterName(value)
+    } else if (name === 'documento_identidad') {
+      filteredValue = filterDocumentId(value)
+    } else if (name === 'telefono') {
+      filteredValue = filterPhone(value)
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: filteredValue
     }))
   }
 
@@ -291,10 +372,12 @@ export default function ClientesPage() {
                 id="documento_identidad"
                 type="text"
                 name="documento_identidad"
-                placeholder="Ej: 12345678A"
+                placeholder="Ej: 12345678"
+                maxLength="20"
                 value={formData.documento_identidad}
                 onChange={handleFormChange}
               />
+              <small style={{ color: '#999' }}>Solo números (máx 20 dígitos)</small>
             </div>
 
             <div className="form-group">
@@ -315,10 +398,12 @@ export default function ClientesPage() {
                 id="telefono"
                 type="tel"
                 name="telefono"
-                placeholder="+34 600 000 000"
+                placeholder="600000000"
+                maxLength="15"
                 value={formData.telefono}
                 onChange={handleFormChange}
               />
+              <small style={{ color: '#999' }}>Solo números (máx 15 dígitos)</small>
             </div>
 
             <div className="form-group">
@@ -329,6 +414,18 @@ export default function ClientesPage() {
                 name="ciudad"
                 placeholder="Ej: Madrid"
                 value={formData.ciudad}
+                onChange={handleFormChange}
+              />
+            </div>
+
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label htmlFor="direccion">Dirección</label>
+              <input
+                id="direccion"
+                type="text"
+                name="direccion"
+                placeholder="Ej: Calle Principal 123, Apto 4B"
+                value={formData.direccion}
                 onChange={handleFormChange}
               />
             </div>

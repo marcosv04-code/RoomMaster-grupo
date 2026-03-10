@@ -17,6 +17,7 @@ import './Modal.css'
  * - onConfirm: Function - Callback cuando se hace click en el botón principal
  * - confirmText: String - Texto del botón de confirmar (default: "Guardar")
  * - cancelText: String - Texto del botón de cancelar (default: "Cancelar")
+ * - showConfirmButton: Boolean - Mostrar el footer con botones (default: true)
  * 
  * Ejemplo de uso:
  * <Modal
@@ -28,8 +29,18 @@ import './Modal.css'
  * >
  *   <form>... formulario aquí ...</form>
  * </Modal>
+ * 
+ * Ejemplo sin footer (para formularios que tienen su propio botón submit):
+ * <Modal
+ *   isOpen={isOpen}
+ *   title="Registrar Usuario"
+ *   onClose={handleClose}
+ *   showConfirmButton={false}
+ * >
+ *   <UserRegisterForm onSubmit={handleSubmit} />
+ * </Modal>
  */
-export default function Modal({ isOpen, title, children, onClose, onConfirm, confirmText = 'Guardar', cancelText = 'Cancelar' }) {
+export default function Modal({ isOpen, title, children, onClose, onConfirm, confirmText = 'Guardar', cancelText = 'Cancelar', showConfirmButton = true }) {
   // Si el modal no está abierto, no renderizar nada
   if (!isOpen) return null
 
@@ -53,18 +64,20 @@ export default function Modal({ isOpen, title, children, onClose, onConfirm, con
           {children}
         </div>
         
-        {/* FOOTER: Botones de acción */}
-        <div className="modal-footer">
-          {/* Botón Cancelar */}
-          <button className="btn btn-secondary" onClick={onClose}>
-            {cancelText}
-          </button>
-          
-          {/* Botón de acción principal (Guardar, Confirmar, etc) */}
-          <button className="btn btn-primary" onClick={onConfirm}>
-            {confirmText}
-          </button>
-        </div>
+        {/* FOOTER: Botones de acción (solo si showConfirmButton es true) */}
+        {showConfirmButton && (
+          <div className="modal-footer">
+            {/* Botón Cancelar */}
+            <button className="btn btn-secondary" onClick={onClose}>
+              {cancelText}
+            </button>
+            
+            {/* Botón de acción principal (Guardar, Confirmar, etc) */}
+            <button className="btn btn-primary" onClick={onConfirm}>
+              {confirmText}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
+import Swal from 'sweetalert2'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
-import { formatCOP } from '../../utils/currency'
+import { filterNumbersDecimal, filterOnlyNumbers, filterName } from '../../utils/validation'
+import { formatCOP, formatNumberWithThousandsSeparator } from '../../utils/currency'
 import './ModulePage.css'
 
-const API = `${window.location.origin}/backend`
+const API = '/api'
 
 export default function TiendaPage() {
   const { user } = useAuth()
@@ -20,6 +22,7 @@ export default function TiendaPage() {
 
   // Modal productos
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
   const [productForm, setProductForm] = useState({
     nombre: '',
     precio: '',
@@ -75,36 +78,114 @@ export default function TiendaPage() {
 
   async function crearProducto() {
     if (!productForm.nombre || !productForm.precio || !productForm.stock) {
-      alert('Completa todos los campos')
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Completa todos los campos requeridos',
+        confirmButtonColor: '#667eea'
+      })
       return
     }
     try {
-      const res = await fetch(`${API}/productos.php`, {
-        method: 'POST',
+      const url = editingProduct ? `${API}/productos.php` : `${API}/productos.php`
+      const method = editingProduct ? 'PUT' : 'POST'
+      // Limpiar punto de separador de mil del precio
+      const cleanPrice = productForm.precio.replace(/\./g, '')
+      const body = editingProduct 
+        ? {
+            id: editingProduct.id,
+            nombre: productForm.nombre,
+            precio: parseFloat(cleanPrice),
+            stock: parseInt(productForm.stock),
+            categoria: productForm.categoria,
+            rol: user?.role
+          }
+        : {
+            nombre: productForm.nombre,
+            precio: parseFloat(cleanPrice),
+            stock: parseInt(productForm.stock),
+            categoria: productForm.categoria,
+            rol: user?.role
+          }
+      
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: productForm.nombre,
-          precio: parseFloat(productForm.precio),
-          stock: parseInt(productForm.stock),
-          categoria: productForm.categoria,
-        })
+        body: JSON.stringify(body)
       })
       const data = await res.json()
       if (data.exito) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: editingProduct ? 'Producto actualizado correctamente' : 'Producto creado correctamente',
+          confirmButtonColor: '#667eea'
+        })
         cargarProductos()
         setProductForm({ nombre: '', precio: '', stock: '', categoria: '' })
+        setEditingProduct(null)
         setIsProductModalOpen(false)
       } else {
-        alert(data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje || 'Error al guardar producto',
+          confirmButtonColor: '#667eea'
+        })
       }
     } catch (err) {
-      alert('Error al crear producto')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al guardar producto',
+        confirmButtonColor: '#667eea'
+      })
     }
+  }
+
+  function handleEditProduct(product) {
+    setEditingProduct(product)
+    setProductForm({
+      nombre: product.nombre,
+      precio: product.precio.toString(),
+      stock: product.stock.toString(),
+      categoria: product.categoria || ''
+    })
+    setIsProductModalOpen(true)
+  }
+
+  function handleProductFormChange(e) {
+    const { name, value } = e.target
+
+    if (name === 'nombre') {
+      setProductForm(prev => ({ ...prev, [name]: filterName(value) }))
+    } else if (name === 'precio') {
+      // Remover puntos de separador de mil y filtrar solo dígitos
+      const cleanValue = value.replace(/\./g, '').replace(/[^0-9]/g, '')
+      // Formatear con puntos de separador
+      const formattedValue = cleanValue ? formatNumberWithThousandsSeparator(cleanValue) : ''
+      setProductForm(prev => ({ ...prev, [name]: formattedValue }))
+    } else if (name === 'stock') {
+      setProductForm(prev => ({ ...prev, [name]: filterOnlyNumbers(value) }))
+    } else {
+      setProductForm(prev => ({ ...prev, [name]: value }))
+    }
+  }
+
+  function handleCancelEdit() {
+    setEditingProduct(null)
+    setProductForm({ nombre: '', precio: '', stock: '', categoria: '' })
+    setIsProductModalOpen(false)
   }
 
   async function crearVenta() {
     if (!saleForm.estadia_id || !saleForm.producto_id || !saleForm.cantidad) {
-      alert('Completa todos los campos')
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Completa todos los campos requeridos',
+        confirmButtonColor: '#667eea'
+      })
       return
     }
     try {
@@ -115,20 +196,37 @@ export default function TiendaPage() {
           estadia_id: parseInt(saleForm.estadia_id),
           producto_id: parseInt(saleForm.producto_id),
           cantidad: parseInt(saleForm.cantidad),
+          rol: user?.role
         })
       })
       const data = await res.json()
       if (data.exito) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Venta registrada correctamente',
+          confirmButtonColor: '#667eea'
+        })
         cargarVentas()
         cargarProductos()
         setSaleForm({ estadia_id: '', producto_id: '', cantidad: '' })
         setSelectedClientName('')
         setIsSaleModalOpen(false)
       } else {
-        alert(data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje || 'Error al registrar venta',
+          confirmButtonColor: '#667eea'
+        })
       }
     } catch (err) {
-      alert('Error al registrar venta')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al registrar venta',
+        confirmButtonColor: '#667eea'
+      })
     }
   }
 
@@ -148,7 +246,22 @@ export default function TiendaPage() {
   }
 
   async function eliminarProducto(id) {
-    if (!confirm('¿Estás seguro?')) return
+    Swal.fire({
+      title: '¿Eliminar producto?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (!result.isConfirmed) return
+      eliminarProductoConfirmed(id)
+    })
+  }
+
+  async function eliminarProductoConfirmed(id) {
     try {
       const res = await fetch(`${API}/productos.php`, {
         method: 'DELETE',
@@ -156,14 +269,49 @@ export default function TiendaPage() {
         body: JSON.stringify({ id, rol: user?.role })
       })
       const data = await res.json()
-      if (data.exito) cargarProductos()
+      if (data.exito) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Eliminado',
+          text: 'Producto eliminado correctamente',
+          timer: 1500
+        })
+        cargarProductos()
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error al eliminar producto',
+          confirmButtonColor: '#667eea'
+        })
+      }
     } catch (err) {
-      alert('Error al eliminar')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al eliminar',
+        confirmButtonColor: '#667eea'
+      })
     }
   }
 
   async function eliminarVenta(id) {
-    if (!confirm('¿Estás seguro?')) return
+    Swal.fire({
+      title: '¿Eliminar venta?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (!result.isConfirmed) return
+      eliminarVentaConfirmed(id)
+    })
+  }
+
+  async function eliminarVentaConfirmed(id) {
     try {
       const res = await fetch(`${API}/ventas.php`, {
         method: 'DELETE',
@@ -172,14 +320,30 @@ export default function TiendaPage() {
       })
       const data = await res.json()
       if (data.exito) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Eliminado',
+          text: 'Venta eliminada correctamente',
+          timer: 1500
+        })
         cargarVentas()
         cargarProductos()
       } else {
-        alert(data.mensaje || 'Error al eliminar venta')
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje || 'Error al eliminar venta',
+          confirmButtonColor: '#667eea'
+        })
       }
     } catch (err) {
       console.error(err)
-      alert('Error al eliminar venta: ' + err.message)
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al eliminar venta: ' + err.message,
+        confirmButtonColor: '#667eea'
+      })
     }
   }
 
@@ -270,6 +434,7 @@ export default function TiendaPage() {
           <Table
             columns={productColumns}
             data={products}
+            onEdit={user?.role === 'admin' ? (p) => handleEditProduct(p) : null}
             onDelete={user?.role === 'admin' ? (p) => eliminarProducto(p.id) : null}
             actions={user?.role === 'admin'}
           />
@@ -279,7 +444,7 @@ export default function TiendaPage() {
         <div className="dashboard-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h2>Registro de Ventas</h2>
-            {(user?.role === 'admin' || user?.role === 'receptionist') && (
+            {(user?.role === 'admin' || user?.role === 'recepcionista') && (
               <button className="btn btn-primary" onClick={() => setIsSaleModalOpen(true)}>
                 + Nueva Venta
               </button>
@@ -289,54 +454,60 @@ export default function TiendaPage() {
             columns={saleColumns}
             data={sales}
             onDelete={(s) => eliminarVenta(s.id)}
-            actions={true}
+            showDelete={true}
+            showEdit={false}
           />
         </div>
 
         {/* Modal Producto */}
         <Modal
           isOpen={isProductModalOpen}
-          title="Nuevo Producto"
-          onClose={() => setIsProductModalOpen(false)}
+          title={editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
+          onClose={handleCancelEdit}
           onConfirm={crearProducto}
-          confirmText="Guardar"
+          confirmText={editingProduct ? 'Actualizar' : 'Guardar'}
         >
           <form className="form-grid">
             <div className="form-group">
               <label>Nombre</label>
               <input
                 type="text"
+                name="nombre"
                 placeholder="Nombre del producto"
                 value={productForm.nombre}
-                onChange={(e) => setProductForm({ ...productForm, nombre: e.target.value })}
+                onChange={handleProductFormChange}
               />
             </div>
             <div className="form-group">
               <label>Precio</label>
               <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
+                type="text"
+                name="precio"
+                placeholder="0"
+                maxLength="15"
                 value={productForm.precio}
-                onChange={(e) => setProductForm({ ...productForm, precio: e.target.value })}
+                onChange={handleProductFormChange}
               />
             </div>
             <div className="form-group">
               <label>Stock</label>
               <input
                 type="number"
+                name="stock"
                 placeholder="0"
+                min="0"
                 value={productForm.stock}
-                onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                onChange={handleProductFormChange}
               />
             </div>
             <div className="form-group">
               <label>Categoría</label>
               <input
                 type="text"
+                name="categoria"
                 placeholder="Ej: Bebidas"
                 value={productForm.categoria}
-                onChange={(e) => setProductForm({ ...productForm, categoria: e.target.value })}
+                onChange={handleProductFormChange}
               />
             </div>
           </form>
@@ -400,11 +571,10 @@ export default function TiendaPage() {
             <div className="form-group">
               <label>Cantidad *</label>
               <input
-                type="number"
+                type="text"
                 placeholder="0"
                 value={saleForm.cantidad}
-                onChange={(e) => setSaleForm({ ...saleForm, cantidad: e.target.value })}
-                min="1"
+                onChange={(e) => setSaleForm({ ...saleForm, cantidad: filterOnlyNumbers(e.target.value) })}
                 required
               />
             </div>

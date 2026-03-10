@@ -12,7 +12,7 @@
 }
 
 .data-table thead {
-  background-color: var(--color-background-secondary);
+  background-color: var(--color-card-background);
   border-bottom: 2px solid var(--color-border);
 }
 
@@ -34,11 +34,12 @@
 }
 
 .data-table tbody tr {
+  background-color: var(--color-card-background);
   transition: var(--transition);
 }
 
 .data-table tbody tr:hover {
-  background-color: rgba(33, 150, 243, 0.03);
+  background-color: rgba(33, 150, 243, 0.08);
 }
 
 .actions-cell {

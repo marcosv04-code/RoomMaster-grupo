@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Swal from 'sweetalert2'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
@@ -6,11 +7,12 @@ import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import UserRegisterForm from '../../components/forms/UserRegisterForm'
 import { useAuth } from '../../hooks/useAuth'
-import { formatCOP, formatThousands } from '../../utils/currency'
+import { filterRoomNumber, filterOnlyNumbers, filterNumbersDecimal, filterName, capitalizeFirstLetter } from '../../utils/validation'
+import { formatCOP, formatThousands, formatNumberWithThousandsSeparator } from '../../utils/currency'
 import './DashboardPage.css'
 import { roomService } from '../../services/index'
 
-const API = `${window.location.origin}/backend`
+const API = '/api'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -100,7 +102,11 @@ export default function DashboardPage() {
 
   const handleSaveStaff = async () => {
     if (!staffForm.nombre || !staffForm.email || !staffForm.telefono) {
-      alert('Completa todos los campos requeridos')
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Completa todos los campos requeridos'
+      })
       return
     }
 
@@ -120,14 +126,26 @@ export default function DashboardPage() {
       const data = await res.json()
       if (data.exito) {
         fetchStaff()
-        alert(editingStaff ? '✓ Personal actualizado' : '✓ Personal creado')
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: editingStaff ? 'Personal actualizado correctamente' : 'Personal creado correctamente'
+        })
         setIsStaffModalOpen(false)
         resetStaffForm()
       } else {
-        alert(data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje
+        })
       }
     } catch (err) {
-      alert('Error al guardar personal')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al guardar personal'
+      })
       console.error(err)
     } finally {
       setSaving(false)
@@ -135,7 +153,18 @@ export default function DashboardPage() {
   }
 
   const handleDeleteStaff = async (staff) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este personal?')) return
+    const result = await Swal.fire({
+      title: '¿Eliminar personal?',
+      text: '¿Estás seguro de que deseas eliminar este personal?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (!result.isConfirmed) return
     
     try {
       const res = await fetch(`${API}/personal_limpieza.php`, {
@@ -147,18 +176,41 @@ export default function DashboardPage() {
       const data = await res.json()
       if (data.exito) {
         fetchStaff()
-        alert('✓ Personal eliminado')
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Personal eliminado correctamente'
+        })
       } else {
-        alert(data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje
+        })
       }
     } catch (err) {
-      alert('Error al eliminar')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al eliminar'
+      })
       console.error(err)
     }
   }
 
   const handleDeleteUser = async (usuario) => {
-    if (!confirm(`¿Estás seguro de que deseas eliminar a ${usuario.nombre}?`)) return
+    const result = await Swal.fire({
+      title: '¿Eliminar usuario?',
+      text: `¿Estás seguro de que deseas eliminar a ${usuario.nombre}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (!result.isConfirmed) return
     
     try {
       const res = await fetch(`${API}/usuarios.php`, {
@@ -170,12 +222,24 @@ export default function DashboardPage() {
       const data = await res.json()
       if (data.exito) {
         fetchUsuarios()
-        alert('✓ Usuario eliminado')
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Usuario eliminado correctamente'
+        })
       } else {
-        alert(data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje
+        })
       }
     } catch (err) {
-      alert('Error al eliminar usuario')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al eliminar usuario'
+      })
       console.error(err)
     }
   }
@@ -207,7 +271,14 @@ export default function DashboardPage() {
 
   const handleStaffFormChange = (e) => {
     const { name, value } = e.target
-    setStaffForm(prev => ({ ...prev, [name]: value }))
+    
+    // Filtrar nombre si es ese el campo
+    let filteredValue = value
+    if (name === 'nombre') {
+      filteredValue = filterName(value)
+    }
+    
+    setStaffForm(prev => ({ ...prev, [name]: filteredValue }))
   }
 
   const fetchRooms = async () => {
@@ -271,13 +342,25 @@ export default function DashboardPage() {
         setIsEditModalOpen(false)
         setEditingRoom(null)
         setEditForm({})
-        alert('✓ Habitación actualizada correctamente')
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Habitación actualizada correctamente'
+        })
       } else {
-        alert('Error: ' + data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error: ' + data.mensaje
+        })
       }
     } catch (error) {
       console.error('Error al actualizar habitación:', error)
-      alert('Error al actualizar la habitación')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al actualizar la habitación'
+      })
     } finally {
       setSaving(false)
     }
@@ -285,16 +368,27 @@ export default function DashboardPage() {
 
   const handleDelete = async (room) => {
     if (!user?.id) {
-      alert('⚠️ Error: Usuario no está cargado/autenticado. Por favor recarga la página.')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Usuario no está cargado/autenticado. Por favor recarga la página.'
+      })
       console.error('handleDelete - user object:', user)
       return
     }
 
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de que deseas eliminar la habitación #${room.numero_habitacion}?`
-    )
+    const result = await Swal.fire({
+      title: '¿Eliminar habitación?',
+      text: `¿Estás seguro de que deseas eliminar la habitación #${room.numero_habitacion}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    })
 
-    if (!confirmDelete) return
+    if (!result.isConfirmed) return
 
     try {
       const deletePayload = { 
@@ -317,19 +411,71 @@ export default function DashboardPage() {
       
       if (data.exito) {
         fetchRooms()
-        alert('✓ Habitación eliminada correctamente')
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Habitación eliminada correctamente'
+        })
       } else {
-        alert('Error: ' + data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error: ' + data.mensaje
+        })
       }
     } catch (error) {
       console.error('Error al eliminar habitación:', error)
-      alert('Error al eliminar la habitación')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al eliminar la habitación'
+      })
     }
   }
 
   const handleAddRoom = async () => {
+    // Validar campos requeridos
     if (!newRoomForm.numero || !newRoomForm.precio_noche) {
-      alert('⚠️ Completa los campos requeridos (número y precio)')
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Por favor completa los campos requeridos: Número y Precio',
+        confirmButtonColor: '#667eea'
+      })
+      return
+    }
+
+    // Validar capacidad
+    const capacidad = parseInt(newRoomForm.capacidad)
+    if (capacidad > 8) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Capacidad inválida',
+        text: 'La capacidad máxima de una habitación es de 8 personas',
+        confirmButtonColor: '#667eea'
+      })
+      return
+    }
+
+    if (capacidad < 1) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Capacidad inválida',
+        text: 'La capacidad mínima debe ser 1 persona',
+        confirmButtonColor: '#667eea'
+      })
+      return
+    }
+
+    // Validar precio
+    const precio = parseFloat(newRoomForm.precio_noche)
+    if (isNaN(precio) || precio <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Precio inválido',
+        text: 'El precio debe ser mayor a 0',
+        confirmButtonColor: '#667eea'
+      })
       return
     }
 
@@ -343,8 +489,8 @@ export default function DashboardPage() {
           numero_habitacion: newRoomForm.numero,
           piso: parseInt(newRoomForm.piso),
           tipo: newRoomForm.tipo,
-          capacidad: parseInt(newRoomForm.capacidad),
-          precio_noche: parseFloat(newRoomForm.precio_noche),
+          capacidad: capacidad,
+          precio_noche: precio,
           amenidades: newRoomForm.amenidades,
           estado: newRoomForm.estado,
           user_id: user?.id,
@@ -357,13 +503,28 @@ export default function DashboardPage() {
         fetchRooms()
         setIsAddRoomModalOpen(false)
         resetNewRoomForm()
-        alert('✓ Habitación agregada correctamente')
+        Swal.fire({
+          icon: 'success',
+          title: '¡Éxito!',
+          text: 'Habitación agregada correctamente',
+          confirmButtonColor: '#667eea'
+        })
       } else {
-        alert('❌ ' + (data.mensaje || 'Error al agregar habitación'))
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje || 'Error al agregar habitación',
+          confirmButtonColor: '#667eea'
+        })
       }
     } catch (error) {
       console.error('Error al agregar habitación:', error)
-      alert('❌ Error al agregar la habitación: ' + error.message)
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al agregar la habitación: ' + error.message,
+        confirmButtonColor: '#667eea'
+      })
     } finally {
       setSaving(false)
     }
@@ -395,7 +556,11 @@ export default function DashboardPage() {
         setIsRegisterUserModalOpen(false)
         resetForm()
         fetchUsuarios()
-        alert('✓ Usuario registrado correctamente')
+        Swal.fire({
+          icon: 'success',
+          title: '¡Éxito!',
+          text: 'Usuario registrado correctamente'
+        })
       } else {
         setError(data.mensaje || 'Error al registrar usuario')
       }
@@ -409,17 +574,36 @@ export default function DashboardPage() {
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target
+    let finalValue = value
+    
+    // Si es el campo de precio, remover puntos de separación y formatear
+    if (name === 'precio') {
+      finalValue = value.replace(/\./g, '') // Remover puntos
+    }
+    
     setEditForm(prev => ({
       ...prev,
-      [name]: value
+      [name]: finalValue
     }))
   }
 
   const handleNewRoomFormChange = (e) => {
     const { name, value } = e.target
+    
+    // Aplicar filtros según el campo
+    let filteredValue = value
+    if (name === 'numero') {
+      filteredValue = filterRoomNumber(value)
+    } else if (name === 'capacidad') {
+      filteredValue = filterOnlyNumbers(value)
+    } else if (name === 'precio_noche') {
+      // Solo remover puntos, sin usar filtros que limiten dígitos
+      filteredValue = value.replace(/\./g, '').replace(/[^0-9]/g, '')
+    }
+    
     setNewRoomForm(prev => ({
       ...prev,
-      [name]: value
+      [name]: filteredValue
     }))
   }
 
@@ -464,7 +648,7 @@ export default function DashboardPage() {
 
         {/* RESUMEN RÁPIDO DE ESTADOS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '40px' }}>
-          <div style={{ padding: '16px', background: '#e8f5e9', borderRadius: '8px', borderLeft: '4px solid #4CAF50', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ padding: '16px', background: 'var(--color-background-secondary)', borderRadius: '8px', borderLeft: '4px solid #4CAF50', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Icon name="check-circle" size={24} />
             <div>
               <div style={{ fontSize: '12px', color: '#2e7d32', fontWeight: '600', marginBottom: '4px' }}>DISPONIBLES</div>
@@ -473,7 +657,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div style={{ padding: '16px', background: '#fff3e0', borderRadius: '8px', borderLeft: '4px solid #FF9800', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ padding: '16px', background: 'var(--color-background-secondary)', borderRadius: '8px', borderLeft: '4px solid #FF9800', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Icon name="running" size={24} />
             <div>
               <div style={{ fontSize: '12px', color: '#e65100', fontWeight: '600', marginBottom: '4px' }}>OCUPADAS</div>
@@ -482,7 +666,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div style={{ padding: '16px', background: '#fce4ec', borderRadius: '8px', borderLeft: '4px solid #E91E63', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ padding: '16px', background: 'var(--color-background-secondary)', borderRadius: '8px', borderLeft: '4px solid #E91E63', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Icon name="phone" size={24} />
             <div>
               <div style={{ fontSize: '12px', color: '#880e4f', fontWeight: '600', marginBottom: '4px' }}>FACTURAS PENDIENTES</div>
@@ -491,7 +675,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div style={{ padding: '16px', background: '#e3f2fd', borderRadius: '8px', borderLeft: '4px solid #2196F3', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ padding: '16px', background: 'var(--color-background-secondary)', borderRadius: '8px', borderLeft: '4px solid #2196F3', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Icon name="package" size={24} />
             <div>
               <div style={{ fontSize: '12px', color: '#1565c0', fontWeight: '600', marginBottom: '4px' }}>BAJO STOCK</div>
@@ -539,15 +723,15 @@ export default function DashboardPage() {
           {loading ? (
             <p>Cargando...</p>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto', background: 'var(--color-card-background)', borderRadius: '8px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: '#f8f9fb', borderBottom: '2px solid #e0e0e0' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Habitación</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Tipo</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Estado</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Precio/Noche</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#666' }}>Acciones</th>
+                  <tr style={{ background: 'var(--color-card-background)', borderBottom: 'var(--border-width) solid var(--color-border)' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Habitación</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Tipo</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Estado</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Precio/Noche</th>
+                    <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -564,10 +748,10 @@ export default function DashboardPage() {
                     
                     return (
                       <tr key={room.id} style={{ 
-                        borderBottom: '1px solid #f0f0f0', 
-                        background: idx % 2 === 0 ? '#fafafa' : 'white',
-                        transition: 'background 0.2s'
-                      }} onMouseEnter={(e) => e.currentTarget.style.background = '#f0f4f8'} onMouseLeave={(e) => e.currentTarget.style.background = idx % 2 === 0 ? '#fafafa' : 'white'}>
+                        borderBottom: 'var(--border-width) solid var(--color-border)', 
+                        background: 'var(--color-card-background)',
+                        transition: 'var(--transition)'
+                      }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(33, 150, 243, 0.08)'} onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-card-background)'}>
                         <td style={{ padding: '12px', fontWeight: '600' }}>#{room.numero_habitacion}</td>
                         <td style={{ padding: '12px', color: '#666' }}>{room.tipo}</td>
                         <td style={{ padding: '12px' }}>
@@ -580,9 +764,9 @@ export default function DashboardPage() {
                             padding: '4px 12px',
                             borderRadius: '12px',
                             fontSize: '12px',
-                            fontWeight: '600'
+                            fontWeight: '600',
+                            textTransform: 'uppercase'
                           }}>
-                            <Icon name={stateColor.icon} size={14} />
                             {room.estado}
                           </span>
                         </td>
@@ -598,7 +782,7 @@ export default function DashboardPage() {
                               borderRadius: '4px', 
                               cursor: 'pointer',
                               fontSize: '12px',
-                              marginRight: '6px',
+                              marginRight: user?.role === 'admin' ? '6px' : '0',
                               transition: 'background 0.2s'
                             }}
                             onMouseEnter={(e) => e.target.style.background = '#1976d2'}
@@ -606,23 +790,25 @@ export default function DashboardPage() {
                           >
                             Editar
                           </button>
-                          <button 
-                            onClick={() => handleDelete(room)}
-                            style={{ 
-                              background: '#f44336', 
-                              color: 'white', 
-                              border: 'none', 
-                              padding: '6px 12px', 
-                              borderRadius: '4px', 
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              transition: 'background 0.2s'
-                            }}
-                            onMouseEnter={(e) => e.target.style.background = '#d32f2f'}
-                            onMouseLeave={(e) => e.target.style.background = '#f44336'}
-                          >
-                            Eliminar
-                          </button>
+                          {user?.role === 'admin' && (
+                            <button 
+                              onClick={() => handleDelete(room)}
+                              style={{ 
+                                background: '#f44336', 
+                                color: 'white', 
+                                border: 'none', 
+                                padding: '6px 12px', 
+                                borderRadius: '4px', 
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                transition: 'background 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.target.style.background = '#d32f2f'}
+                              onMouseLeave={(e) => e.target.style.background = '#f44336'}
+                            >
+                              Eliminar
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
@@ -686,20 +872,19 @@ export default function DashboardPage() {
                 <option value="Disponible">Disponible</option>
                 <option value="Ocupada">Ocupada</option>
                 <option value="Mantenimiento">Mantenimiento</option>
-                <option value="Limpieza">Limpieza</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label htmlFor="precio">Precio por Noche</label>
+              <label htmlFor="precio">Precio por Noche (COP)</label>
               <input
                 id="precio"
-                type="number"
+                type="text"
                 name="precio"
-                value={editForm.precio || ''}
+                value={editForm.precio ? formatNumberWithThousandsSeparator(editForm.precio) : ''}
                 onChange={handleEditFormChange}
-                placeholder="Ej: 150"
-                min="0"
+                placeholder="Ej: 1500000"
+                maxLength="15"
               />
             </div>
           </div>
@@ -758,7 +943,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="add-capacidad">Capacidad (personas)</label>
+              <label htmlFor="add-capacidad">Capacidad (personas) *</label>
               <input
                 id="add-capacidad"
                 type="number"
@@ -766,19 +951,21 @@ export default function DashboardPage() {
                 value={newRoomForm.capacidad}
                 onChange={handleNewRoomFormChange}
                 min="1"
+                max="8"
               />
+              <small style={{ color: '#999' }}>1 a 8 personas (máximo)</small>
             </div>
 
             <div className="form-group">
               <label htmlFor="add-precio">Precio por Noche (COP) *</label>
               <input
                 id="add-precio"
-                type="number"
+                type="text"
                 name="precio_noche"
-                value={newRoomForm.precio_noche}
+                value={newRoomForm.precio_noche ? formatNumberWithThousandsSeparator(newRoomForm.precio_noche) : ''}
                 onChange={handleNewRoomFormChange}
-                placeholder="Ej: 150000"
-                min="0"
+                placeholder="Ej: 1500000"
+                maxLength="15"
                 required
               />
             </div>
@@ -806,7 +993,6 @@ export default function DashboardPage() {
                 <option value="Disponible">Disponible</option>
                 <option value="Ocupada">Ocupada</option>
                 <option value="Mantenimiento">Mantenimiento</option>
-                <option value="Limpieza">Limpieza</option>
               </select>
             </div>
           </div>
@@ -828,31 +1014,31 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto', background: 'var(--color-card-background)', borderRadius: '8px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: '#f8f9fb', borderBottom: '2px solid #e0e0e0' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Nombre</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Email</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Hotel</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Rol</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Estado</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#666' }}>Acciones</th>
+                  <tr style={{ background: 'var(--color-card-background)', borderBottom: 'var(--border-width) solid var(--color-border)' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Nombre</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Email</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Hotel</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Rol</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Estado</th>
+                    <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {usuarios.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
+                      <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                         No hay usuarios registrados
                       </td>
                     </tr>
                   ) : (
                     usuarios.map((usuario) => (
-                      <tr key={usuario.id} style={{ borderBottom: '1px solid #e0e0e0', hover: { background: '#f9f9f9' } }}>
+                      <tr key={usuario.id} style={{ borderBottom: 'var(--border-width) solid var(--color-border)', background: 'var(--color-card-background)', transition: 'var(--transition)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(33, 150, 243, 0.08)'} onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-card-background)'}>
                         <td style={{ padding: '12px' }}>{usuario.nombre}</td>
                         <td style={{ padding: '12px' }}>{usuario.email}</td>
-                        <td style={{ padding: '12px', fontSize: '14px', color: '#555' }}>{usuario.hotel || '-'}</td>
+                        <td style={{ padding: '12px', fontSize: '14px', color: 'var(--color-text-secondary)' }}>{usuario.hotel || '-'}</td>
                         <td style={{ padding: '12px' }}>
                           <span style={{ 
                             background: usuario.rol === 'recepcion' ? '#e3f2fd' : '#f3e5f5',
@@ -862,7 +1048,7 @@ export default function DashboardPage() {
                             fontSize: '12px',
                             fontWeight: '600'
                           }}>
-                            {usuario.rol === 'recepcion' ? 'Recepcionista' : usuario.rol}
+                            {capitalizeFirstLetter(usuario.rol)}
                           </span>
                         </td>
                         <td style={{ padding: '12px' }}>
@@ -923,24 +1109,24 @@ export default function DashboardPage() {
             )}
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', background: 'var(--color-card-background)', borderRadius: '8px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#f8f9fb', borderBottom: '2px solid #e0e0e0' }}>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Nombre</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Email</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Teléfono</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Turno</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: '#666' }}>Estado</th>
+                <tr style={{ background: 'var(--color-card-background)', borderBottom: 'var(--border-width) solid var(--color-border)' }}>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Nombre</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Email</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Teléfono</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Turno</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Estado</th>
                   {(user?.role === 'admin') && (
-                    <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: '#666' }}>Acciones</th>
+                    <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Acciones</th>
                   )}
                 </tr>
               </thead>
               <tbody>
                 {staff.length === 0 ? (
                   <tr>
-                    <td colSpan={user?.role === 'admin' ? 6 : 5} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
+                    <td colSpan={user?.role === 'admin' ? 6 : 5} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                       No hay personal registrado
                     </td>
                   </tr>
@@ -955,14 +1141,14 @@ export default function DashboardPage() {
                     
                     return (
                       <tr key={member.id} style={{ 
-                        borderBottom: '1px solid #f0f0f0', 
-                        background: idx % 2 === 0 ? '#fafafa' : 'white',
-                        transition: 'background 0.2s'
-                      }} onMouseEnter={(e) => e.currentTarget.style.background = '#f0f4f8'} onMouseLeave={(e) => e.currentTarget.style.background = idx % 2 === 0 ? '#fafafa' : 'white'}>
+                        borderBottom: 'var(--border-width) solid var(--color-border)', 
+                        background: 'var(--color-card-background)',
+                        transition: 'var(--transition)'
+                      }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(33, 150, 243, 0.08)'} onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-card-background)'}>
                         <td style={{ padding: '12px', fontWeight: '600' }}>{member.nombre}</td>
-                        <td style={{ padding: '12px', color: '#666' }}>{member.email}</td>
-                        <td style={{ padding: '12px', color: '#666' }}>{member.telefono}</td>
-                        <td style={{ padding: '12px', color: '#666' }}>{member.turno}</td>
+                        <td style={{ padding: '12px', color: 'var(--color-text)' }}>{member.email}</td>
+                        <td style={{ padding: '12px', color: 'var(--color-text)' }}>{member.telefono}</td>
+                        <td style={{ padding: '12px', color: 'var(--color-text)' }}>{member.turno}</td>
                         <td style={{ padding: '12px' }}>
                           <span style={{ 
                             display: 'inline-block',

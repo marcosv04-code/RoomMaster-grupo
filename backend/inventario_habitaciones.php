@@ -85,7 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 // PUT - Actualizar cantidad de suministro en una habitación
 else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-    verificarPermisoOAbortar('INVENTARIO_EDIT', $rol);
+    // Permitir admin y recepcionista
+    if ($rol !== 'admin' && $rol !== 'recepcionista') {
+        http_response_code(403);
+        echo json_encode(['exito' => false, 'mensaje' => 'No tienes permiso para editar inventario']);
+        return;
+    }
     
     try {
         $id = $datosInput['id'] ?? null;
@@ -125,7 +130,12 @@ else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
 
 // POST - Reabastecimiento de habitación
 else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verificarPermisoOAbortar('INVENTARIO_EDIT', $rol);
+    // Solo admin puede reabastecer
+    if ($rol !== 'admin') {
+        http_response_code(403);
+        echo json_encode(['exito' => false, 'mensaje' => 'No tienes permiso para reabastecer']);
+        return;
+    }
     
     try {
         $habitacion_id = $datosInput['habitacion_id'] ?? null;

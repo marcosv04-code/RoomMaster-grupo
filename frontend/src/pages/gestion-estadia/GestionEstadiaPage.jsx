@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Swal from 'sweetalert2'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
@@ -8,7 +9,7 @@ import { usePermissions } from '../../hooks/usePermissions'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
-const API = `${window.location.origin}/backend`
+const API = '/api'
 
 export default function GestionEstadiaPage() {
   const { user } = useAuth()
@@ -57,7 +58,11 @@ export default function GestionEstadiaPage() {
       const data = await res.json()
       if (data.exito) setStays(data.datos)
     } catch (err) {
-      alert('Error al cargar estadías')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al cargar estadías'
+      })
       console.error(err)
     } finally {
       setLoading(false)
@@ -120,7 +125,22 @@ export default function GestionEstadiaPage() {
 
   const handleSaveStay = async () => {
     if (!formData.cliente_id || !formData.habitacion_id || !formData.fecha_entrada || !formData.fecha_salida) {
-      alert('Completa todos los campos requeridos')
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Completa todos los campos requeridos'
+      })
+      return
+    }
+
+    // Validar número de huéspedes
+    const numHuespedes = parseInt(formData.numero_huespedes) || 0
+    if (numHuespedes > 8) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Error de validación',
+        text: 'El número máximo de huéspedes es 8'
+      })
       return
     }
 
@@ -136,9 +156,17 @@ export default function GestionEstadiaPage() {
         const data = await res.json()
         if (data.exito) {
           cargarEstadias()
-          alert('✓ Estadía actualizada')
+          Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Estadía actualizada correctamente'
+          })
         } else {
-          alert(data.mensaje)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.mensaje
+          })
         }
       } else {
         // Crear
@@ -150,15 +178,27 @@ export default function GestionEstadiaPage() {
         const data = await res.json()
         if (data.exito) {
           cargarEstadias()
-          alert('✓ Estadía creada')
+          Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Estadía creada correctamente'
+          })
         } else {
-          alert(data.mensaje)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.mensaje
+          })
         }
       }
       setIsModalOpen(false)
       resetForm()
     } catch (err) {
-      alert('Error al guardar')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al guardar'
+      })
       console.error(err)
     } finally {
       setSaving(false)
@@ -176,18 +216,41 @@ export default function GestionEstadiaPage() {
       const data = await res.json()
       if (data.exito) {
         cargarEstadias()
-        alert('✓ Eliminada')
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Estadía eliminada correctamente'
+        })
       } else {
-        alert(data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje
+        })
       }
     } catch (err) {
-      alert('Error al eliminar')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al eliminar'
+      })
       console.error(err)
     }
   }
 
   const handleCancel = async (stay) => {
-    if (!confirm('¿Deseas cancelar esta estadía?')) return
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Cancelar Estadía',
+      text: '¿Deseas cancelar esta estadía?',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, cancelar',
+      cancelButtonText: 'No, mantener',
+      confirmButtonColor: '#f44336'
+    })
+
+    if (!result.isConfirmed) return
+
     try {
       const res = await fetch(`${API}/estadias.php`, {
         method: 'PUT',
@@ -201,19 +264,54 @@ export default function GestionEstadiaPage() {
       const data = await res.json()
       if (data.exito) {
         cargarEstadias()
-        alert('✓ Estadía cancelada')
+        Swal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Estadía cancelada correctamente'
+        })
       } else {
-        alert(data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje
+        })
       }
     } catch (err) {
-      alert('Error al cancelar')
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al cancelar'
+      })
       console.error(err)
     }
   }
 
   const handleFormChange = (e) => {
     const { name, value } = e.target
+    
+    // Limitar número de huéspedes a máximo 8
+    if (name === 'numero_huespedes') {
+      const numValue = parseInt(value) || 0
+      if (numValue > 8) {
+        return // No actualizar si es mayor a 8
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const getAvailableRooms = () => {
+    const roomsWithActiveStays = stays
+      .filter(s => s.estado === 'activa')
+      .map(s => s.habitacion_id)
+    return rooms.filter(r => !roomsWithActiveStays.includes(r.id))
+  }
+
+  const getAvailableClients = () => {
+    const clientsWithActiveStays = stays
+      .filter(s => s.estado === 'activa')
+      .map(s => s.cliente_id)
+    return clients.filter(c => !clientsWithActiveStays.includes(c.id))
   }
 
   return (
@@ -239,7 +337,7 @@ export default function GestionEstadiaPage() {
             title="Completadas"
             value={stays.filter(s => s.estado === 'completada').length}
             icon="check"
-            subtitle="Finalizadas"
+            subtitle="Completadas"
           />
           <Card
             title="Canceladas"
@@ -295,36 +393,40 @@ export default function GestionEstadiaPage() {
           confirmText={saving ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear'}
         >
           <form className="form-grid">
-            <div className="form-group">
-              <label>👤 Cliente</label>
-              <select 
-                name="cliente_id"
-                value={formData.cliente_id}
-                onChange={handleFormChange}
-                required
-              >
-                <option value="">Selecciona un cliente</option>
-                {clients.map(c => (
-                  <option key={c.id} value={c.id}>{c.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>🏨 Habitación</label>
-              <select
-                name="habitacion_id"
-                value={formData.habitacion_id}
-                onChange={handleFormChange}
-                required
-              >
-                <option value="">Selecciona una habitación</option>
-                {rooms.map(r => (
-                  <option key={r.id} value={r.id}>
-                    #{r.numero_habitacion} - {r.tipo} (${r.precio_noche}/noche)
-                  </option>
-                ))}
-              </select>
-            </div>
+            {!isEditMode && (
+              <div className="form-group">
+                <label>👤 Cliente</label>
+                <select 
+                  name="cliente_id"
+                  value={formData.cliente_id}
+                  onChange={handleFormChange}
+                  required
+                >
+                  <option value="">Selecciona un cliente</option>
+                  {getAvailableClients().map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {!isEditMode && (
+              <div className="form-group">
+                <label>🏨 Habitación</label>
+                <select
+                  name="habitacion_id"
+                  value={formData.habitacion_id}
+                  onChange={handleFormChange}
+                  required
+                >
+                  <option value="">Selecciona una habitación</option>
+                  {getAvailableRooms().map(r => (
+                    <option key={r.id} value={r.id}>
+                      #{r.numero_habitacion} - {r.tipo} (${r.precio_noche}/noche)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="form-group">
               <label>📅 Fecha Entrada</label>
               <input 
@@ -354,7 +456,7 @@ export default function GestionEstadiaPage() {
                 onChange={handleFormChange}
                 placeholder="0"
                 min="1"
-                max="10"
+                max="8"
               />
             </div>
             <div className="form-group">

@@ -11,41 +11,42 @@
 export const ROLES = {
   ADMIN: 'admin',
   RECEPTIONIST: 'receptionist',
-  RECEPCION: 'recepcion' // Alias para recepcionista (como se guarda en BD)
+  RECEPCIONISTA: 'recepcionista', // Valor real en la BD
+  RECEPCION: 'recepcion' // Alias
 }
 
 export const PERMISSIONS = {
   // DASHBOARD - Solo lectura para ambos
-  DASHBOARD_VIEW: ['admin', 'receptionist', 'recepcion'],
+  DASHBOARD_VIEW: ['admin', 'receptionist', 'recepcionista', 'recepcion'],
   
   // GESTIÓN DE ESTADIA
-  ESTADIA_VIEW: ['admin', 'receptionist', 'recepcion'],
-  ESTADIA_CREATE: ['admin', 'receptionist', 'recepcion'], // Admin y recepcionista pueden crear check-in
+  ESTADIA_VIEW: ['admin', 'receptionist', 'recepcionista', 'recepcion'],
+  ESTADIA_CREATE: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Admin y recepcionista pueden crear check-in
   ESTADIA_EDIT: ['admin'], // Solo admin puede modificar
   ESTADIA_DELETE: ['admin'], // Solo admin puede eliminar
-  ESTADIA_CANCEL: ['admin', 'receptionist', 'recepcion'], // Admin y recepcionista pueden cancelar
+  ESTADIA_CANCEL: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Admin y recepcionista pueden cancelar
   
   // FACTURACIÓN
-  FACTURACION_VIEW: ['admin', 'receptionist', 'recepcion'],
-  FACTURACION_CREATE: ['receptionist', 'recepcion'], // Recepcionista genera facturas
-  FACTURACION_MARK_PAID: ['receptionist', 'recepcion'], // Recepcionista marca como pagada
-  FACTURACION_EDIT: ['admin', 'receptionist', 'recepcion'], // Admin y recepcionista pueden editar
+  FACTURACION_VIEW: ['admin', 'receptionist', 'recepcionista', 'recepcion'],
+  FACTURACION_CREATE: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Admin y recepcionista generan facturas
+  FACTURACION_MARK_PAID: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Admin y recepcionista marcan como pagada
+  FACTURACION_EDIT: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Admin y recepcionista pueden editar
   FACTURACION_DELETE: ['admin'], // Solo admin puede eliminar
   
   // TIENDA / VENTAS
-  TIENDA_VIEW: ['admin', 'receptionist', 'recepcion'],
-  TIENDA_CREATE: ['receptionist', 'recepcion'], // Recepcionista vende productos
+  TIENDA_VIEW: ['admin', 'receptionist', 'recepcionista', 'recepcion'],
+  TIENDA_CREATE: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Admin y recepcionista venden productos
   TIENDA_EDIT: ['admin'], // Solo admin puede editar
   TIENDA_DELETE: ['admin'], // Solo admin puede eliminar
   
   // CLIENTES
-  CLIENTES_VIEW: ['admin', 'receptionist', 'recepcion'],
-  CLIENTES_CREATE: ['receptionist', 'recepcion'], // Recepcionista puede registrar clientes
+  CLIENTES_VIEW: ['admin', 'receptionist', 'recepcionista', 'recepcion'],
+  CLIENTES_CREATE: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Admin y recepcionista pueden registrar clientes
   CLIENTES_EDIT: ['admin'], // Solo admin puede editar información
   CLIENTES_DELETE: ['admin'], // Solo admin puede eliminar
   
   // INVENTARIO
-  INVENTARIO_VIEW: ['admin', 'receptionist', 'recepcion'],
+  INVENTARIO_VIEW: ['admin', 'receptionist', 'recepcionista', 'recepcion'],
   INVENTARIO_EDIT: ['admin'], // Solo admin puede modificar inventario
   INVENTARIO_DELETE: ['admin'], // Solo admin puede eliminar productos
   
@@ -53,7 +54,7 @@ export const PERMISSIONS = {
   REPORTES_VIEW: ['admin'],
   
   // PERFIL
-  PERFIL_EDIT_SELF: ['admin', 'receptionist', 'recepcion'], // Cada usuario edita su perfil
+  PERFIL_EDIT_SELF: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Cada usuario edita su perfil
   PERFIL_EDIT_OTHERS: ['admin'], // Admin puede editar otros perfiles
   PERFIL_DELETE: ['admin'], // Solo admin puede eliminar usuarios
 }

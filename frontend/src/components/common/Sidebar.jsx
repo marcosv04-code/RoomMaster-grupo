@@ -1,6 +1,7 @@
 import './Sidebar.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useTheme } from '../../hooks/useTheme'
 import { usePermissions } from '../../hooks/usePermissions'
 import Icon from './Icon'
 import logo from '../../assets/images/logo.svg'
@@ -24,6 +25,9 @@ export default function Sidebar() {
   
   // Obtener datos del usuario y función logout
   const { user, logout } = useAuth()
+  
+  // Hook para cambiar el tema
+  const { isDarkMode, toggleTheme } = useTheme()
   
   // Hook para verificar permisos
   const { can, isAdmin, isReceptionist } = usePermissions()
@@ -108,8 +112,8 @@ export default function Sidebar() {
           <div className="user-details">
             <p className="user-name">{user?.name || 'Usuario'}</p>
             <p className="user-role" style={{ 
-              color: isAdmin ? '#FF6B6B' : '#4ECDC4',
-              fontWeight: '600',
+              color: '#ffffff',
+              fontWeight: '700',
               margin: '2px 0'
             }}>
               {isAdmin ? 'Administrador' : 'Recepcionista'}
@@ -117,15 +121,22 @@ export default function Sidebar() {
             {user?.hotel && (
               <p className="user-hotel" style={{ 
                 fontSize: '0.75rem',
-                color: '#888',
+                color: '#ffffff',
                 margin: '2px 0',
-                fontWeight: '500'
+                fontWeight: '700'
               }}>
                 {user.hotel}
               </p>
             )}
           </div>
         </div>
+        <button 
+          className="theme-toggle-btn" 
+          onClick={toggleTheme}
+          title={isDarkMode ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+        >
+          <Icon name={isDarkMode ? 'sun' : 'moon'} size={18} className="white" />
+        </button>
         <button className="logout-btn" onClick={handleLogout}>
           Cerrar sesión
         </button>

@@ -175,7 +175,7 @@ else if ($metodo === 'PUT') {
         responder(false, $resultado['error'], null, 500);
     }
     
-    // Si la factura se marca como pagada, actualizar la estadía a finalizada y la habitación a mantenimiento
+    // Si la factura se marca como pagada, actualizar la estadía a completada y la habitación a mantenimiento
     if ($estado === 'Pagada') {
         // Obtener el estadia_id y habitacion_id de la factura
         $factura_query = $conexion->query("SELECT f.estadia_id, e.habitacion_id FROM facturas f 
@@ -187,8 +187,8 @@ else if ($metodo === 'PUT') {
             $estadia_id = intval($factura['estadia_id']);
             $habitacion_id = intval($factura['habitacion_id']);
             
-            // Actualizar estadía a finalizada
-            $sql_estadia = "UPDATE estadias SET estado = 'finalizada' WHERE id = $estadia_id";
+            // Actualizar estadía a completada
+            $sql_estadia = "UPDATE estadias SET estado = 'completada' WHERE id = $estadia_id";
             $conexion->query($sql_estadia);
             
             // Actualizar habitación a mantenimiento

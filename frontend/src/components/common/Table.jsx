@@ -42,7 +42,8 @@ export default function Table({
   showEdit = true,
   showDelete = true,
   showCancel = false,
-  showPrint = false
+  showPrint = false,
+  editButtonText = 'Editar'
 }) {
   return (
     <div className="table-container">
@@ -85,7 +86,7 @@ export default function Table({
                         className="btn-edit" 
                         onClick={() => onEdit(row)}
                       >
-                        Editar
+                        {editButtonText}
                       </button>
                     )}
                     

@@ -17,21 +17,21 @@
   border: none;
   border-radius: 50%;
   background-color: var(--color-primary);
-  color: white;
+  color: var(--color-text-inverse);
   font-size: 24px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
   z-index: 10;
 }
 
 .back-to-home:hover {
-  background-color: #1565c0;
+  background-color: var(--color-primary-dark);
   transform: scale(1.1) translateX(-3px);
-  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.5);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.5);
 }
 
 .back-to-home:active {
@@ -56,8 +56,8 @@
 }
 
 .auth-box-left {
-  background: linear-gradient(135deg, #1565c0 0%, #2196F3 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--brand-primary-dark) 0%, var(--brand-primary) 100%);
+  color: var(--color-text-inverse);
   padding: 40px 30px;
   display: flex;
   flex-direction: column;
@@ -69,7 +69,7 @@
   font-size: 28px;
   margin: 0;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-text-inverse);
   text-align: center;
 }
 
@@ -85,7 +85,7 @@
   font-size: 14px;
   margin: 0;
   opacity: 1;
-  color: #ffffff;
+  color: var(--color-text-inverse);
   line-height: 1.5;
   font-weight: 500;
 }
@@ -114,7 +114,7 @@
 .auth-feature-text {
   margin: 0;
   font-size: 13px;
-  color: #ffffff;
+  color: var(--color-text-inverse);
   font-weight: 500;
 }
 
@@ -162,8 +162,8 @@
 }
 
 .form-group input::placeholder {
-  color: #999;
-}
+  color: var(--color-text-tertiary);
+}}
 
 .form-group input:focus {
   outline: none;

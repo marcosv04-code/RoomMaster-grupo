@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from '../common/Icon'
+import { filterName, filterPhone } from '../../utils/validation'
 import './UserRegisterForm.css'
 
 export default function UserRegisterForm({ onSubmit, isLoading = false, showRoleSelection = true }) {
@@ -11,7 +12,7 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
     password: '',
     confirmPassword: '',
   })
-  const [role, setRole] = useState('recepcion')
+  const [role, setRole] = useState('recepcionista')
   const [error, setError] = useState('')
   const [passwordStrength, setPasswordStrength] = useState(0)
 
@@ -52,10 +53,21 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Aplicar filtros según el campo
+    let filteredValue = value
+    if (name === 'nombre') {
+      filteredValue = filterName(value)
+    } else if (name === 'telefono') {
+      filteredValue = filterPhone(value)
+    } else if (name === 'hotel') {
+      filteredValue = filterName(value)
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: filteredValue }))
 
     if (name === 'password') {
-      const { strength } = validatePasswordStrength(value)
+      const { strength } = validatePasswordStrength(filteredValue)
       setPasswordStrength(strength)
     }
   }
@@ -103,7 +115,7 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
       password: '',
       confirmPassword: '',
     })
-    setRole('recepcion')
+    setRole('recepcionista')
     setPasswordStrength(0)
     setError('')
   }
@@ -176,13 +188,13 @@ export default function UserRegisterForm({ onSubmit, isLoading = false, showRole
               <input
                 type="radio"
                 name="role"
-                value="recepcion"
-                checked={role === 'recepcion'}
+                value="recepcionista"
+                checked={role === 'recepcionista'}
                 onChange={handleRoleChange}
                 disabled={isLoading}
                 style={{ marginRight: '6px' }}
               />
-              <span>👤 Recepcionista</span>
+              <span>Recepcionista</span>
             </label>
           </div>
         </div>

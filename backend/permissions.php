@@ -11,7 +11,8 @@
 
 define('ROLE_ADMIN', 'admin');
 define('ROLE_RECEPTIONIST', 'receptionist');
-define('ROLE_RECEPCION', 'recepcion'); // Alias para recepcionista (como se guarda en BD)
+define('ROLE_RECEPCION', 'recepcion'); // Alias
+define('ROLE_RECEPCIONISTA', 'recepcionista'); // Valor real en la BD
 
 /**
  * Array de permisos por rol
@@ -19,43 +20,43 @@ define('ROLE_RECEPCION', 'recepcion'); // Alias para recepcionista (como se guar
  */
 $permisos = [
     // DASHBOARD - Solo lectura
-    'DASHBOARD_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],
+    'DASHBOARD_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
     
     // ESTADÍAS
-    'ESTADIA_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],
-    'ESTADIA_CREATE' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],  // Admin y recepcionista crean check-in
+    'ESTADIA_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
+    'ESTADIA_CREATE' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],  // Admin y recepcionista crean check-in
     'ESTADIA_EDIT' => [ROLE_ADMIN],           // Solo admin puede modificar
     'ESTADIA_DELETE' => [ROLE_ADMIN],         // Solo admin puede eliminar
-    'ESTADIA_CANCEL' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],  // Admin y recepcionista pueden cancelar
+    'ESTADIA_CANCEL' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],  // Admin y recepcionista pueden cancelar
     
     // FACTURACIÓN
-    'FACTURACION_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],
-    'FACTURACION_CREATE' => [ROLE_RECEPTIONIST, ROLE_RECEPCION],      // Recepcionista genera facturas
-    'FACTURACION_MARK_PAID' => [ROLE_RECEPTIONIST, ROLE_RECEPCION],   // Recepcionista marca como pagada
-    'FACTURACION_EDIT' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],        // Admin y recepcionista pueden editar
+    'FACTURACION_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
+    'FACTURACION_CREATE' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],      // Admin y recepcionista generan facturas
+    'FACTURACION_MARK_PAID' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],   // Admin y recepcionista marcan como pagada
+    'FACTURACION_EDIT' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],        // Admin y recepcionista pueden editar
     'FACTURACION_DELETE' => [ROLE_ADMIN],             // Solo admin puede eliminar
     
     // VENTAS / TIENDA
-    'TIENDA_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],
-    'TIENDA_CREATE' => [ROLE_RECEPTIONIST, ROLE_RECEPCION],  // Recepcionista vende productos
+    'TIENDA_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
+    'TIENDA_CREATE' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],  // Admin y recepcionista venden productos
     'TIENDA_EDIT' => [ROLE_ADMIN],           // Solo admin puede editar
     'TIENDA_DELETE' => [ROLE_ADMIN],         // Solo admin puede eliminar
     
     // CLIENTES
-    'CLIENTES_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],
-    'CLIENTES_CREATE' => [ROLE_RECEPTIONIST, ROLE_RECEPCION],  // Recepcionista registra clientes
+    'CLIENTES_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
+    'CLIENTES_CREATE' => [ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],  // Recepcionista registra clientes
     'CLIENTES_EDIT' => [ROLE_ADMIN],           // Solo admin puede editar
     'CLIENTES_DELETE' => [ROLE_ADMIN],         // Solo admin puede eliminar
     
     // INVENTARIO
-    'INVENTARIO_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],
+    'INVENTARIO_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
     'INVENTARIO_EDIT' => [ROLE_ADMIN],    // Solo admin puede modificar
     'INVENTARIO_DELETE' => [ROLE_ADMIN],  // Solo admin puede eliminar
     
     // HABITACIONES
-    'HABITACIONES_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],
+    'HABITACIONES_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
     'HABITACIONES_CREATE' => [ROLE_ADMIN],        // Solo admin crea habitaciones
-    'HABITACIONES_EDIT' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION],    // Admin y recepcionista pueden editar estado
+    'HABITACIONES_EDIT' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],    // Admin y recepcionista pueden editar estado
     'HABITACIONES_DELETE' => [ROLE_ADMIN],        // Solo admin elimina habitaciones
     
     // PERSONAL DE LIMPIEZA

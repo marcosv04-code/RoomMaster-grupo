@@ -50,9 +50,10 @@ else if ($metodo === 'POST') {
     $documento = escapar($conexion, $datos['documento_identidad'] ?? '');
     $tipo_documento = escapar($conexion, $datos['tipo_documento'] ?? 'cedula');
     $ciudad = escapar($conexion, $datos['ciudad'] ?? '');
+    $direccion = escapar($conexion, $datos['direccion'] ?? '');
     
-    $sql = "INSERT INTO clientes (nombre, email, telefono, documento_identidad, tipo_documento, ciudad) 
-            VALUES ('$nombre', '$email', '$telefono', '$documento', '$tipo_documento', '$ciudad')";
+    $sql = "INSERT INTO clientes (nombre, email, telefono, documento_identidad, tipo_documento, ciudad, direccion) 
+            VALUES ('$nombre', '$email', '$telefono', '$documento', '$tipo_documento', '$ciudad', '$direccion')";
     
     $resultado = ejecutarAccion($conexion, $sql);
     
@@ -76,8 +77,10 @@ else if ($metodo === 'PUT') {
     $nombre = escapar($conexion, $datos['nombre'] ?? '');
     $email = escapar($conexion, $datos['email'] ?? '');
     $telefono = escapar($conexion, $datos['telefono'] ?? '');
+    $ciudad = escapar($conexion, $datos['ciudad'] ?? '');
+    $direccion = escapar($conexion, $datos['direccion'] ?? '');
     
-    $sql = "UPDATE clientes SET nombre = '$nombre', email = '$email', telefono = '$telefono' WHERE id = $id";
+    $sql = "UPDATE clientes SET nombre = '$nombre', email = '$email', telefono = '$telefono', ciudad = '$ciudad', direccion = '$direccion' WHERE id = $id";
     
     $resultado = ejecutarAccion($conexion, $sql);
     

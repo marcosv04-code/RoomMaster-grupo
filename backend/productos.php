@@ -70,8 +70,11 @@ else if ($metodo === 'POST') {
 
 // PUT - Actualizar producto
 else if ($metodo === 'PUT') {
+    // Obtener rol del usuario desde los datos
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    
     // Verificar permiso - solo admin puede editar
-    verificarPermisoOAbortar('TIENDA_EDIT');
+    verificarPermisoOAbortar('TIENDA_EDIT', $rol);
     
     $error = validarCampos($datos, ['id']);
     if ($error) {
@@ -100,25 +103,11 @@ else if ($metodo === 'PUT') {
 
 // DELETE - Eliminar producto
 else if ($metodo === 'DELETE') {
+    // Obtener rol del usuario desde los datos
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    
     // Verificar permiso - solo admin puede eliminar
-    verificarPermisoOAbortar('TIENDA_DELETE');
-    
-    $error = validarCampos($datos, ['id']);
-    if ($error) {
-        responder(false, $error, null, 400);
-    }
-    
-    $id = intval($datos['id']);
-    
-    $sql = "UPDATE productos SET estado = 'inactivo' WHERE id = $id";
-    
-    $resultado = ejecutarAccion($conexion, $sql);
-    
-    if (isset($resultado['error'])) {
-        responder(false, $resultado['error'], null, 500);
-    }
-    
-    responder(true, 'Producto eliminado exitosamente');
+    verificarPermisoOAbortar('TIENDA_DELETE', $rol);
 }
 
 else {

@@ -53,7 +53,7 @@
   font-size: 14px;
   font-family: var(--font-family-primary);
   transition: all 0.3s ease;
-  background-color: var(--color-background-secondary);
+  background-color: var(--color-card-background);
 }
 
 .form-group input:focus,

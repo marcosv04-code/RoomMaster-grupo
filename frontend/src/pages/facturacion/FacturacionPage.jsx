@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
+import Swal from 'sweetalert2'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
-import { formatCOP, formatCOPWithDecimals } from '../../utils/currency'
+import { formatCOP, formatCOPWithDecimals, formatNumberWithThousandsSeparator } from '../../utils/currency'
 import './ModulePage.css'
 
-const API = `${window.location.origin}/backend`
+const API = '/api'
 
 export default function FacturacionPage() {
   const { user } = useAuth()
@@ -123,7 +124,12 @@ export default function FacturacionPage() {
 
   const handleSaveInvoice = async () => {
     if (!formData.cliente_id || !formData.total) {
-      alert('Por favor completa: Cliente y Total')
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Por favor completa: Cliente y Total',
+        confirmButtonColor: '#667eea'
+      })
       return
     }
 
@@ -142,14 +148,33 @@ export default function FacturacionPage() {
         })
         const data = await res.json()
         if (data.exito) {
-          alert('Factura actualizada')
+          Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: 'Factura actualizada',
+            confirmButtonColor: '#667eea'
+          })
           cargarFacturas()
-          // Si la factura se marca como pagada, recargar estadías (se actualizarán a finalizada)
-          if (formData.estado === 'Pagada') {
+          // Si la factura se marca como pagada, actualizar estadía a completada
+          if (formData.estado === 'Pagada' && editingInvoice.estadia_id) {
+            await fetch(`${API}/estadias.php`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: editingInvoice.estadia_id,
+                estado: 'completada',
+                rol: user?.role
+              })
+            })
             cargarEstadias()
           }
         } else {
-          alert('Error: ' + data.mensaje)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.mensaje || 'Error al actualizar factura',
+            confirmButtonColor: '#667eea'
+          })
         }
       } else {
         // Crear nueva
@@ -168,22 +193,52 @@ export default function FacturacionPage() {
         })
         const data = await res.json()
         if (data.exito) {
-          alert('Factura creada: ' + data.datos.numero_factura)
+          Swal.fire({
+            icon: 'success',
+            title: 'Factura Creada',
+            text: 'Factura ' + data.datos.numero_factura + ' creada exitosamente',
+            confirmButtonColor: '#667eea'
+          })
           cargarFacturas()
         } else {
-          alert('Error: ' + data.mensaje)
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.mensaje || 'Error al crear factura',
+            confirmButtonColor: '#667eea'
+          })
         }
       }
       setIsModalOpen(false)
       resetForm()
     } catch (err) {
-      alert('Error al guardar: ' + err.message)
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al guardar: ' + err.message,
+        confirmButtonColor: '#667eea'
+      })
       console.error(err)
     }
   }
 
   const handleDelete = async (invoice) => {
-    if (!confirm('¿Eliminar factura ' + invoice.numero_factura + '?')) return
+    Swal.fire({
+      title: '¿Eliminar factura?',
+      text: 'Se eliminará la factura ' + invoice.numero_factura + '. Esta acción no se puede deshacer.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (!result.isConfirmed) return
+      handleDeleteConfirmed(invoice)
+    })
+  }
+
+  const handleDeleteConfirmed = async (invoice) => {
     try {
       const res = await fetch(`${API}/facturas.php`, {
         method: 'DELETE',
@@ -192,13 +247,28 @@ export default function FacturacionPage() {
       })
       const data = await res.json()
       if (data.exito) {
-        alert('Factura eliminada')
+        Swal.fire({
+          icon: 'success',
+          title: 'Eliminada',
+          text: 'Factura eliminada exitosamente',
+          confirmButtonColor: '#667eea'
+        })
         cargarFacturas()
       } else {
-        alert('Error: ' + data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje || 'Error al eliminar factura',
+          confirmButtonColor: '#667eea'
+        })
       }
     } catch (err) {
-      alert('Error: ' + err.message)
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message,
+        confirmButtonColor: '#667eea'
+      })
     }
   }
 
@@ -220,8 +290,8 @@ export default function FacturacionPage() {
             .detail-value { color: #666; }
             .invoice-items { margin-bottom: 30px; }
             .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .items-table th { background-color: #f5f5f5; padding: 10px; text-align: left; border-bottom: 2px solid #333; font-weight: bold; }
-            .items-table td { padding: 10px; border-bottom: 1px solid #eee; }
+            .items-table th { background-color: var(--color-background-secondary); padding: 10px; text-align: left; border-bottom: 2px solid var(--color-border); font-weight: bold; color: var(--color-text); }
+            .items-table td { padding: 10px; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
             .totals { margin-top: 30px; border-top: 2px solid #333; padding-top: 20px; }
             .total-row { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px; }
             .total-row.grand { font-size: 20px; font-weight: bold; color: #2c3e50; border-top: 1px solid #333; padding-top: 10px; }
@@ -301,13 +371,25 @@ export default function FacturacionPage() {
       const res = await fetch(`${API}/facturas.php?action=generar_automatica&estadia_id=${estadiaId}`)
       const data = await res.json()
       if (data.exito) {
-        alert(`Factura ${data.datos.numero_factura} creada automáticamente\n\nEstadía: ${formatCOP(data.datos.total_estadia)}\nVentas: ${formatCOP(data.datos.total_ventas)}\nTotal: ${formatCOP(data.datos.total)}`)
+        Swal.fire({
+          icon: 'success',
+          title: 'Factura generada',
+          html: `<strong>Factura ${data.datos.numero_factura}</strong><br><br>Estadía: ${formatCOP(data.datos.total_estadia)}<br>Ventas: ${formatCOP(data.datos.total_ventas)}<br><strong>Total: ${formatCOP(data.datos.total)}</strong>`
+        })
         cargarFacturas()
       } else {
-        alert('Error: ' + data.mensaje)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.mensaje
+        })
       }
     } catch (err) {
-      alert('Error al generar factura: ' + err.message)
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al generar factura: ' + err.message
+      })
     }
   }
   // CALCULAR TOTALES
@@ -336,7 +418,7 @@ export default function FacturacionPage() {
         </div>
         <p className="page-subtitle">Gestiona facturas, cobros y registra pagos</p>
 
-        {error && <div style={{ color: 'red', marginBottom: '20px', padding: '10px', backgroundColor: '#ffe6e6', borderRadius: '4px' }}>{error}</div>}
+        {error && <div style={{ color: '#f44336', marginBottom: '20px', padding: '10px', backgroundColor: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336' }}>{error}</div>}
 
         {/* TARJETAS ESTADÍSTICAS */}
         <div className="stats-grid" style={{ marginBottom: '32px' }}>
@@ -360,39 +442,29 @@ export default function FacturacionPage() {
           />
         </div>
 
-        {/* BOTÓN NUEVA FACTURA */}
-        <div className="page-header" style={{ marginBottom: '20px' }}>
-          <div></div>
-          {(user?.role === 'admin' || user?.role === 'receptionist') && (
-            <button className="btn btn-primary" onClick={handleOpenModal}>
-              + Nueva Factura
-            </button>
-          )}
-        </div>
-
         {/* SECCIÓN: ESTADÍAS ACTIVAS (para generar facturas automáticas) */}
         {stays && stays.filter(s => s.estado === 'activa').length > 0 && (
-          <div style={{ marginBottom: '40px', padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+          <div style={{ marginBottom: '40px', padding: '20px', backgroundColor: 'var(--color-background-secondary)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <Icon name="users" size={24} className="primary" />
               <h3 style={{ margin: 0 }}>Estadías Activas - Generar Facturas</h3>
             </div>
-            <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>Selecciona una estadía para generar su factura automáticamente (suma habitación + compras en tienda)</p>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '16px', fontSize: '14px' }}>Selecciona una estadía para generar su factura automáticamente (suma habitación + compras en tienda)</p>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '12px' }}>
               {stays.filter(s => s.estado === 'activa').map(stay => (
                 <div key={stay.id} style={{
                   padding: '12px',
-                  backgroundColor: 'white',
+                  backgroundColor: 'var(--color-card-background)',
                   borderRadius: '6px',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--color-border)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
                 }}>
                   <div>
                     <div style={{ fontWeight: '600', marginBottom: '4px' }}>{stay.cliente_nombre || `Cliente #${stay.cliente_id}`}</div>
-                    <div style={{ fontSize: '12px', color: '#999' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                       Hab. {stay.numero_habitacion || stay.habitacion_id} | {stay.fecha_entrada} a {stay.fecha_salida}
                     </div>
                   </div>
@@ -423,16 +495,17 @@ export default function FacturacionPage() {
             showPrint={true}
             showEdit={true}
             showDelete={user?.role === 'admin'}
+            editButtonText="Pagar"
           />
         )}
 
         {/* MODAL */}
         <Modal
           isOpen={isModalOpen}
-          title={isEditMode ? 'Editar Factura' : 'Nueva Factura'}
+          title={isEditMode ? 'Pagar Factura' : 'Nueva Factura'}
           onClose={() => setIsModalOpen(false)}
           onConfirm={handleSaveInvoice}
-          confirmText={isEditMode ? 'Actualizar' : 'Crear Factura'}
+          confirmText={isEditMode ? 'Pagar' : 'Crear Factura'}
         >
           <form className="form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             {!isEditMode && (
@@ -443,7 +516,7 @@ export default function FacturacionPage() {
                   <select
                     value={formData.estadia_id}
                     onChange={(e) => setFormData({ ...formData, estadia_id: e.target.value })}
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-card-background)', color: 'var(--color-text)' }}
                   >
                     <option value="">Seleccionar estadía</option>
                     {stays.map(stay => (
@@ -461,12 +534,12 @@ export default function FacturacionPage() {
                     value={formData.cliente_id}
                     onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
                     required
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-card-background)', color: 'var(--color-text)' }}
                   >
                     <option value="">Seleccionar cliente</option>
                     {clients.map(client => (
                       <option key={client.id} value={client.id}>
-                        {client.nombre} (ID: {client.id})
+                        {client.nombre}
                       </option>
                     ))}
                   </select>
@@ -481,8 +554,13 @@ export default function FacturacionPage() {
                     value={formData.subtotal}
                     onChange={(e) => setFormData({ ...formData, subtotal: e.target.value })}
                     placeholder="0.00"
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-card-background)', color: 'var(--color-text)' }}
                   />
+                  {formData.subtotal && (
+                    <small style={{ color: '#667eea', fontWeight: '600', marginTop: '4px', display: 'block' }}>
+                      {formatNumberWithThousandsSeparator(formData.subtotal)}
+                    </small>
+                  )}
                 </div>
 
                 {/* IMPUESTO */}
@@ -494,8 +572,13 @@ export default function FacturacionPage() {
                     value={formData.impuesto}
                     onChange={(e) => setFormData({ ...formData, impuesto: e.target.value })}
                     placeholder="0.00"
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-card-background)', color: 'var(--color-text)' }}
                   />
+                  {formData.impuesto && (
+                    <small style={{ color: '#667eea', fontWeight: '600', marginTop: '4px', display: 'block' }}>
+                      {formatNumberWithThousandsSeparator(formData.impuesto)}
+                    </small>
+                  )}
                 </div>
 
                 {/* TOTAL */}
@@ -508,8 +591,13 @@ export default function FacturacionPage() {
                     onChange={(e) => setFormData({ ...formData, total: e.target.value })}
                     placeholder="0.00"
                     required
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-card-background)', color: 'var(--color-text)' }}
                   />
+                  {formData.total && (
+                    <small style={{ color: '#667eea', fontWeight: '600', marginTop: '4px', display: 'block' }}>
+                      {formatNumberWithThousandsSeparator(formData.total)}
+                    </small>
+                  )}
                 </div>
               </>
             )}
@@ -520,11 +608,10 @@ export default function FacturacionPage() {
               <select
                 value={formData.estado}
                 onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-card-background)', color: 'var(--color-text)' }}
               >
                 <option value="Pendiente">Pendiente</option>
                 <option value="Pagada">Pagada</option>
-                <option value="Cancelada">Cancelada</option>
               </select>
             </div>
 
@@ -534,7 +621,7 @@ export default function FacturacionPage() {
               <select
                 value={formData.metodo_pago}
                 onChange={(e) => setFormData({ ...formData, metodo_pago: e.target.value })}
-                style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-card-background)', color: 'var(--color-text)' }}
               >
                 <option value="">Seleccionar</option>
                 <option value="Efectivo">Efectivo</option>

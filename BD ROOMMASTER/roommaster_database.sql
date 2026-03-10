@@ -16,13 +16,13 @@ USE roommaster_db;
 -- 2. TABLA DE USUARIOS (Administradores y Personal)
 -- ============================================
 -- Almacena a todos los usuarios del hotel
--- Roles: admin, gerente, recepcionista
+-- Roles: admin, recepcionista
 CREATE TABLE usuarios (
   id INT PRIMARY KEY AUTO_INCREMENT,
   nombre VARCHAR(100) NOT NULL,
   email VARCHAR(100) UNIQUE NOT NULL,
   contraseña VARCHAR(255) NOT NULL,
-  rol VARCHAR(50) NOT NULL DEFAULT 'recepcionista', -- 'admin', 'gerente', 'recepcionista'
+  rol VARCHAR(50) NOT NULL DEFAULT 'recepcionista', -- 'admin', 'recepcionista'
   telefono VARCHAR(20),
   hotel VARCHAR(100),
   estado VARCHAR(20) DEFAULT 'activo', -- 'activo', 'inactivo'
@@ -52,7 +52,7 @@ CREATE TABLE clientes (
 -- 4. TABLA DE HABITACIONES
 -- ============================================
 -- Registro de todas las habitaciones del hotel
--- Estados: disponible, ocupada, mantenimiento, limpieza
+-- Estados: disponible, ocupada, mantenimiento
 CREATE TABLE habitaciones (
   id INT PRIMARY KEY AUTO_INCREMENT,
   numero_habitacion VARCHAR(20) UNIQUE NOT NULL, -- 101, 102, etc
@@ -61,7 +61,7 @@ CREATE TABLE habitaciones (
   capacidad INT NOT NULL, -- número de personas que pueden dormir
   precio_noche DECIMAL(10, 2) NOT NULL, -- precio por noche
   amenidades VARCHAR(255), -- TV, AC, WiFi, etc
-  estado VARCHAR(20) DEFAULT 'disponible', -- 'disponible', 'ocupada', 'mantenimiento', 'limpieza'
+  estado VARCHAR(20) DEFAULT 'disponible', -- 'disponible', 'ocupada', 'mantenimiento'
   descripcion TEXT,
   activa BOOLEAN DEFAULT TRUE,
   fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -110,7 +110,7 @@ CREATE TABLE facturas (
   total DECIMAL(10, 2) NOT NULL,
   
   -- Control
-  estado VARCHAR(20) DEFAULT 'Pendiente', -- 'Pendiente', 'Pagada', 'Cancelada', 'Vencida'
+  estado VARCHAR(20) DEFAULT 'Pendiente', -- 'Pendiente', 'Pagada'
   metodo_pago VARCHAR(50), -- 'efectivo', 'tarjeta', 'transferencia', 'cheque'
   descripcion TEXT,
   
@@ -263,7 +263,7 @@ CREATE TABLE personal_limpieza (
 -- Insertar un usuario administrador de ejemplo
 INSERT INTO usuarios (nombre, email, contraseña, rol, telefono, hotel) VALUES
 ('Carlos Rodriguez', 'admin@roommaster.com', 'admin123', 'admin', '+57 (1) 555-0123', 'Hotel Grand Plaza'),
-('María García', 'maria@roommaster.com', 'maria123', 'gerente', '+57 (1) 555-0124', 'Hotel Grand Plaza'),
+('María García', 'maria@roommaster.com', 'maria123', 'recepcionista', '+57 (1) 555-0124', 'Hotel Grand Plaza'),
 ('Juan López', 'juan@roommaster.com', 'juan123', 'recepcionista', '+57 (1) 555-0125', 'Hotel Grand Plaza');
 
 -- Insertar clientes/huéspedes
@@ -290,7 +290,7 @@ INSERT INTO estadias (cliente_id, habitacion_id, fecha_entrada, fecha_salida, nu
 INSERT INTO facturas (numero_factura, estadia_id, cliente_id, subtotal, impuesto, total, estado, metodo_pago) VALUES
 ('FAC-001', 2, 2, 400.00, 50.00, 450.00, 'Pagada', 'tarjeta'),
 ('FAC-002', 1, 1, 250.00, 70.00, 320.00, 'Pendiente', NULL),
-('FAC-003', 2, 2, 280.00, 0, 280.00, 'Cancelada', 'efectivo');
+('FAC-003', 2, 2, 280.00, 0, 280.00, 'Pagada', 'efectivo');
 
 -- Insertar productos para la tienda
 INSERT INTO productos (nombre, descripcion, precio, stock, categoria, codigo_producto) VALUES

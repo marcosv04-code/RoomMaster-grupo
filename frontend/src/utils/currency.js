@@ -53,8 +53,28 @@ export const formatThousands = (value) => {
   return num.toString()
 }
 
+/**
+ * Formatea un número con separador de miles (puntos)
+ * Útil para mostrar en inputs mientras se escribe
+ * @param {number} value - Valor a formatear
+ * @returns {string} - Valor formateado con puntos (ej: "150.000" o "1.500.000")
+ */
+export const formatNumberWithThousandsSeparator = (value) => {
+  if (!value && value !== 0) return ''
+  
+  // Convertir a string y remover espacios
+  const stringValue = String(value).replace(/\s/g, '')
+  
+  // Remover puntos existentes
+  const cleanValue = stringValue.replace(/\./g, '')
+  
+  // Agregar puntos cada 3 dígitos de derecha a izquierda
+  return cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
+
 export default {
   formatCOP,
   formatCOPWithDecimals,
-  formatThousands
+  formatThousands,
+  formatNumberWithThousandsSeparator
 }

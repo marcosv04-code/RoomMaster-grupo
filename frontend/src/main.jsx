@@ -8,11 +8,17 @@ import App from './App.jsx'
 // Importar los estilos globales (CSS que se aplica a toda la app)
 import './styles/global.css'
 
+// Importar configuración de Sweetalert
+import { initSwalTheme } from './services/swalConfig'
+
 // ============================================
 // PUNTO DE ENTRADA DE LA APLICACIÓN
 // ============================================
 // Este archivo inicializa React y monta la aplicación
 // en el elemento con id="root" del HTML
+
+// Inicializar los estilos de Sweetalert para dark mode
+initSwalTheme()
 
 // Obtener el elemento raíz del DOM (en index.html)
 const elemento_raiz = document.getElementById('root')

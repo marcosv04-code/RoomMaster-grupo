@@ -48,12 +48,12 @@
 .form-group select,
 .form-group textarea {
   padding: 12px 14px;
-  border: 2px solid #e8e8e8;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 14px;
   font-family: var(--font-family-primary);
   transition: all 0.3s ease;
-  background-color: #f8f9fb;
+  background-color: var(--color-card-background);
 }
 
 .form-group input:focus,
@@ -61,7 +61,7 @@
 .form-group textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  background-color: white;
+  background-color: var(--color-card-background);
   box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.1);
 }
 

@@ -136,15 +136,23 @@ else if ($metodo === 'DELETE') {
     
     $id = intval($datos['id']);
     
-    $sql = "UPDATE habitaciones SET activa = FALSE WHERE id = $id";
+    // Verificar que la habitación existe
+    $sql_check = "SELECT id FROM habitaciones WHERE id = $id";
+    $resultado_check = $conexion->query($sql_check);
+    if (!$resultado_check || $resultado_check->num_rows === 0) {
+        responder(false, 'La habitación no existe', null, 404);
+    }
+    
+    // Usar DELETE directo en lugar de soft-delete
+    $sql = "DELETE FROM habitaciones WHERE id = $id";
     
     $resultado = ejecutarAccion($conexion, $sql);
     
     if (isset($resultado['error'])) {
-        responder(false, $resultado['error'], null, 400);
+        responder(false, 'Error al eliminar: ' . $resultado['error'], null, 400);
     }
     
-    responder(true, 'Habitación eliminada', null);
+    responder(true, 'Habitación eliminada correctamente', null);
 }
 
 else {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { filterName } from '../../utils/validation'
 import Icon from '../../components/common/Icon'
 import logo from '../../assets/images/logo.svg'
 import './AuthPage.css'
@@ -55,10 +56,17 @@ export default function RegisterPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // Filtrar nombre si es ese el campo
+    let filteredValue = value
+    if (name === 'name') {
+      filteredValue = filterName(value)
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: filteredValue }))
 
     if (name === 'password') {
-      const { strength } = validatePasswordStrength(value)
+      const { strength } = validatePasswordStrength(filteredValue)
       setPasswordStrength(strength)
     }
   }
@@ -88,7 +96,7 @@ export default function RegisterPage() {
 
     try {
       // Enviar solicitud al backend
-      const response = await fetch(`${window.location.origin}/backend/register.php`, {
+      const response = await fetch(`/api/register.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -25,6 +25,8 @@ import calendar from '../../assets/icons/calendar.svg'
 import fileText from '../../assets/icons/file-text.svg'
 import alertCircle from '../../assets/icons/alert-circle.svg'
 import box from '../../assets/icons/box.svg'
+import moon from '../../assets/icons/moon.svg'
+import sun from '../../assets/icons/sun.svg'
 import './Icon.css'
 
 const iconMap = {
@@ -55,6 +57,8 @@ const iconMap = {
   'file-text': fileText,
   'alert-circle': alertCircle,
   box,
+  moon,
+  sun,
 }
 
 export default function Icon({ name, size = 24, className = '' }) {

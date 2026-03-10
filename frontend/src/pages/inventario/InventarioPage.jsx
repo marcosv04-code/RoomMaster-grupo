@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
+import Swal from 'sweetalert2'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
-import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
 import { useAuth } from '../../hooks/useAuth'
 import { usePermissions } from '../../hooks/usePermissions'
 import './ModulePage.css'
 
-const API = `${window.location.origin}/backend`
+const API = '/api'
 
 export default function InventarioPage() {
   const { user } = useAuth()
@@ -81,7 +81,7 @@ export default function InventarioPage() {
   }
 
   const handleGuardarCantidad = async (id) => {
-    if (!can('INVENTARIO_EDIT')) {
+    if (user?.role !== 'admin' && user?.role !== 'recepcionista') {
       setError('No tienes permiso para editar inventario')
       return
     }
@@ -117,12 +117,23 @@ export default function InventarioPage() {
 
   // REABASTECIMIENTO COMPLETO
   const handleReabastecimiento = async (habitacion_id) => {
-    if (!can('INVENTARIO_EDIT')) {
-      setError('No tienes permiso para editar inventario')
+    if (user?.role !== 'admin') {
+      setError('No tienes permiso para reabastecer')
       return
     }
 
-    if (!window.confirm('¿Reabastecerá la habitación ' + habitacionesAgrupadas[habitacion_id]?.numero_habitacion + ' completamente?')) {
+    const result = await Swal.fire({
+      title: '¿Reabastecer?',
+      text: '¿Reabastecerá la habitación ' + habitacionesAgrupadas[habitacion_id]?.numero_habitacion + ' completamente?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, reabastecer',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (!result.isConfirmed) {
       return
     }
 
@@ -158,13 +169,23 @@ export default function InventarioPage() {
       'sabanas': '#FF6B6B',
       'toallas': '#4ECDC4',
       'limpieza': '#FFE66D',
-      'amenities': '#95E1D3'
+      'amenidades': '#95E1D3'
     }
     return colores[tipo] || '#8B9DC3'
   }
 
+  const getTipoLabel = (tipo) => {
+    const labels = {
+      'sabanas': 'Sábanas',
+      'toallas': 'Toallas',
+      'limpieza': 'Limpieza',
+      'amenities': 'Amenidades'
+    }
+    return labels[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1)
+  }
+
   const getEstadoColor = (necesitaReabastecimiento) => {
-    return necesitaReabastecimiento ? '#FF6B6B' : '#51CF66'
+    return necesitaReabastecimiento ? '#FF6B6B' : '#2196F3'
   }
   return (
     <DashboardLayout>
@@ -173,16 +194,16 @@ export default function InventarioPage() {
           <Icon name="box" size={32} className="primary" />
           <h1 style={{ margin: 0 }}>Inventario por Habitación</h1>
         </div>
-        <p className="page-subtitle">Gestiona suministros de cada habitación (sábanas, toallas, limpieza, amenities)</p>
+        <p className="page-subtitle">Gestiona suministros: sábanas, toallas, limpieza, amenidades</p>
 
         {error && (
           <div style={{ 
-            color: '#d32f2f', 
+            color: 'var(--color-error)', 
             marginBottom: '20px', 
             padding: '12px', 
-            backgroundColor: '#ffebee', 
+            backgroundColor: 'rgba(239, 83, 80, 0.1)', 
             borderRadius: '4px',
-            border: '1px solid #ef5350'
+            border: '1px solid var(--color-error)'
           }}>
             {error}
           </div>
@@ -190,12 +211,12 @@ export default function InventarioPage() {
 
         {successMessage && (
           <div style={{ 
-            color: '#388e3c', 
+            color: 'var(--color-success)', 
             marginBottom: '20px', 
             padding: '12px', 
-            backgroundColor: '#e8f5e9', 
+            backgroundColor: 'rgba(76, 175, 80, 0.1)', 
             borderRadius: '4px',
-            border: '1px solid #81c784'
+            border: '1px solid var(--color-success)'
           }}>
             {successMessage}
           </div>
@@ -204,12 +225,12 @@ export default function InventarioPage() {
         {/* SELECTOR DE HABITACIONES */}
         {!loading && Object.keys(habitacionesAgrupadas).length > 0 && (
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: 'var(--color-text)' }}>
               Selecciona una habitación:
             </label>
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
               gap: '10px'
             }}>
               {Object.keys(habitacionesAgrupadas)
@@ -227,19 +248,18 @@ export default function InventarioPage() {
                       onClick={() => setSelectedHabitacion(habId)}
                       style={{
                         padding: '12px',
-                        border: selectedHabitacion === habId ? '2px solid #1976d2' : '1px solid #ddd',
-                        backgroundColor: selectedHabitacion === habId ? '#e3f2fd' : '#f5f5f5',
+                        border: selectedHabitacion === habId ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        backgroundColor: selectedHabitacion === habId ? 'rgba(33, 150, 243, 0.1)' : 'var(--color-background-secondary)',
                         borderRadius: '4px',
                         cursor: 'pointer',
                         fontWeight: selectedHabitacion === habId ? 'bold' : 'normal',
-                        transition: 'all 0.2s',
-                        color: tieneReabastecimiento ? '#d32f2f' : '#000'
+                        color: tieneReabastecimiento ? 'var(--color-error)' : 'var(--color-text)',
+                        fontFamily: 'inherit'
                       }}
                     >
                       <div>Hab. {hab.numero_habitacion}</div>
-                      <div style={{ fontSize: '12px', opacity: 0.7 }}>
+                      <div style={{ fontSize: '11px', opacity: 0.7 }}>
                         {hab.tipo_habitacion}
-                        {tieneReabastecimiento && ' ⚠️'}
                       </div>
                     </button>
                   )
@@ -250,7 +270,7 @@ export default function InventarioPage() {
 
         {/* CONTENIDO DE HABITACIÓN SELECCIONADA */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-secondary)' }}>
             <p>Cargando inventario...</p>
           </div>
         ) : selectedHabitacion && habitacionesAgrupadas[selectedHabitacion] ? (
@@ -263,95 +283,90 @@ export default function InventarioPage() {
                 <>
                   {/* HEADER HABITACIÓN */}
                   <div style={{
-                    backgroundColor: '#fff',
+                    backgroundColor: 'var(--color-card-background)',
                     padding: '16px',
                     borderRadius: '8px',
                     marginBottom: '20px',
-                    border: '1px solid #e0e0e0',
+                    border: '1px solid var(--color-border)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
                   }}>
                     <div>
-                      <h2 style={{ margin: '0 0 4px 0' }}>Habitación {habActual.numero_habitacion}</h2>
-                      <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
-                        Tipo: <strong>{habActual.tipo_habitacion}</strong> • 
-                        Estado: <strong>{habActual.estado_habitacion}</strong>
-                        {tieneReabastecimiento && <span style={{ color: '#d32f2f', marginLeft: '8px' }}>Necesita reabastecimiento</span>}
+                      <h2 style={{ margin: '0 0 4px 0', color: 'var(--color-text)' }}>
+                        Habitación {habActual.numero_habitacion}
+                      </h2>
+                      <p style={{ margin: 0, fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+                        {habActual.tipo_habitacion} • {habActual.estado_habitacion}
                       </p>
                     </div>
-                    {can('INVENTARIO_EDIT') && (
+                    {can('INVENTARIO_EDIT') && user?.role === 'admin' && (
                       <button
                         onClick={() => handleReabastecimiento(selectedHabitacion)}
                         style={{
                           padding: '8px 16px',
-                          backgroundColor: '#4caf50',
+                          backgroundColor: 'var(--color-primary)',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer',
-                          fontWeight: 'bold'
+                          fontWeight: 'bold',
+                          fontFamily: 'inherit'
                         }}
                       >
-                        ✓ Reabastecimiento Completo
+                        ✓ Reabastecer
                       </button>
                     )}
                   </div>
 
-                  {/* TABLA DE SUMINISTROS */}
+                  {/* TABLA */}
                   <div style={{
-                    backgroundColor: '#fff',
+                    backgroundColor: 'var(--color-card-background)',
                     borderRadius: '8px',
                     overflow: 'hidden',
-                    border: '1px solid #e0e0e0'
+                    border: '1px solid var(--color-border)'
                   }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
-                        <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                          <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: 'bold' }}>Suministro</th>
-                          <th style={{ padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: 'bold' }}>Tipo</th>
-                          <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Actual</th>
-                          <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Estándar</th>
-                          <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Estado</th>
-                          {can('INVENTARIO_EDIT') && (
-                            <th style={{ padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Acciones</th>
+                        <tr style={{ backgroundColor: 'var(--color-background-secondary)', borderBottom: '2px solid var(--color-border)' }}>
+                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: 'var(--color-text)' }}>Suministro</th>
+                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: 'var(--color-text)' }}>Tipo</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Actual</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Estándar</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Estado</th>
+                          {(user?.role === 'admin' || user?.role === 'recepcionista') && (
+                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Acciones</th>
                           )}
                         </tr>
                       </thead>
                       <tbody>
-                        {habActual.suministros.map((suministro, idx) => (
+                        {habActual.suministros.map((suministro) => (
                           <tr 
                             key={suministro.id}
                             style={{
-                              borderBottom: '1px solid #eee',
-                              backgroundColor: idx % 2 === 0 ? '#fff' : '#fafafa',
-                              opacity: suministro.necesita_reabastecimiento ? 1 : 1
+                              borderBottom: '1px solid var(--color-border)',
+                              backgroundColor: 'var(--color-card-background)'
                             }}
                           >
-                            <td style={{ padding: '12px', fontSize: '14px' }}>
-                              <strong>{suministro.suministro_nombre}</strong>
-                              {suministro.descripcion && (
-                                <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                                  {suministro.descripcion}
-                                </div>
-                              )}
+                            <td style={{ padding: '12px', color: 'var(--color-text)', fontWeight: 'bold' }}>
+                              {suministro.suministro_nombre}
                             </td>
-                            <td style={{ padding: '12px', fontSize: '14px' }}>
+                            <td style={{ padding: '12px', color: 'var(--color-text)' }}>
                               <span 
                                 style={{
                                   display: 'inline-block',
-                                  padding: '4px 8px',
+                                  padding: '3px 6px',
                                   backgroundColor: getTipoColor(suministro.tipo),
                                   color: '#fff',
-                                  borderRadius: '4px',
+                                  borderRadius: '3px',
                                   fontSize: '12px',
                                   fontWeight: 'bold'
                                 }}
                               >
-                                {suministro.tipo.charAt(0).toUpperCase() + suministro.tipo.slice(1)}
+                                {getTipoLabel(suministro.tipo)}
                               </span>
                             </td>
-                            <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                            <td style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text)' }}>
                               {editingId === suministro.id ? (
                                 <input
                                   type="number"
@@ -361,34 +376,37 @@ export default function InventarioPage() {
                                   style={{
                                     width: '50px',
                                     padding: '4px',
-                                    border: '1px solid #1976d2',
+                                    border: '1px solid var(--color-primary)',
                                     borderRadius: '4px',
-                                    textAlign: 'center'
+                                    textAlign: 'center',
+                                    backgroundColor: 'var(--color-background)',
+                                    color: 'var(--color-text)',
+                                    fontFamily: 'inherit'
                                   }}
                                 />
                               ) : (
                                 <strong>{suministro.cantidad_actual}</strong>
                               )}
                             </td>
-                            <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                            <td style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text)' }}>
                               {suministro.cantidad_estandar}
                             </td>
-                            <td style={{ padding: '12px', textAlign: 'center', fontSize: '14px' }}>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
                               <span 
                                 style={{
                                   display: 'inline-block',
-                                  padding: '4px 8px',
-                                  backgroundColor: getEstadoColor(suministro.necesita_reabastecimiento),
+                                  padding: '3px 8px',
+                                  backgroundColor: suministro.necesita_reabastecimiento ? '#FF6B6B' : '#4CAF50',
                                   color: '#fff',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
+                                  borderRadius: '3px',
+                                  fontSize: '11px',
                                   fontWeight: 'bold'
                                 }}
                               >
                                 {suministro.necesita_reabastecimiento ? 'Necesita' : 'OK'}
                               </span>
                             </td>
-                            {can('INVENTARIO_EDIT') && (
+                            {(user?.role === 'admin' || user?.role === 'recepcionista') && (
                               <td style={{ padding: '12px', textAlign: 'center' }}>
                                 {editingId === suministro.id ? (
                                   <>
@@ -425,8 +443,14 @@ export default function InventarioPage() {
             })()}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+          !loading && <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-secondary)' }}>
             <p>No hay datos disponibles</p>
+          </div>
+        )}
+
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-secondary)' }}>
+            <p>Cargando inventario...</p>
           </div>
         )}
       </div>

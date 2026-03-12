@@ -804,6 +804,7 @@ export default function DashboardPage() {
                 <thead>
                   <tr style={{ background: 'var(--color-card-background)', borderBottom: 'var(--border-width) solid var(--color-border)' }}>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Habitación</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Piso</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Tipo</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Estado</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Precio/Noche</th>
@@ -829,6 +830,7 @@ export default function DashboardPage() {
                         transition: 'var(--transition)'
                       }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(33, 150, 243, 0.08)'} onMouseLeave={(e) => e.currentTarget.style.background = 'var(--color-card-background)'}>
                         <td style={{ padding: '12px', fontWeight: '600' }}>#{room.numero_habitacion}</td>
+                        <td style={{ padding: '12px', color: '#666' }}>Piso {room.piso}</td>
                         <td style={{ padding: '12px', color: '#666' }}>{room.tipo}</td>
                         <td style={{ padding: '12px' }}>
                           <span style={{ 

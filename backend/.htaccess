@@ -1,0 +1,25 @@
+# Backend API - PHP
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /backend/
+  
+  # Permitir archivos y directorios que existen
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # Redirigir todas las solicitudes a index.php (si es necesario)
+  RewriteRule . index.php [L]
+</IfModule>
+
+# Configuración de tiempo de ejecución para operaciones a la BD
+php_value max_execution_time 300
+
+# Límite de subida de archivos
+php_value upload_max_filesize 50M
+php_value post_max_size 50M
+
+# Compresión
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE application/json
+  AddOutputFilterByType DEFLATE text/plain
+</IfModule>

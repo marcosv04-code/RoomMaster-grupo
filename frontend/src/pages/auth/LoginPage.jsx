@@ -117,7 +117,7 @@ export default function LoginPage() {
 
     try {
       // Llamar al backend
-      const response = await fetch(`/api/login.php`, {
+      const response = await fetch(`/backend/login.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -271,6 +271,25 @@ export default function LoginPage() {
               <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </button>
+
+              {/* Link para recuperar contraseña */}
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => navigate('/recuperar-contrasena')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-primary)',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
             </form>
           </div>
         </div>

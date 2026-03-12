@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { usePermissions } from '../../hooks/usePermissions'
 import './ModulePage.css'
 
-const API = '/api'
+const API = '/backend'
 
 export default function PerfilPage() {
   const { user } = useAuth()
@@ -324,22 +324,6 @@ export default function PerfilPage() {
                     <div style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text)' }}>
                       {userProfile.nombre}
                     </div>
-                    <button
-                      onClick={handleEditName}
-                      style={{
-                        padding: '4px 8px',
-                        background: 'var(--color-primary)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        fontFamily: 'inherit'
-                      }}
-                    >
-                      Editar
-                    </button>
                   </div>
                 )}
                 <div style={{ fontSize: '14px', color: 'var(--color-text-secondary)' }}>

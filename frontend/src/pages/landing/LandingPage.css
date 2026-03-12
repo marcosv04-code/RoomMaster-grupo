@@ -202,7 +202,7 @@
 
 .feature-card {
   background-color: var(--color-white);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--border-radius);
   padding: 0;
   text-align: center;
@@ -211,7 +211,7 @@
   flex-direction: column;
   align-items: center;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .feature-image {
@@ -373,7 +373,7 @@
 
 /* Testimonials Section */
 .testimonials-section {
-  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3f6fb 100%);
   padding: 100px 32px;
   max-width: 100%;
 }
@@ -407,9 +407,9 @@
   background-color: var(--color-white);
   padding: 32px;
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 20px rgba(21, 101, 192, 0.12);
   transition: var(--transition);
-  border: 1px solid var(--color-border);
+  border: 2px solid #e3f2fd;
   position: relative;
   overflow: hidden;
 }
@@ -493,7 +493,7 @@
   max-width: 100%;
   padding: 100px 32px;
   width: 100%;
-  background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+  background: linear-gradient(135deg, #f3f6fb 0%, #ecf1f8 100%);
 }
 
 .contact-container {
@@ -542,10 +542,11 @@
 .contact-item {
   display: flex;
   gap: 16px;
-  padding: 20px;
+  padding: 24px;
   background-color: var(--color-white);
   border-radius: var(--border-radius);
-  border-left: 4px solid var(--color-primary);
+  border-left: 5px solid var(--color-primary);
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.1);
   transition: var(--transition);
 }
 
@@ -578,7 +579,8 @@
   background-color: var(--color-white);
   padding: 40px;
   border-radius: var(--border-radius);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e3f2fd;
+  box-shadow: 0 8px 24px rgba(21, 101, 192, 0.12);
 }
 
 .form-group {
@@ -589,12 +591,13 @@
 .form-group textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid var(--color-border);
+  border: 2px solid #e3f2fd;
   border-radius: var(--border-radius);
   font-size: 14px;
   font-family: inherit;
   transition: var(--transition);
-  background-color: #fafafa;
+  background-color: #f8fafb;
+  color: var(--color-text-primary);
 }
 
 .form-group input:focus,

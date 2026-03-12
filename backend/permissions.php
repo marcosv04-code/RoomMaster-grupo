@@ -25,7 +25,7 @@ $permisos = [
     // ESTADÍAS
     'ESTADIA_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
     'ESTADIA_CREATE' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],  // Admin y recepcionista crean check-in
-    'ESTADIA_EDIT' => [ROLE_ADMIN],           // Solo admin puede modificar
+    'ESTADIA_EDIT' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],    // Admin y recepcionista pueden editar
     'ESTADIA_DELETE' => [ROLE_ADMIN],         // Solo admin puede eliminar
     'ESTADIA_CANCEL' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],  // Admin y recepcionista pueden cancelar
     
@@ -45,7 +45,7 @@ $permisos = [
     // CLIENTES
     'CLIENTES_VIEW' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],
     'CLIENTES_CREATE' => [ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],  // Recepcionista registra clientes
-    'CLIENTES_EDIT' => [ROLE_ADMIN],           // Solo admin puede editar
+    'CLIENTES_EDIT' => [ROLE_ADMIN, ROLE_RECEPTIONIST, ROLE_RECEPCION, ROLE_RECEPCIONISTA],    // Admin y recepcionista pueden editar
     'CLIENTES_DELETE' => [ROLE_ADMIN],         // Solo admin puede eliminar
     
     // INVENTARIO

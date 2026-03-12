@@ -6,28 +6,28 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 32px;
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .page-header h1 {
   margin: 0;
-  font-size: 36px;
+  font-size: clamp(1.75rem, 6vw, 2.25rem);
   font-weight: 700;
   color: var(--color-text-primary);
 }
 
 .page-subtitle {
-  font-size: 14px;
+  font-size: clamp(0.8rem, 2vw, 0.875rem);
   color: var(--color-text-secondary);
-  margin: 0 0 32px 0;
+  margin: 0 0 clamp(1rem, 2vw, 1.5rem) 0;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(180px, 18vw, 250px), 1fr));
+  gap: 1rem;
 }
 
 .form-group {
@@ -36,9 +36,9 @@
 }
 
 .form-group label {
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -47,10 +47,10 @@
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 12px 14px;
+  padding: 0.75rem 0.875rem;
   border: 2px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
   font-family: var(--font-family-primary);
   transition: all 0.3s ease;
   background-color: var(--color-card-background);

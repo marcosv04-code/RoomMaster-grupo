@@ -7,35 +7,62 @@
 
 .layout-content {
   flex: 1;
-  margin-left: 280px;
+  margin-left: clamp(65px, 20vw, 280px);
   display: flex;
   flex-direction: column;
+  transition: margin-left 0.3s ease;
 }
 
 .main-content {
   flex: 1;
-  padding: 32px;
+  padding: 0 clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 2vw, 1.5rem);
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1440px) {
   .layout-content {
-    margin-left: 260px;
+    margin-left: clamp(240px, 18vw, 270px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .layout-content {
+    margin-left: clamp(240px, 16vw, 260px);
   }
   
   .main-content {
-    padding: 20px;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-content {
+    margin-left: clamp(220px, 15vw, 240px);
+  }
+  
+  .main-content {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .layout-content {
+    margin-left: 70px;
+  }
+  
+  .main-content {
+    padding: 1rem;
   }
 }
 
 @media (max-width: 480px) {
   .layout-content {
-    margin-left: 0;
+    margin-left: 65px;
   }
   
   .main-content {
-    padding: 16px;
+    padding: 0.75rem;
   }
 }

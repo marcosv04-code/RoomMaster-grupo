@@ -6,7 +6,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { usePermissions } from '../../hooks/usePermissions'
 import './ModulePage.css'
 
-const API = '/api'
+const API = '/backend'
 
 export default function InventarioPage() {
   const { user } = useAuth()

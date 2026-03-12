@@ -9,7 +9,7 @@ import { usePermissions } from '../../hooks/usePermissions'
 import { useAuth } from '../../hooks/useAuth'
 import './ModulePage.css'
 
-const API = '/api'
+const API = '/backend'
 
 export default function GestionEstadiaPage() {
   const { user } = useAuth()
@@ -206,7 +206,18 @@ export default function GestionEstadiaPage() {
   }
 
   const handleDelete = async (stay) => {
-    if (!confirm('¿Estás seguro?')) return
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Eliminar Estadía',
+      text: '¿Estás seguro de que deseas eliminar esta estadía?',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#f44336'
+    })
+    
+    if (!result.isConfirmed) return
+    
     try {
       const res = await fetch(`${API}/estadias.php`, {
         method: 'DELETE',
@@ -375,7 +386,7 @@ export default function GestionEstadiaPage() {
               onDelete={handleDelete}
               onCancel={handleCancel}
               actions={true}
-              showEdit={can('ESTADIA_EDIT')}
+              showEdit={isAdmin || user?.role === 'recepcionista'}
               showDelete={can('ESTADIA_DELETE')}
               showCancel={can('ESTADIA_CANCEL')}
             />

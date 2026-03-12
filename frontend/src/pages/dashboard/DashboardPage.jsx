@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 import DashboardLayout from '../../components/layouts/DashboardLayout'
 import Card from '../../components/common/Card'
 import Icon from '../../components/common/Icon'
@@ -11,8 +12,10 @@ import { filterRoomNumber, filterOnlyNumbers, filterNumbersDecimal, filterName, 
 import { formatCOP, formatThousands, formatNumberWithThousandsSeparator } from '../../utils/currency'
 import './DashboardPage.css'
 import { roomService } from '../../services/index'
+import api from '../../services/api'
 
-const API = '/api'
+const MySwal = withReactContent(Swal)
+const API = '/backend'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -29,6 +32,7 @@ export default function DashboardPage() {
   const [rooms, setRooms] = useState([])
   const [staff, setStaff] = useState([])
   const [usuarios, setUsuarios] = useState([])
+  const [mostrarPassword, setMostrarPassword] = useState({})
   const [loading, setLoading] = useState(true)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false)
@@ -97,6 +101,72 @@ export default function DashboardPage() {
       if (data.exito) setUsuarios(data.datos)
     } catch (error) {
       console.error('Error al cargar usuarios:', error)
+    }
+  }
+
+  const toggleEstadoUsuario = async (usuario) => {
+    const nuevoEstado = usuario.estado === 'activo' ? 'inactivo' : 'activo'
+    
+    const resultado = await MySwal.fire({
+      title: '¿Cambiar estado?',
+      text: `¿Cambiar a ${nuevoEstado}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí',
+      cancelButtonText: 'No'
+    })
+
+    if (!resultado.isConfirmed) return
+
+    try {
+      const response = await api.patch('/usuarios.php', {
+        user_id: usuario.id,
+        estado: nuevoEstado,
+        rol: user.role
+      })
+
+      if (response.data.exito) {
+        setUsuarios(usuarios.map(u => 
+          u.id === usuario.id ? { ...u, estado: nuevoEstado } : u
+        ))
+        MySwal.fire('Éxito', `Usuario ${nuevoEstado}`, 'success')
+      } else {
+        MySwal.fire('Error', response.data.mensaje || 'No se pudo cambiar el estado', 'error')
+      }
+    } catch (error) {
+      MySwal.fire('Error', error.response?.data?.mensaje || 'No se pudo cambiar el estado', 'error')
+    }
+  }
+
+  const eliminarUsuario = async (usuario) => {
+    const resultado = await MySwal.fire({
+      title: '¿Eliminar?',
+      text: `¿Eliminar a ${usuario.nombre}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'No',
+      confirmButtonColor: '#d33'
+    })
+
+    if (!resultado.isConfirmed) return
+
+    try {
+      const response = await api.delete('/usuarios.php', {
+        data: {
+          id: usuario.id,
+          rol: user.role
+        }
+      })
+
+      if (response.data.exito) {
+        setUsuarios(usuarios.filter(u => u.id !== usuario.id))
+        MySwal.fire('Éxito', 'Usuario eliminado', 'success')
+      } else {
+        MySwal.fire('Error', response.data.mensaje || 'No se pudo eliminar', 'error')
+      }
+    } catch (error) {
+      MySwal.fire('Error', error.response?.data?.mensaje || 'No se pudo eliminar', 'error')
     }
   }
 
@@ -596,6 +666,9 @@ export default function DashboardPage() {
       filteredValue = filterRoomNumber(value)
     } else if (name === 'capacidad') {
       filteredValue = filterOnlyNumbers(value)
+    } else if (name === 'piso') {
+      // Solo números, máximo 2 dígitos
+      filteredValue = filterOnlyNumbers(value).slice(0, 2)
     } else if (name === 'precio_noche') {
       // Solo remover puntos, sin usar filtros que limiten dígitos
       filteredValue = value.replace(/\./g, '').replace(/[^0-9]/g, '')
@@ -924,6 +997,8 @@ export default function DashboardPage() {
                 value={newRoomForm.piso}
                 onChange={handleNewRoomFormChange}
                 min="1"
+                max="99"
+                maxLength="2"
               />
             </div>
 
@@ -1023,13 +1098,14 @@ export default function DashboardPage() {
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Hotel</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Rol</th>
                     <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Estado</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Contraseña</th>
                     <th style={{ padding: '12px', textAlign: 'center', fontWeight: '600', color: 'var(--color-text-secondary)' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {usuarios.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                      <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
                         No hay usuarios registrados
                       </td>
                     </tr>
@@ -1063,25 +1139,69 @@ export default function DashboardPage() {
                             {usuario.estado === 'activo' ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
-                        <td style={{ padding: '12px', textAlign: 'center' }}>
-                          <button
-                            onClick={() => handleDeleteUser(usuario)}
-                            style={{
-                              background: '#ff6b6b',
-                              color: 'white',
-                              border: 'none',
-                              padding: '6px 12px',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              transition: 'all 0.3s ease'
-                            }}
-                            onMouseOver={(e) => e.target.style.background = '#d32f2f'}
-                            onMouseOut={(e) => e.target.style.background = '#ff6b6b'}
-                          >
-                            Eliminar
-                          </button>
+                        <td style={{ padding: '12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                              {mostrarPassword[usuario.id] ? usuario.contraseña : '••••••••'}
+                            </span>
+                            <button
+                              onClick={() => setMostrarPassword(p => ({ ...p, [usuario.id]: !p[usuario.id] }))}
+                              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
+                              title={mostrarPassword[usuario.id] ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                            >
+                              {mostrarPassword[usuario.id] ? (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#667eea' }}>
+                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                  <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                              ) : (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#999' }}>
+                                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <button
+                              onClick={() => toggleEstadoUsuario(usuario)}
+                              style={{
+                                background: usuario.estado === 'activo' ? '#FF6B6B' : '#4ECDC4',
+                                color: 'white',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease'
+                              }}
+                              onMouseOver={(e) => e.target.style.opacity = '0.9'}
+                              onMouseOut={(e) => e.target.style.opacity = '1'}
+                            >
+                              {usuario.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                            </button>
+                            <button
+                              onClick={() => eliminarUsuario(usuario)}
+                              style={{
+                                background: '#ff4757',
+                                color: 'white',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                transition: 'all 0.3s ease'
+                              }}
+                              onMouseOver={(e) => e.target.style.opacity = '0.9'}
+                              onMouseOut={(e) => e.target.style.opacity = '1'}
+                            >
+                              Eliminar
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

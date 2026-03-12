@@ -10,7 +10,7 @@ export default function LandingPage() {
   const { isAuthenticated } = useAuth()
 
   return (
-    <div className="landing-page">
+    <div className="landing-page" data-theme="light">
       {/* Header */}
       <header className="landing-header">
         <div className="header-container">

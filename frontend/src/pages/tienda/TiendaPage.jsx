@@ -10,7 +10,7 @@ import { filterNumbersDecimal, filterOnlyNumbers, filterName } from '../../utils
 import { formatCOP, formatNumberWithThousandsSeparator } from '../../utils/currency'
 import './ModulePage.css'
 
-const API = '/api'
+const API = '/backend'
 
 export default function TiendaPage() {
   const { user } = useAuth()
@@ -348,8 +348,8 @@ export default function TiendaPage() {
   }
 
   const productColumns = [
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'categoria', label: 'Categoría' },
+    { key: 'nombre', label: 'Nombre', render: (v) => v.charAt(0).toUpperCase() + v.slice(1) },
+    { key: 'categoria', label: 'Categoría', render: (v) => v.charAt(0).toUpperCase() + v.slice(1) },
     { key: 'precio', label: 'Precio', render: (v) => formatCOP(v) },
     { 
       key: 'stock', 
@@ -373,7 +373,7 @@ export default function TiendaPage() {
   const saleColumns = [
     { key: 'id', label: 'ID' },
     { key: 'cliente_nombre', label: 'Cliente' },
-    { key: 'producto_nombre', label: 'Producto' },
+    { key: 'producto_nombre', label: 'Producto', render: (v) => v.charAt(0).toUpperCase() + v.slice(1) },
     { key: 'cantidad', label: 'Cantidad' },
     { key: 'precio_unitario', label: 'Precio Unitario', render: (v) => formatCOP(v) },
     { key: 'subtotal', label: 'Subtotal', render: (v) => formatCOP(v) },

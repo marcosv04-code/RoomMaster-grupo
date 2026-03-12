@@ -7,6 +7,7 @@ import ProtectedRoute from './components/common/ProtectedRoute'
 import LandingPage from './pages/landing/LandingPage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
+import RecuperarContraseñaPage from './pages/auth/RecuperarContraseñaPage'
 
 // Páginas privadas
 import DashboardPage from './pages/dashboard/DashboardPage'
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/recuperar-contrasena" element={<RecuperarContraseñaPage />} />
 
           {/* Rutas privadas */}
           <Route 

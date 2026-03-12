@@ -22,7 +22,7 @@ function responder($success, $mensaje = '', $datos = null, $codigo = 200) {
 function obtenerDatos() {
     $metodo = $_SERVER['REQUEST_METHOD'];
     
-    if ($metodo === 'POST' || $metodo === 'PUT' || $metodo === 'DELETE') {
+    if ($metodo === 'POST' || $metodo === 'PUT' || $metodo === 'PATCH' || $metodo === 'DELETE') {
         $input = file_get_contents('php://input');
         $datos = json_decode($input, true);
         return $datos ?? $_POST;

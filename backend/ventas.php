@@ -71,17 +71,20 @@ else if ($metodo === 'POST') {
     $cliente_nombre = escapar($conexion, $estadia_fila['nombre']);
     
     // Obtener precio del producto
-    $prod = $conexion->query("SELECT precio FROM productos WHERE id = $producto_id");
+    $prod = $conexion->query("SELECT precio, stock FROM productos WHERE id = $producto_id");
     $prod_fila = $prod->fetch_assoc();
     $precio_unitario = floatval($prod_fila['precio']);
     $subtotal = $precio_unitario * $cantidad;
     
-    // Verificar stock
+    // Verificar stock - puede venir de inventario o de productos
     $inv = $conexion->query("SELECT cantidad_actual FROM inventario WHERE producto_id = $producto_id");
     $inv_fila = $inv->fetch_assoc();
     
-    if ($inv_fila['cantidad_actual'] < $cantidad) {
-        responder(false, 'Stock insuficiente', null, 400);
+    // Si existe en inventario usa eso, sino usa el stock de productos
+    $stock_disponible = $inv_fila ? $inv_fila['cantidad_actual'] : $prod_fila['stock'];
+    
+    if ($stock_disponible < $cantidad) {
+        responder(false, 'Stock insuficiente. Disponible: ' . $stock_disponible, null, 400);
     }
     
     // Registrar venta (el nombre del cliente se obtiene automáticamente)
@@ -95,8 +98,14 @@ else if ($metodo === 'POST') {
         responder(false, $resultado['error'], null, 500);
     }
     
-    // Rebajar stock
-    $sql_stock = "UPDATE inventario SET cantidad_actual = cantidad_actual - $cantidad WHERE producto_id = $producto_id";
+    // Rebajar stock - en ambas tablas
+    if ($inv_fila) {
+        // Si existe en inventario, actualiza ahí
+        $sql_stock = "UPDATE inventario SET cantidad_actual = cantidad_actual - $cantidad WHERE producto_id = $producto_id";
+    } else {
+        // Si no existe en inventario, actualiza en productos
+        $sql_stock = "UPDATE productos SET stock = stock - $cantidad WHERE id = $producto_id";
+    }
     $conexion->query($sql_stock);
     
     responder(true, 'Venta registrada exitosamente', ['id' => $resultado['id']], 201);
@@ -122,10 +131,21 @@ else if ($metodo === 'DELETE') {
         responder(false, 'Venta no encontrada', null, 404);
     }
     
-    // Devolver stock
+    // Devolver stock - en ambas tablas
     $producto_id = $venta_fila['producto_id'];
     $cantidad = $venta_fila['cantidad'];
-    $sql_stock = "UPDATE inventario SET cantidad_actual = cantidad_actual + $cantidad WHERE producto_id = $producto_id";
+    
+    // Verificar si existe en inventario o productos
+    $inv_check = $conexion->query("SELECT id FROM inventario WHERE producto_id = $producto_id");
+    $inv_exists = $inv_check->num_rows > 0;
+    
+    if ($inv_exists) {
+        // Si existe en inventario, devuelve ahí
+        $sql_stock = "UPDATE inventario SET cantidad_actual = cantidad_actual + $cantidad WHERE producto_id = $producto_id";
+    } else {
+        // Si no existe en inventario, devuelve en productos
+        $sql_stock = "UPDATE productos SET stock = stock + $cantidad WHERE id = $producto_id";
+    }
     $conexion->query($sql_stock);
     
     // Eliminar venta

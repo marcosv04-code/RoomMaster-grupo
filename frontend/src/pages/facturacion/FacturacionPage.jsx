@@ -9,7 +9,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { formatCOP, formatCOPWithDecimals, formatNumberWithThousandsSeparator } from '../../utils/currency'
 import './ModulePage.css'
 
-const API = '/api'
+const API = '/backend'
 
 export default function FacturacionPage() {
   const { user } = useAuth()

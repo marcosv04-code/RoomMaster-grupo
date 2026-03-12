@@ -8,7 +8,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { filterDocumentId, filterPhone, filterName } from '../../utils/validation'
 import './ModulePage.css'
 
-const API = '/api'
+const API = '/backend'
 
 /**
  * ClientesPage: Gestión completa de clientes
@@ -28,6 +28,7 @@ export default function ClientesPage() {
   
   // Lista de clientes desde la BD
   const [clients, setClients] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')             // Búsqueda de clientes
   
   // Control de modal
   const [isModalOpen, setIsModalOpen] = useState(false)        // ¿Está abierto el modal?
@@ -311,6 +312,18 @@ export default function ClientesPage() {
     }))
   }
 
+  // Filtrar clientes por búsqueda
+  const filteredClients = clients.filter(client => {
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      client.nombre.toLowerCase().includes(searchLower) ||
+      client.email.toLowerCase().includes(searchLower) ||
+      client.documento_identidad.includes(searchTerm) ||
+      client.telefono.includes(searchTerm) ||
+      client.ciudad.toLowerCase().includes(searchLower)
+    )
+  })
+
   return (
     <DashboardLayout>
       <div className="module-page">
@@ -322,7 +335,30 @@ export default function ClientesPage() {
         
         <div className="page-header">
           <div>
-            <p className="clients-count">Total: {loading ? '...' : clients.length} cliente(s)</p>
+            <p className="clients-count">Total: {loading ? '...' : filteredClients.length} cliente(s)</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+              <Icon name="search" size={20} style={{ color: 'var(--color-text-secondary)' }} />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, email, documento, teléfono o ciudad..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'all 0.3s ease',
+                  width: '100%',
+                  maxWidth: '300px',
+                  background: 'var(--color-input-background)',
+                  color: 'var(--color-text-primary)'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
+              />
+            </div>
           </div>
           <button className="btn btn-primary" onClick={handleOpenAddModal} disabled={loading}>
             + Nuevo Cliente
@@ -331,14 +367,18 @@ export default function ClientesPage() {
 
         {loading ? (
           <p style={{ textAlign: 'center', padding: '20px' }}>Cargando clientes...</p>
-        ) : clients.length === 0 ? (
-          <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>No hay clientes registrados</p>
+        ) : filteredClients.length === 0 ? (
+          <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+            {searchTerm ? 'No se encontraron clientes que coincidan con tu búsqueda' : 'No hay clientes registrados'}
+          </p>
         ) : (
           <Table
             columns={columns}
-            data={clients}
+            data={filteredClients}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            showEdit={true}
+            showDelete={user?.role === 'admin'}
           />
         )}
 

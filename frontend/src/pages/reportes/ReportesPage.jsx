@@ -7,7 +7,7 @@ import Icon from '../../components/common/Icon'
 import { formatCOP } from '../../utils/currency'
 import './ModulePage.css'
 
-const API = '/api'
+const API = '/backend'
 
 // Función auxiliar para formatear fechas de manera segura
 const formatDate = (dateString) => {

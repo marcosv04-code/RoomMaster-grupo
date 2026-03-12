@@ -57,6 +57,9 @@ export const PERMISSIONS = {
   PERFIL_EDIT_SELF: ['admin', 'receptionist', 'recepcionista', 'recepcion'], // Cada usuario edita su perfil
   PERFIL_EDIT_OTHERS: ['admin'], // Admin puede editar otros perfiles
   PERFIL_DELETE: ['admin'], // Solo admin puede eliminar usuarios
+  
+  // GESTIÓN DE USUARIOS
+  USUARIOS_MANAGE: ['admin'], // Solo admin puede gestionar usuarios
 }
 
 /**

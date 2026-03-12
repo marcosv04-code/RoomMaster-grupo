@@ -21,7 +21,7 @@ if ($metodo === 'GET') {
     if ($id) {
         // Obtener un usuario específico
         $id = intval($id);
-        $sql = "SELECT id, nombre, email, telefono, rol, hotel, estado, fecha_creacion FROM usuarios WHERE id = $id";
+        $sql = "SELECT id, nombre, email, telefono, rol, hotel, estado, contraseña, fecha_creacion FROM usuarios WHERE id = $id";
         
         $resultado = ejecutarConsulta($conexion, $sql);
         
@@ -32,7 +32,7 @@ if ($metodo === 'GET') {
         responder(true, 'Usuario obtenido', $resultado[0]);
     } else {
         // Obtener todos los usuarios
-        $sql = "SELECT id, nombre, email, telefono, hotel, rol, estado, fecha_creacion FROM usuarios WHERE rol != 'admin' ORDER BY nombre ASC";
+        $sql = "SELECT id, nombre, email, telefono, hotel, rol, estado, contraseña, fecha_creacion FROM usuarios WHERE rol != 'admin' ORDER BY nombre ASC";
         
         $resultado = ejecutarConsulta($conexion, $sql);
         
@@ -131,6 +131,51 @@ else if ($metodo === 'PUT') {
     
     responder(false, 'No se especificó qué actualizar', null, 400);
 }
+
+// PATCH - Actualizar estado de usuario
+else if ($metodo === 'PATCH') {
+    $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));
+    verificarPermisoOAbortar('USUARIOS_MANAGE', $rol);
+    
+    $user_id = $datos['user_id'] ?? null;
+    $estado = $datos['estado'] ?? null;
+    
+    if (!$user_id || !$estado) {
+        responder(false, 'Usuario o estado no especificado', null, 400);
+    }
+    
+    // Validar que estado sea válido
+    if (!in_array($estado, ['activo', 'inactivo'])) {
+        responder(false, 'Estado inválido. Debe ser activo o inactivo', null, 400);
+    }
+    
+    $user_id = intval($user_id);
+    $estado = $conexion->real_escape_string($estado);
+    
+    // No permitir desactivar al admin
+    $sql_check = "SELECT rol FROM usuarios WHERE id = $user_id";
+    $resultado_check = $conexion->query($sql_check);
+    
+    if (!$resultado_check || $resultado_check->num_rows === 0) {
+        responder(false, 'Usuario no encontrado', null, 404);
+    }
+    
+    $usuario = $resultado_check->fetch_assoc();
+    if ($usuario['rol'] === 'admin' && $estado === 'inactivo') {
+        responder(false, 'No se puede desactivar la cuenta de administrador', null, 403);
+    }
+    
+    // Actualizar estado
+    $sql = "UPDATE usuarios SET estado = '$estado' WHERE id = $user_id";
+    $resultado = ejecutarAccion($conexion, $sql);
+    
+    if (isset($resultado['error'])) {
+        responder(false, 'Error al actualizar estado', null, 500);
+    }
+    
+    responder(true, 'Estado actualizdo exitosamente', null);
+}
+
 // DELETE - Eliminar un usuario
 else if ($metodo === 'DELETE') {
     $rol = strtolower(trim($datos['rol'] ?? $_POST['rol'] ?? $_GET['rol'] ?? 'usuario'));

@@ -108,6 +108,36 @@ else if ($metodo === 'DELETE') {
     
     // Verificar permiso - solo admin puede eliminar
     verificarPermisoOAbortar('TIENDA_DELETE', $rol);
+    
+    $id = $datos['id'] ?? null;
+    
+    if (!$id) {
+        responder(false, 'Producto no especificado', null, 400);
+    }
+    
+    $id = intval($id);
+    
+    // Verificar que existe
+    $sql_check = "SELECT id FROM productos WHERE id = $id";
+    $resultado_check = $conexion->query($sql_check);
+    
+    if (!$resultado_check || $resultado_check->num_rows === 0) {
+        responder(false, 'Producto no encontrado', null, 404);
+    }
+    
+    // Eliminar del inventario primero
+    $sql_inv = "DELETE FROM inventario WHERE producto_id = $id";
+    $conexion->query($sql_inv);
+    
+    // Eliminar producto
+    $sql = "DELETE FROM productos WHERE id = $id";
+    $resultado = ejecutarAccion($conexion, $sql);
+    
+    if (isset($resultado['error'])) {
+        responder(false, 'Error al eliminar producto', null, 500);
+    }
+    
+    responder(true, 'Producto eliminado exitosamente', null);
 }
 
 else {

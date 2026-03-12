@@ -367,6 +367,7 @@ export default function DashboardPage() {
 
   const columns = [
     { key: 'numero', label: 'Habitación' },
+    { key: 'piso', label: 'Piso' },
     { key: 'tipo', label: 'Tipo' },
     { key: 'estado', label: 'Estado' },
     { 
@@ -380,6 +381,7 @@ export default function DashboardPage() {
     setEditingRoom(room)
     setEditForm({
       numero: room.numero_habitacion,
+      piso: room.piso,
       tipo: room.tipo,
       estado: room.estado,
       precio: room.precio_noche,
@@ -399,6 +401,7 @@ export default function DashboardPage() {
         body: JSON.stringify({
           id: editingRoom.id,
           numero_habitacion: editForm.numero,
+          piso: parseInt(editForm.piso),
           tipo: editForm.tipo,
           estado: editForm.estado,
           precio_noche: editForm.precio,
@@ -914,6 +917,20 @@ export default function DashboardPage() {
                 value={editForm.numero || ''}
                 onChange={handleEditFormChange}
                 placeholder="Ej: 101"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="piso">Piso</label>
+              <input
+                id="piso"
+                type="number"
+                name="piso"
+                value={editForm.piso || ''}
+                onChange={handleEditFormChange}
+                placeholder="Ej: 1"
+                min="1"
+                max="99"
               />
             </div>
 

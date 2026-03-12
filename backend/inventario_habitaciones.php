@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $habitacion_id = $_GET['habitacion_id'] ?? null;
         
         if ($habitacion_id) {
-            // Obtener inventario específico de una habitación
+            // Obtener inventario específico de una habitación (incluyendo las sin inventario)
             $sql = "SELECT 
                         ih.id,
                         ih.habitacion_id,
@@ -28,19 +28,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                         ih.cantidad_estandar,
                         ih.necesita_reabastecimiento,
                         ih.ultima_actualizacion
-                    FROM inventario_habitaciones ih
-                    JOIN habitaciones h ON ih.habitacion_id = h.id
-                    JOIN suministros s ON ih.suministro_id = s.id
-                    WHERE ih.habitacion_id = ?
+                    FROM habitaciones h
+                    LEFT JOIN inventario_habitaciones ih ON h.id = ih.habitacion_id
+                    LEFT JOIN suministros s ON ih.suministro_id = s.id
+                    WHERE h.id = ?
                     ORDER BY s.tipo, s.nombre";
             
             $stmt = $conexion->prepare($sql);
             $stmt->bind_param("i", $habitacion_id);
         } else {
-            // Obtener inventario de todas las habitaciones
+            // Obtener inventario de TODAS las habitaciones (incluso sin inventario registrado)
             $sql = "SELECT 
                         ih.id,
                         ih.habitacion_id,
+                        h.id as id_habitacion,
                         h.numero_habitacion,
                         h.tipo as tipo_habitacion,
                         h.estado as estado_habitacion,
@@ -52,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                         ih.cantidad_estandar,
                         ih.necesita_reabastecimiento,
                         ih.ultima_actualizacion
-                    FROM inventario_habitaciones ih
-                    JOIN habitaciones h ON ih.habitacion_id = h.id
-                    JOIN suministros s ON ih.suministro_id = s.id
+                    FROM habitaciones h
+                    LEFT JOIN inventario_habitaciones ih ON h.id = ih.habitacion_id
+                    LEFT JOIN suministros s ON ih.suministro_id = s.id
                     ORDER BY h.numero_habitacion, s.tipo, s.nombre";
             
             $stmt = $conexion->prepare($sql);
@@ -128,17 +129,18 @@ else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     }
 }
 
-// POST - Reabastecimiento de habitación
+// POST - Reabastecimiento de habitación o crear inventario inicial
 else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Solo admin puede reabastecer
+    // Solo admin puede reabastecer o crear inventario
     if ($rol !== 'admin') {
         http_response_code(403);
-        echo json_encode(['exito' => false, 'mensaje' => 'No tienes permiso para reabastecer']);
+        echo json_encode(['exito' => false, 'mensaje' => 'No tienes permiso para esta acción']);
         return;
     }
     
     try {
         $habitacion_id = $datosInput['habitacion_id'] ?? null;
+        $action = $datosInput['action'] ?? 'reabastecer';
         
         if (!$habitacion_id) {
             http_response_code(400);
@@ -146,27 +148,66 @@ else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             return;
         }
         
-        // Restaurar todos los suministros de una habitación a cantidad estándar
-        $sql = "UPDATE inventario_habitaciones 
-                SET cantidad_actual = cantidad_estandar,
-                    necesita_reabastecimiento = FALSE,
-                    ultima_actualizacion = NOW()
-                WHERE habitacion_id = ?";
-        
-        $stmt = $conexion->prepare($sql);
-        $stmt->bind_param("i", $habitacion_id);
-        $stmt->execute();
-        
-        echo json_encode([
-            'exito' => true,
-            'mensaje' => 'Habitación reabastecida correctamente'
-        ]);
+        // ACTION 1: Crear inventario inicial para habitación sin inventario
+        if ($action === 'inicializar') {
+            // Obtener todos los suministros
+            $sqlSuministros = "SELECT id FROM suministros ORDER BY tipo, nombre";
+            $resultSuministros = $conexion->query($sqlSuministros);
+            
+            $creados = 0;
+            while ($suministro = $resultSuministros->fetch_assoc()) {
+                $suministro_id = $suministro['id'];
+                $cantidad_estandar = 5; // Cantidad estándar por defecto
+                
+                // Verificar si ya existe este inventario
+                $sqlCheck = "SELECT id FROM inventario_habitaciones 
+                           WHERE habitacion_id = ? AND suministro_id = ?";
+                $stmtCheck = $conexion->prepare($sqlCheck);
+                $stmtCheck->bind_param("ii", $habitacion_id, $suministro_id);
+                $stmtCheck->execute();
+                $existente = $stmtCheck->get_result()->fetch_assoc();
+                
+                // Si no existe, crearlo
+                if (!$existente) {
+                    $sqlInsert = "INSERT INTO inventario_habitaciones 
+                                (habitacion_id, suministro_id, cantidad_actual, cantidad_estandar, necesita_reabastecimiento, ultima_actualizacion)
+                                VALUES (?, ?, ?, ?, FALSE, NOW())";
+                    $stmtInsert = $conexion->prepare($sqlInsert);
+                    $stmtInsert->bind_param("iiii", $habitacion_id, $suministro_id, $cantidad_estandar, $cantidad_estandar);
+                    if ($stmtInsert->execute()) {
+                        $creados++;
+                    }
+                }
+            }
+            
+            echo json_encode([
+                'exito' => true,
+                'mensaje' => "Inventario inicializado: $creados suministros registrados"
+            ]);
+        } 
+        // ACTION 2: Reabastecer habitación (restaurar a cantidad estándar)
+        else {
+            $sql = "UPDATE inventario_habitaciones 
+                    SET cantidad_actual = cantidad_estandar,
+                        necesita_reabastecimiento = FALSE,
+                        ultima_actualizacion = NOW()
+                    WHERE habitacion_id = ?";
+            
+            $stmt = $conexion->prepare($sql);
+            $stmt->bind_param("i", $habitacion_id);
+            $stmt->execute();
+            
+            echo json_encode([
+                'exito' => true,
+                'mensaje' => 'Habitación reabastecida correctamente'
+            ]);
+        }
         
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode([
             'exito' => false,
-            'mensaje' => 'Error al reabastecimiento: ' . $e->getMessage()
+            'mensaje' => 'Error en la operación: ' . $e->getMessage()
         ]);
     }
 }

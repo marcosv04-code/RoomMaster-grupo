@@ -29,22 +29,30 @@ export default function InventarioPage() {
     cargarInventario()
   }, [])
 
-  // AGRUPAR POR HABITACIÓN
+  // AGRUPAR POR HABITACIÓN (incluyendo sin inventario)
   useEffect(() => {
     if (inventarioHabitaciones.length > 0) {
       const agrupado = {}
+      
+      // Primero, agrupar los datos disponibles
       inventarioHabitaciones.forEach(item => {
-        if (!agrupado[item.habitacion_id]) {
-          agrupado[item.habitacion_id] = {
-            habitacion_id: item.habitacion_id,
+        const habId = item.id_habitacion || item.habitacion_id
+        if (!agrupado[habId]) {
+          agrupado[habId] = {
+            habitacion_id: habId,
             numero_habitacion: item.numero_habitacion,
             tipo_habitacion: item.tipo_habitacion,
             estado_habitacion: item.estado_habitacion,
             suministros: []
           }
         }
-        agrupado[item.habitacion_id].suministros.push(item)
+        
+        // Si tiene datos de suministro (no es NULL), agregarlo
+        if (item.suministro_id && item.suministro_nombre) {
+          agrupado[habId].suministros.push(item)
+        }
       })
+      
       setHabitacionesAgrupadas(agrupado)
       
       // Seleccionar la primera habitación si no hay seleccionada
@@ -112,6 +120,56 @@ export default function InventarioPage() {
       }
     } catch (err) {
       setError('Error al guardar: ' + err.message)
+    }
+  }
+
+  // INICIALIZAR INVENTARIO DE HABITACIÓN
+  const handleInicializarInventario = async (habitacion_id) => {
+    if (user?.role !== 'admin') {
+      setError('Solo administradores pueden inicializar inventario')
+      return
+    }
+
+    const result = await Swal.fire({
+      title: 'Inicializar Inventario',
+      text: `Se crearán registros de inventario para todos los suministros en la habitación ${habitacionesAgrupadas[habitacion_id]?.numero_habitacion}`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, inicializar',
+      cancelButtonText: 'Cancelar'
+    })
+
+    if (!result.isConfirmed) {
+      return
+    }
+
+    try {
+      setError('')
+      const res = await fetch(`${API}/inventario_habitaciones.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          habitacion_id: habitacion_id,
+          action: 'inicializar',
+          rol: user.role
+        })
+      })
+      
+      const data = await res.json()
+      
+      if (data.exito) {
+        setSuccessMessage(data.mensaje)
+        setTimeout(() => setSuccessMessage(''), 4000)
+        cargarInventario()
+      } else {
+        setError(data.mensaje || 'Error al inicializar')
+      }
+    } catch (err) {
+      setError('Error: ' + err.message)
     }
   }
 
@@ -319,125 +377,166 @@ export default function InventarioPage() {
                     )}
                   </div>
 
-                  {/* TABLA */}
-                  <div style={{
-                    backgroundColor: 'var(--color-card-background)',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--color-border)'
-                  }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ backgroundColor: 'var(--color-background-secondary)', borderBottom: '2px solid var(--color-border)' }}>
-                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: 'var(--color-text)' }}>Suministro</th>
-                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: 'var(--color-text)' }}>Tipo</th>
-                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Actual</th>
-                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Estándar</th>
-                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Estado</th>
-                          {(user?.role === 'admin' || user?.role === 'recepcionista') && (
-                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Acciones</th>
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {habActual.suministros.map((suministro) => (
-                          <tr 
-                            key={suministro.id}
-                            style={{
-                              borderBottom: '1px solid var(--color-border)',
-                              backgroundColor: 'var(--color-card-background)'
-                            }}
-                          >
-                            <td style={{ padding: '12px', color: 'var(--color-text)', fontWeight: 'bold' }}>
-                              {suministro.suministro_nombre}
-                            </td>
-                            <td style={{ padding: '12px', color: 'var(--color-text)' }}>
-                              <span 
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '3px 6px',
-                                  backgroundColor: getTipoColor(suministro.tipo),
-                                  color: '#fff',
-                                  borderRadius: '3px',
-                                  fontSize: '12px',
-                                  fontWeight: 'bold'
-                                }}
-                              >
-                                {getTipoLabel(suministro.tipo)}
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text)' }}>
-                              {editingId === suministro.id ? (
-                                <input
-                                  type="number"
-                                  value={editingCantidad}
-                                  onChange={(e) => setEditingCantidad(e.target.value)}
-                                  min="0"
-                                  style={{
-                                    width: '50px',
-                                    padding: '4px',
-                                    border: '1px solid var(--color-primary)',
-                                    borderRadius: '4px',
-                                    textAlign: 'center',
-                                    backgroundColor: 'var(--color-background)',
-                                    color: 'var(--color-text)',
-                                    fontFamily: 'inherit'
-                                  }}
-                                />
-                              ) : (
-                                <strong>{suministro.cantidad_actual}</strong>
-                              )}
-                            </td>
-                            <td style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text)' }}>
-                              {suministro.cantidad_estandar}
-                            </td>
-                            <td style={{ padding: '12px', textAlign: 'center' }}>
-                              <span 
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '3px 8px',
-                                  backgroundColor: suministro.necesita_reabastecimiento ? '#FF6B6B' : '#4CAF50',
-                                  color: '#fff',
-                                  borderRadius: '3px',
-                                  fontSize: '11px',
-                                  fontWeight: 'bold'
-                                }}
-                              >
-                                {suministro.necesita_reabastecimiento ? 'Necesita' : 'OK'}
-                              </span>
-                            </td>
+                  {/* TABLA O MENSAJE */}
+                  {habActual.suministros && habActual.suministros.length > 0 ? (
+                    <div style={{
+                      backgroundColor: 'var(--color-card-background)',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--color-border)'
+                    }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ backgroundColor: 'var(--color-background-secondary)', borderBottom: '2px solid var(--color-border)' }}>
+                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: 'var(--color-text)' }}>Suministro</th>
+                            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: 'var(--color-text)' }}>Tipo</th>
+                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Actual</th>
+                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Estándar</th>
+                            <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Estado</th>
                             {(user?.role === 'admin' || user?.role === 'recepcionista') && (
-                              <td style={{ padding: '12px', textAlign: 'center' }}>
-                                {editingId === suministro.id ? (
-                                  <>
-                                    <button
-                                      onClick={() => handleGuardarCantidad(suministro.id)}
-                                      className="btn-save btn-save-sm"
-                                    >
-                                      Guardar
-                                    </button>
-                                    <button
-                                      onClick={() => setEditingId(null)}
-                                      className="btn-cancel btn-cancel-sm"
-                                    >
-                                      Cancelar
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button
-                                    onClick={() => handleEditarCantidad(suministro.id, suministro.cantidad_actual)}
-                                    className="btn-edit btn-edit-sm"
-                                  >
-                                    Editar
-                                  </button>
-                                )}
-                              </td>
+                              <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: 'var(--color-text)' }}>Acciones</th>
                             )}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {habActual.suministros.map((suministro) => (
+                            <tr 
+                              key={suministro.id}
+                              style={{
+                                borderBottom: '1px solid var(--color-border)',
+                                backgroundColor: 'var(--color-card-background)'
+                              }}
+                            >
+                              <td style={{ padding: '12px', color: 'var(--color-text)', fontWeight: 'bold' }}>
+                                {suministro.suministro_nombre}
+                              </td>
+                              <td style={{ padding: '12px', color: 'var(--color-text)' }}>
+                                <span 
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '3px 6px',
+                                    backgroundColor: getTipoColor(suministro.tipo),
+                                    color: '#fff',
+                                    borderRadius: '3px',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold'
+                                  }}
+                                >
+                                  {getTipoLabel(suministro.tipo)}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text)' }}>
+                                {editingId === suministro.id ? (
+                                  <input
+                                    type="number"
+                                    value={editingCantidad}
+                                    onChange={(e) => setEditingCantidad(e.target.value)}
+                                    min="0"
+                                    style={{
+                                      width: '50px',
+                                      padding: '4px',
+                                      border: '1px solid var(--color-primary)',
+                                      borderRadius: '4px',
+                                      textAlign: 'center',
+                                      backgroundColor: 'var(--color-background)',
+                                      color: 'var(--color-text)',
+                                      fontFamily: 'inherit'
+                                    }}
+                                  />
+                                ) : (
+                                  <strong>{suministro.cantidad_actual}</strong>
+                                )}
+                              </td>
+                              <td style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text)' }}>
+                                {suministro.cantidad_estandar}
+                              </td>
+                              <td style={{ padding: '12px', textAlign: 'center' }}>
+                                <span 
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '3px 8px',
+                                    backgroundColor: suministro.necesita_reabastecimiento ? '#FF6B6B' : '#4CAF50',
+                                    color: '#fff',
+                                    borderRadius: '3px',
+                                    fontSize: '11px',
+                                    fontWeight: 'bold'
+                                  }}
+                                >
+                                  {suministro.necesita_reabastecimiento ? 'Necesita' : 'OK'}
+                                </span>
+                              </td>
+                              {(user?.role === 'admin' || user?.role === 'recepcionista') && (
+                                <td style={{ padding: '12px', textAlign: 'center' }}>
+                                  {editingId === suministro.id ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleGuardarCantidad(suministro.id)}
+                                        className="btn-save btn-save-sm"
+                                      >
+                                        Guardar
+                                      </button>
+                                      <button
+                                        onClick={() => setEditingId(null)}
+                                        className="btn-cancel btn-cancel-sm"
+                                      >
+                                        Cancelar
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleEditarCantidad(suministro.id, suministro.cantidad_actual)}
+                                      className="btn-edit btn-edit-sm"
+                                    >
+                                      Editar
+                                    </button>
+                                  )}
+                                </td>
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div style={{
+                      backgroundColor: 'var(--color-card-background)',
+                      padding: '32px',
+                      borderRadius: '8px',
+                      border: '2px dashed var(--color-border)',
+                      textAlign: 'center',
+                      color: 'var(--color-text-secondary)'
+                    }}>
+                      <Icon name="alert-circle" size={48} style={{ opacity: 0.5, marginBottom: '16px' }} />
+                      <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>
+                        Esta habitación no tiene inventario registrado
+                      </p>
+                      <p style={{ fontSize: '14px', marginBottom: '20px' }}>
+                        Para empezar a gestionar los suministros, primero necesita crear un registro de inventario.
+                      </p>
+                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => handleInicializarInventario(selectedHabitacion)}
+                            style={{
+                              display: 'inline-block',
+                              padding: '12px 24px',
+                              backgroundColor: 'var(--color-primary)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              textDecoration: 'none',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              fontFamily: 'inherit',
+                              fontSize: '14px'
+                            }}
+                          >
+                            ✓ Inicializar Inventario
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </>
               )
             })()}

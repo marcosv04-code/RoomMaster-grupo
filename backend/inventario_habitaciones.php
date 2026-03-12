@@ -96,6 +96,7 @@ else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     try {
         $id = $datosInput['id'] ?? null;
         $cantidad_actual = $datosInput['cantidad_actual'] ?? null;
+        $cantidad_estandar = $datosInput['cantidad_estandar'] ?? null;
         
         if (!$id) {
             http_response_code(400);
@@ -103,17 +104,54 @@ else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             return;
         }
         
-        $sql = "UPDATE inventario_habitaciones 
-                SET cantidad_actual = ?,
-                    necesita_reabastecimiento = CASE 
-                        WHEN ? < cantidad_estandar THEN TRUE 
-                        ELSE FALSE 
-                    END
-                WHERE id = ?";
-        
-        $stmt = $conexion->prepare($sql);
-        $stmt->bind_param("iii", $cantidad_actual, $cantidad_actual, $id);
-        $stmt->execute();
+        // Si solo actualiza cantidad_actual
+        if ($cantidad_actual !== null && $cantidad_estandar === null) {
+            $sql = "UPDATE inventario_habitaciones 
+                    SET cantidad_actual = ?,
+                        necesita_reabastecimiento = CASE 
+                            WHEN ? < cantidad_estandar THEN TRUE 
+                            ELSE FALSE 
+                        END
+                    WHERE id = ?";
+            
+            $stmt = $conexion->prepare($sql);
+            $stmt->bind_param("iii", $cantidad_actual, $cantidad_actual, $id);
+            $stmt->execute();
+        }
+        // Si solo actualiza cantidad_estandar
+        else if ($cantidad_estandar !== null && $cantidad_actual === null) {
+            $sql = "UPDATE inventario_habitaciones 
+                    SET cantidad_estandar = ?,
+                        necesita_reabastecimiento = CASE 
+                            WHEN cantidad_actual < ? THEN TRUE 
+                            ELSE FALSE 
+                        END
+                    WHERE id = ?";
+            
+            $stmt = $conexion->prepare($sql);
+            $stmt->bind_param("iii", $cantidad_estandar, $cantidad_estandar, $id);
+            $stmt->execute();
+        }
+        // Si actualiza ambas
+        else if ($cantidad_actual !== null && $cantidad_estandar !== null) {
+            $sql = "UPDATE inventario_habitaciones 
+                    SET cantidad_actual = ?,
+                        cantidad_estandar = ?,
+                        necesita_reabastecimiento = CASE 
+                            WHEN ? < ? THEN TRUE 
+                            ELSE FALSE 
+                        END
+                    WHERE id = ?";
+            
+            $stmt = $conexion->prepare($sql);
+            $stmt->bind_param("iiiii", $cantidad_actual, $cantidad_estandar, $cantidad_actual, $cantidad_estandar, $id);
+            $stmt->execute();
+        }
+        else {
+            http_response_code(400);
+            echo json_encode(['exito' => false, 'mensaje' => 'Debe proporcionar cantidad_actual o cantidad_estandar']);
+            return;
+        }
         
         echo json_encode([
             'exito' => true,

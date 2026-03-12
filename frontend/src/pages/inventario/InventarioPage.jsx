@@ -20,6 +20,7 @@ export default function InventarioPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [editingId, setEditingId] = useState(null)
+  const [editingType, setEditingType] = useState(null) // 'actual' o 'estandar'
   const [editingCantidad, setEditingCantidad] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [selectedHabitacion, setSelectedHabitacion] = useState(null)
@@ -82,10 +83,18 @@ export default function InventarioPage() {
     }
   }
 
-  // ACTUALIZAR CANTIDAD
+  // ACTUALIZAR CANTIDAD ACTUAL
   const handleEditarCantidad = (id, cantidadActual) => {
     setEditingId(id)
+    setEditingType('actual')
     setEditingCantidad(cantidadActual.toString())
+  }
+
+  // ACTUALIZAR CANTIDAD ESTÁNDAR
+  const handleEditarEstandar = (id, cantidadEstandar) => {
+    setEditingId(id)
+    setEditingType('estandar')
+    setEditingCantidad(cantidadEstandar.toString())
   }
 
   const handleGuardarCantidad = async (id) => {
@@ -96,16 +105,23 @@ export default function InventarioPage() {
 
     try {
       setError('')
+      const body = {
+        id: id,
+        rol: user.role
+      }
+      
+      if (editingType === 'actual') {
+        body.cantidad_actual = parseInt(editingCantidad)
+      } else if (editingType === 'estandar') {
+        body.cantidad_estandar = parseInt(editingCantidad)
+      }
+      
       const res = await fetch(`${API}/inventario_habitaciones.php`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          id: id,
-          cantidad_actual: parseInt(editingCantidad),
-          rol: user.role
-        })
+        body: JSON.stringify(body)
       })
       
       const data = await res.json()
@@ -115,6 +131,7 @@ export default function InventarioPage() {
         setTimeout(() => setSuccessMessage(''), 3000)
         cargarInventario()
         setEditingId(null)
+        setEditingType(null)
       } else {
         setError(data.mensaje || 'Error al actualizar cantidad')
       }
@@ -448,7 +465,43 @@ export default function InventarioPage() {
                                 )}
                               </td>
                               <td style={{ padding: '12px', textAlign: 'center', color: 'var(--color-text)' }}>
-                                {suministro.cantidad_estandar}
+                                {editingId === suministro.id && editingType === 'estandar' ? (
+                                  <input
+                                    type="number"
+                                    value={editingCantidad}
+                                    onChange={(e) => setEditingCantidad(e.target.value)}
+                                    min="0"
+                                    style={{
+                                      width: '50px',
+                                      padding: '4px',
+                                      border: '1px solid var(--color-primary)',
+                                      borderRadius: '4px',
+                                      textAlign: 'center',
+                                      backgroundColor: 'var(--color-background)',
+                                      color: 'var(--color-text)',
+                                      fontFamily: 'inherit'
+                                    }}
+                                  />
+                                ) : (
+                                  <button
+                                    onClick={() => handleEditarEstandar(suministro.id, suministro.cantidad_estandar)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'var(--color-primary)',
+                                      cursor: 'pointer',
+                                      fontWeight: 'bold',
+                                      fontSize: '14px',
+                                      padding: '4px 8px',
+                                      borderRadius: '3px',
+                                      transition: 'background-color 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(33, 150, 243, 0.1)'}
+                                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                  >
+                                    {suministro.cantidad_estandar} ✎
+                                  </button>
+                                )}
                               </td>
                               <td style={{ padding: '12px', textAlign: 'center' }}>
                                 <span 
